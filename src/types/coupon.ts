@@ -37,6 +37,12 @@ export interface Coupon {
   productIds: string[];
   categoryIds: string[];
   isActive: boolean;
+  /**
+   * Written by the store team when a seller's code was taken off the checkout.
+   * Empty on a code the desk never touched.
+   */
+  blockedReason?: string;
+  blockedAt?: string | null;
   usedCount: number;
   discountGiven: number;
   /** 0 when the code has no cap, so the desk shows "No limit" not a zero. */
