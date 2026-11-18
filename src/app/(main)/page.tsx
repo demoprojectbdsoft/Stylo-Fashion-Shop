@@ -9,11 +9,10 @@ import NewArrivals from "@/components/homepage/NewArrivals";
 import FeaturedVendors from "@/components/vendor/FeaturedVendors";
 import FeaturedProducts from "@/components/vendor/FeaturedProducts";
 import { Product, Promo } from "@/types";
-import type { PublicStore } from "@/types/stores";
 import PromoStrip from "@/components/homepage/PromoStrip";
 import Brand from "@/components/homepage/Brand";
 import { getProducts } from "@/lib/api/products";
-import { asStore, asStoreList, getPublicStoreBySlug, getPublicStores } from "@/lib/api/stores";
+import { asStoreList, getPublicStores } from "@/lib/api/stores";
 import { getSlides } from "@/lib/api/slides";
 import { getPromos } from "@/lib/api/promos";
 
@@ -63,14 +62,13 @@ async function FeaturedProductsSection() {
   return <FeaturedProducts products={products} />;
 }
 
-// The shops a paid placement is lighting up, the freshest grant first.
+// The shops a storefront placement is lighting up, the freshest first.
 //
-// A storefront placement lifts a shop directly. When none is running, the
-// sellers behind the featured listings carry the rail instead — a shop whose
-// product was granted the shelf is a featured vendor just as much as one that
-// bought the marquee, and this is what keeps the section from disappearing
-// while product placements are clearly selling. Nothing featured at all, no
-// section.
+// Only a placement on the shop itself puts it here — the one a paid period opens
+// when the plan starts, or the one the store team grants from the promotions
+// desk. A featured listing does not carry its seller along: the marquee is the
+// shop's own row, so a shop appears because that row was bought or granted,
+// never as a side effect of one of its products. Nothing placed, no section.
 async function FeaturedVendorsSection() {
   const placedRes = await getPublicStores({ featured: true, sort: "latest", limit: 8 });
   // An API that predates the `latest` order answers nothing to this read, so
@@ -78,22 +76,7 @@ async function FeaturedVendorsSection() {
   const placed =
     asStoreList(placedRes) ?? asStoreList(await getPublicStores({ featured: true, limit: 8 }));
 
-  let vendors: PublicStore[] = placed?.stores ?? [];
-
-  if (vendors.length === 0) {
-    const res = await getProducts({ isFeatured: true, sort: "featured", limit: 12 });
-    const products: Product[] = res?.data?.products ?? [];
-    const slugs = Array.from(
-      new Set(products.map((product) => product.seller?.slug).filter(Boolean))
-    )
-      .slice(0, 8)
-      .map(String);
-
-    const stores = await Promise.all(slugs.map((slug) => getPublicStoreBySlug(slug)));
-    vendors = stores.map(asStore).filter((store): store is PublicStore => Boolean(store));
-  }
-
-  return <FeaturedVendors vendors={vendors} />;
+  return <FeaturedVendors vendors={placed?.stores ?? []} />;
 }
 
 // Reads the active "tile" banners. They are drawn two per row by PromoBanners.
