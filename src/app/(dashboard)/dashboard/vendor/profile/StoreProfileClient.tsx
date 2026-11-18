@@ -310,7 +310,7 @@ export default function StoreProfileClient({
             <div className="-mt-8 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-[var(--surface-elevated)] bg-[var(--surface-alt)] text-[var(--brand-flat)] shadow-md">
               {draft.logo ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={draft.logo} alt={draft.name} className="h-full w-full object-cover" />
+                <img src={draft.logo} alt={draft.name} className="h-full w-full object-contain p-0.5" />
               ) : (
                 <Store className="h-6 w-6" />
               )}

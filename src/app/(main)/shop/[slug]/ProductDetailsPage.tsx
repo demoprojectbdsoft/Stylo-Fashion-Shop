@@ -1051,7 +1051,7 @@ export default function ProductDetailsPage({
                       alt={`${sellerStore.name} logo`}
                       fill
                       sizes="48px"
-                      className="object-cover"
+                      className="object-contain p-0.5"
                     />
                   ) : (
                     <Store className="w-5 h-5 text-[var(--foreground-muted)]" />

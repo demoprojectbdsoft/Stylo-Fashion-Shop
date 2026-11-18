@@ -55,7 +55,7 @@ export default function VendorCard({
               alt={`${vendor.name} logo`}
               fill
               sizes="48px"
-              className="object-cover"
+              className="object-contain p-1"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";
               }}

@@ -69,7 +69,7 @@ export default function SpotlightVendorCard({
                 alt={`${vendor.name} logo`}
                 fill
                 sizes="44px"
-                className="object-cover"
+                className="object-contain p-0.5"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
