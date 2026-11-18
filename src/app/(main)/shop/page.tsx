@@ -7,6 +7,7 @@ import { getSubCategories } from "@/lib/api/subCategories";
 import ProductsTopBar from "@/components/shop/ProductsTopBar";
 import ProductsSidebarFilter from "@/components/shop/ProductsSidebarFilter";
 import ProductsGrid from "@/components/shop/ProductsGrid";
+import ShopHeroBand from "@/components/shop/ShopHeroBand";
 import { ShopQueryParams } from "@/types";
 
 interface ShopPageProps {
@@ -65,6 +66,11 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   return (
     <div className="w-full py-6">
+      {/* Hero band — the same storefront window the vendor directory opens with */}
+      <div className="mb-6">
+        <ShopHeroBand totalProducts={pagination.total} categoryCount={categories.length} />
+      </div>
+
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[var(--foreground-muted)] mb-6 flex-wrap">
         <Link href="/" className="hover:text-primary transition-colors">
