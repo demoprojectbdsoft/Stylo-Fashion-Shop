@@ -150,6 +150,7 @@ sequenceDiagram
 | **Order success** | Official purchase receipt with a printable/downloadable copy and the tracking link |
 | **Track order** | Live Leaflet map with the rider's last position, the step timeline and the hand-over code; the delivery outcome is recorded from the customer's orders screen |
 | **Stores** | Public seller directory, vendor storefront pages and a store locator |
+| **Featured vendors** | The home rail shows only shops holding the marquee — a week bought with a paid plan or a run granted by the store team — drawn as spotlight posters with the delivery record, rating and delivered count |
 | **Content** | About, services, FAQ, support, customer service, privacy, terms, returns, not-found and maintenance pages |
 | **Onboarding** | Become a vendor and become a rider wizards (multi-step, documents, autosaved draft) plus status pages |
 | **Extras** | Dark/light theme, 14-language switcher (Google Translate), PWA manifest, dynamic favicon, floating mobile actions |
@@ -166,6 +167,8 @@ sequenceDiagram
 - Product list and editor (images, variants, specifications, warranty fields, offers, badges)
 - Promotions, coupons, deliveries, payouts, transactions, reviews
 - Analytics with the plan's entitlement ladder, subscription desk and plan upgrade
+- Buying a paid period puts the shop on the featured rail for a week by itself (the run is capped at 7 days and never replaces a live grant from the store team) — the seller's bell explains the run, and the store team's activity feed records it
+- A code the store team blocked shows the written reason on the seller's coupons desk instead of silently disappearing
 - Store profile, availability and settings
 
 ### Rider Dashboard
@@ -186,9 +189,9 @@ sequenceDiagram
 | **Deliveries** | Assign a rider, reassign, cancel, delivery board and history |
 | **Riders** | Rider list, detail page and the application review desk |
 | **Payouts** | What each delivered job paid the rider, with range filters and a chart |
-| **Vendors** | Vendor list, store profiles, plans and applications |
+| **Vendors** | The seller board: search, shop-state / plan / marquee filters, seven sort keys and pages, over one table whose points rank plan money, paid time, sales and the delivery record. Each row opens a full seller dashboard — account, shop record, plan history and payments, listings, placements, codes and recent orders. Applications live in their own review queue under `/vendors/applications` |
 | **Vendor plans** | The editable price list behind the pricing cards |
-| **Promotions & coupons** | Featured placements, store coupons, banner and slider CMS |
+| **Promotions & coupons** | Featured placements (granted from the desk or opened by a paid plan), store coupons, banner and slider CMS. The coupons desk carries every seller's codes too: block one with a written reason, put a blocked one back, or remove it — a code that already saved shoppers money is only stopped |
 | **Analytics** | Sales report, vendor desk (subscriptions + commission) and product engagement, with CSV/PDF export |
 | **Users** | Search, roles, per-role suspension, detail page |
 | **Messages** | Contact-form inbox with replies |
@@ -314,7 +317,7 @@ The flag is read from the API's `/site-settings` with a 3-second cache; the sess
 | `/dashboard/customer` | orders, wishlist, reviews, notifications, transactions, profile, settings |
 | `/dashboard/vendor` | orders (+ detail), products (+ new, edit, view), promotions, coupons, deliveries, payouts, transactions, reviews, analytics, subscription, profile, settings, notifications |
 | `/dashboard/rider` | requests, active, deliveries, earnings, history, notifications, profile, settings |
-| `/dashboard/admin` | overview, products (+ add, detail), categories, orders, deliveries, riders (+ detail), payouts, vendors (+ detail), vendor-plans, promotions, coupons, home-slider, promo-banners, analytics, users (+ detail), messages, reviews, transactions, settings, notifications |
+| `/dashboard/admin` | overview, products (+ add, detail), categories, orders, deliveries, riders (+ detail), payouts, vendors (+ `[id]` seller dashboard, `applications`, `applications/[id]` review), vendor-plans, promotions, coupons (store and seller codes), home-slider, promo-banners, analytics, users (+ detail), messages, reviews, transactions, settings, notifications |
 
 ---
 
@@ -666,6 +669,9 @@ npx next typegen
 | **Vendor Dashboard** | ✅ Complete (orders, products, plan, analytics) |
 | **Rider Dashboard** | ✅ Complete (offers, active job, earnings) |
 | **Admin Dashboard** | ✅ Complete |
+| **Vendor Board (admin)** | ✅ Complete (points directory + one-seller dashboard) |
+| **Featured Placements** | ✅ Complete (admin grants, plan spotlight, poster rail) |
+| **Coupon Moderation** | ✅ Complete (block with a reason, put back, remove) |
 | **Live Delivery Tracking** | ✅ Complete (Leaflet map, steps, code) |
 | **Site Settings CMS** | ✅ Complete (brand, colours, content) |
 | **Maintenance Mode** | ✅ Complete (staff exempt) |
