@@ -13,7 +13,7 @@ import type { PublicStore } from "@/types/stores";
 import PromoStrip from "@/components/homepage/PromoStrip";
 import Brand from "@/components/homepage/Brand";
 import { getProducts } from "@/lib/api/products";
-import { asStoreList, getPublicStores } from "@/lib/api/stores";
+import { asStore, asStoreList, getPublicStoreBySlug, getPublicStores } from "@/lib/api/stores";
 import { getSlides } from "@/lib/api/slides";
 import { getPromos } from "@/lib/api/promos";
 
@@ -63,12 +63,36 @@ async function FeaturedProductsSection() {
   return <FeaturedProducts products={products} />;
 }
 
-// The shops a paid placement is lighting up, the freshest grant first. No
-// placement running, no section: the rail would otherwise claim a "featured"
-// list that is simply empty.
+// The shops a paid placement is lighting up, the freshest grant first.
+//
+// A storefront placement lifts a shop directly. When none is running, the
+// sellers behind the featured listings carry the rail instead — a shop whose
+// product was granted the shelf is a featured vendor just as much as one that
+// bought the marquee, and this is what keeps the section from disappearing
+// while product placements are clearly selling. Nothing featured at all, no
+// section.
 async function FeaturedVendorsSection() {
-  const result = asStoreList(await getPublicStores({ featured: true, sort: "latest", limit: 8 }));
-  const vendors: PublicStore[] = result?.stores ?? [];
+  const placedRes = await getPublicStores({ featured: true, sort: "latest", limit: 8 });
+  // An API that predates the `latest` order answers nothing to this read, so
+  // ask once more in the default order rather than lose the rail to a 400.
+  const placed =
+    asStoreList(placedRes) ?? asStoreList(await getPublicStores({ featured: true, limit: 8 }));
+
+  let vendors: PublicStore[] = placed?.stores ?? [];
+
+  if (vendors.length === 0) {
+    const res = await getProducts({ isFeatured: true, sort: "featured", limit: 12 });
+    const products: Product[] = res?.data?.products ?? [];
+    const slugs = Array.from(
+      new Set(products.map((product) => product.seller?.slug).filter(Boolean))
+    )
+      .slice(0, 8)
+      .map(String);
+
+    const stores = await Promise.all(slugs.map((slug) => getPublicStoreBySlug(slug)));
+    vendors = stores.map(asStore).filter((store): store is PublicStore => Boolean(store));
+  }
+
   return <FeaturedVendors vendors={vendors} />;
 }
 
