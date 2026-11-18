@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
@@ -18,6 +17,7 @@ import {
 } from "lucide-react";
 import { asStore, getPublicStoreBySlug } from "@/lib/api/stores";
 import { getProducts } from "@/lib/api/products";
+import StoreImage from "@/components/vendor/StoreImage";
 import VendorShelf from "./VendorShelf";
 
 export const dynamic = "force-dynamic";
@@ -122,16 +122,13 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
       <div className="rounded-3xl overflow-hidden border border-[var(--border-color)] bg-[var(--surface-elevated)] shadow-2xs">
         <div className="relative h-36 md:h-52 bg-brand-gradient">
           {store.coverImage && (
-            <Image
+            <StoreImage
               src={store.coverImage}
               alt=""
               fill
               priority
               sizes="(max-width: 1280px) 100vw, 1280px"
               className="object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
             />
           )}
           {store.isFeatured && (
@@ -145,15 +142,12 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
           <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 sm:-mt-14">
             <div className="relative w-20 h-20 md:w-28 md:h-28 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] shadow-md overflow-hidden flex items-center justify-center shrink-0">
               {store.logo ? (
-                <Image
+                <StoreImage
                   src={store.logo}
                   alt={`${store.name} logo`}
                   fill
                   sizes="112px"
                   className="object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
                 />
               ) : (
                 <Store className="w-8 h-8 text-[var(--foreground-muted)]" />
