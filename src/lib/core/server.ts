@@ -1,9 +1,12 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { getToken } from "./session";
 
 const API_URL: string = process.env.NEXT_PUBLIC_API_URL as string;
+
+/** A hung API must not hold the whole page render open until the platform kills it. */
+const REQUEST_TIMEOUT_MS = 10_000;
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -43,12 +46,18 @@ const authHeaders = async (): Promise<HeadersInit> => {
  * render an empty state instead of crashing the render.
  */
 export const serverFetch = async (path: string, requireAuth: boolean = false) => {
+  if (!API_URL) {
+    console.error("NEXT_PUBLIC_API_URL is not set — cannot read", path);
+    return null;
+  }
+
   try {
     const headers = requireAuth ? await authHeaders() : {};
 
     const res = await fetch(`${API_URL}${path}`, {
       cache: "no-store",
       headers,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (res.status === 401 || res.status === 403) {
@@ -57,6 +66,10 @@ export const serverFetch = async (path: string, requireAuth: boolean = false) =>
 
     return await handleResponse(res);
   } catch (err) {
+    // A redirect, a notFound or the framework's own "this route is dynamic"
+    // signal belongs to Next, not to this helper. Swallowing it froze pages
+    // into static copies and surfaced later as the ISR error screen.
+    unstable_rethrow(err);
     console.error("serverFetch error for path", path, ":", (err as Error).message);
     return null;
   }
@@ -87,6 +100,7 @@ export const serverMutation = async (
         Authorization: `Bearer ${token}`,
       },
       body: data ? JSON.stringify(data) : undefined,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (options?.explainForbidden && res.status === 403) {
@@ -99,6 +113,7 @@ export const serverMutation = async (
 
     return await handleResponse(res);
   } catch (err) {
+    unstable_rethrow(err);
     console.error("fetch failed:", (err as Error).message);
     return { success: false, message: (err as Error).message };
   }

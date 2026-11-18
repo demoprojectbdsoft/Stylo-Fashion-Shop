@@ -21,6 +21,13 @@ const poppins = Poppins({
 
 import { getSiteSettings } from "@/lib/api/siteSettings";
 
+// Every screen in this app is painted from the live API and the live session, so
+// nothing may be baked into the build. Without this line Next tries to prerender
+// each route; the fetches below run inside a try/catch, so the "dynamic usage"
+// signal is swallowed, the route is marked static, and the first revalidation
+// after a deploy fails into the root error screen ("This page couldn’t load").
+export const dynamic = "force-dynamic";
+
 // Viewport configuration for standalone PWA & responsive displays
 export const viewport: Viewport = {
   colorScheme: "light dark",

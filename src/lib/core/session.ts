@@ -9,9 +9,17 @@ type Role = "admin" | "customer" | "rider" | "vendor" | "user";
 
 /** Reads the better-auth session for the current request. */
 const readSession = async () => {
-  return auth.api.getSession({
-    headers: await headers(),
-  });
+  try {
+    return await auth.api.getSession({
+      headers: await headers(),
+    });
+  } catch (err) {
+    // The session store is a database like any other: a dropped connection must
+    // send this request down the signed-out path, not throw the whole page into
+    // the error screen.
+    console.error("readSession failed:", (err as Error).message);
+    return null;
+  }
 };
 
 /** The signed-in user, or null when the request has no session. */
