@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowUpRight,
+  Ban,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -320,6 +321,13 @@ export default function VendorCouponsClient({
                         <> · min {formatPrice(coupon.minOrderAmount, currency)}</>
                       )}
                     </p>
+                    {/* The store team's reason, not a silent disappearance. */}
+                    {coupon.blockedReason && (
+                      <p className="mt-1 inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">
+                        <Ban className="h-3 w-3" />
+                        The store team blocked this code: {coupon.blockedReason}
+                      </p>
+                    )}
                   </div>
 
                   <span
@@ -338,15 +346,24 @@ export default function VendorCouponsClient({
                       Edit
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => toggleActive(coupon)}
-                      disabled={busyId === coupon._id}
-                      className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2 py-1.5 text-[10px] font-semibold text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)] disabled:opacity-50 cursor-pointer"
-                    >
-                      {busyId === coupon._id && <Loader2 className="h-3 w-3 animate-spin" />}
-                      {coupon.isActive ? "Stop" : "Resume"}
-                    </button>
+                    {coupon.isActive || !coupon.blockedReason ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleActive(coupon)}
+                        disabled={busyId === coupon._id}
+                        className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2 py-1.5 text-[10px] font-semibold text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)] disabled:opacity-50 cursor-pointer"
+                      >
+                        {busyId === coupon._id && <Loader2 className="h-3 w-3 animate-spin" />}
+                        {coupon.isActive ? "Stop" : "Resume"}
+                      </button>
+                    ) : (
+                      // A code the store team blocked is theirs to release, so the
+                      // switch is not offered — the reason above says who did it.
+                      <span className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2 py-1.5 text-[10px] font-semibold text-rose-600 dark:border-rose-500/30 dark:text-rose-300">
+                        <Ban className="h-3 w-3" />
+                        Store team blocked
+                      </span>
+                    )}
 
                     <button
                       type="button"
