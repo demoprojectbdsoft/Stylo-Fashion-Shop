@@ -26,6 +26,11 @@ export const getPublicStores = async (params?: PublicStoreListQuery) => {
   return serverFetch(withQuery("/vendor-store/public", params));
 };
 
+/** The categories the public directory's filter offers, from the trading shops. */
+export const getPublicStoreCategories = async () => {
+  return serverFetch("/vendor-store/public/categories");
+};
+
 export const getPublicStoreBySlug = async (slug: string) => {
   return serverFetch(`/vendor-store/public/${encodeURIComponent(slug)}`);
 };
@@ -33,6 +38,12 @@ export const getPublicStoreBySlug = async (slug: string) => {
 /** A null read becomes an empty table rather than a crashed render. */
 export const asStoreList = (payload: unknown): PublicStoreListResult | null => {
   return (payload as { data?: PublicStoreListResult } | null)?.data ?? null;
+};
+
+/** A null read becomes an empty category list rather than a crashed render. */
+export const asStoreCategories = (payload: unknown): string[] => {
+  const data = (payload as { data?: { categories?: string[] } } | null)?.data;
+  return Array.isArray(data?.categories) ? data.categories : [];
 };
 
 export const asStore = (payload: unknown): PublicStore | null => {
