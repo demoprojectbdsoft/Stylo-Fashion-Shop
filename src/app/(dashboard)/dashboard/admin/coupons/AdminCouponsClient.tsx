@@ -3,11 +3,13 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Ban,
   ChevronLeft,
   ChevronRight,
   Loader2,
   Pencil,
   Plus,
+  RotateCcw,
   Search,
   Ticket,
   Trash2,
@@ -23,7 +25,7 @@ import {
   couponWindowWords,
   getCouponStateStyle,
 } from "@/lib/couponWords";
-import { deleteStoreCoupon, setStoreCouponActive } from "@/lib/action/coupons";
+import { deleteStoreCoupon, moderateSellerCoupon, setStoreCouponActive } from "@/lib/action/coupons";
 import AdminCouponForm, {
   type CouponCategoryOption,
   type CouponProductOption,
@@ -87,6 +89,10 @@ export default function AdminCouponsClient({
   const router = useRouter();
   const [search, setSearch] = useState(filters.search);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // A seller's row is being blocked: the id whose reason box is open, and the
+  // reason itself. Ours never uses it — a store code is edited, not blocked.
+  const [blockingId, setBlockingId] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
 
   /**
    * Every filter, the open editor and the picker's search live in the URL, so the
@@ -163,6 +169,47 @@ export default function AdminCouponsClient({
     }
   };
 
+  /**
+   * The one write this desk has over somebody else's row.
+   *
+   * A seller owns their code, so nothing here edits its price, its window or
+   * its reach: the desk can take it off the checkout, put a stopped one back,
+   * or remove it. The reason is written onto the row, which is what the
+   * seller's own coupons desk reads instead of leaving them to guess.
+   */
+  const moderate = async (coupon: Coupon, action: "block" | "unblock" | "delete") => {
+    if (busyId) return;
+
+    if (
+      action === "delete" &&
+      !window.confirm(
+        `Remove ${coupon.code}? A code that has already saved shoppers money is only blocked, and the orders that used it stay.`
+      )
+    ) {
+      return;
+    }
+
+    setBusyId(coupon._id);
+    try {
+      const res = await moderateSellerCoupon(coupon._id, action, action === "block" ? reason : undefined);
+      if (res?.success === false) {
+        toast.error(res.message || "The code could not be changed");
+        return;
+      }
+      toast.success(
+        res?.message ||
+          (action === "unblock" ? "Code is live again" : action === "block" ? "Code blocked" : "Code removed")
+      );
+      setBlockingId(null);
+      setReason("");
+      router.refresh();
+    } catch (err) {
+      toast.error((err as Error).message || "An error occurred");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   // An id that no longer resolves is not a new code, so the editor stays shut
   // and the board says what happened instead of opening an empty form.
   const editorOpen = Boolean(filters.edit) && (filters.edit === "new" || Boolean(editing));
@@ -175,7 +222,8 @@ export default function AdminCouponsClient({
           <h1 className="text-lg font-bold text-[var(--foreground)]">Coupons</h1>
           <p className="text-[11px] text-[var(--foreground-muted)]">
             Codes the store writes reach everything. A seller&rsquo;s code reaches
-            only their own shelf.
+            only their own shelf, and this desk can block one, put it back or
+            remove it — never write it.
           </p>
         </div>
 
@@ -341,11 +389,18 @@ export default function AdminCouponsClient({
                       ) : (
                         <span className="text-[var(--foreground-muted)]">
                           {coupon.sellerName || "A seller"}
-                          {coupon.storeSlug ? ` · /${coupon.storeSlug}` : ""} — they
-                          manage this code from their own desk
+                          {coupon.storeSlug ? ` · /${coupon.storeSlug}` : ""} — their own
+                          desk writes this code; this one can stop it
                         </span>
                       )}
                     </p>
+                    {!ours && coupon.blockedReason && (
+                      <p className="mt-1 inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">
+                        <Ban className="h-3 w-3" />
+                        Blocked by this desk: {coupon.blockedReason}
+                        {coupon.blockedAt ? ` (${new Date(coupon.blockedAt).toLocaleDateString()})` : ""}
+                      </p>
+                    )}
                   </div>
 
                   <span
@@ -385,9 +440,78 @@ export default function AdminCouponsClient({
                       </button>
                     </div>
                   ) : (
-                    <span className="rounded-lg bg-[var(--surface-alt)] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[var(--foreground-muted)]">
-                      Read only
-                    </span>
+                    <div className="flex items-center gap-1">
+                      {coupon.isActive ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBlockingId(blockingId === coupon._id ? null : coupon._id);
+                            setReason("");
+                          }}
+                          disabled={busyId === coupon._id}
+                          className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2 py-1.5 text-[10px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-50 cursor-pointer"
+                        >
+                          <Ban className="h-3.5 w-3.5" />
+                          Block
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => moderate(coupon, "unblock")}
+                          disabled={busyId === coupon._id}
+                          className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2 py-1.5 text-[10px] font-semibold text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)] disabled:opacity-50 cursor-pointer"
+                        >
+                          {busyId === coupon._id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          )}
+                          Put back
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => moderate(coupon, "delete")}
+                        disabled={busyId === coupon._id}
+                        title="Remove this code"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-color)] text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-rose-600 disabled:opacity-50 cursor-pointer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Why the code is going quiet — the seller reads this on their desk. */}
+                  {blockingId === coupon._id && (
+                    <div className="flex w-full flex-wrap items-center gap-2 rounded-xl bg-[var(--surface-alt)] px-3 py-2">
+                      <input
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                        maxLength={200}
+                        placeholder="Why is this code coming off? The seller will read this."
+                        className="h-8 min-w-0 flex-1 rounded-lg border border-[var(--border-color)] bg-[var(--surface)] px-2 text-[11px] text-[var(--foreground)] placeholder:text-[var(--foreground-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--brand-flat)]/35"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => moderate(coupon, "block")}
+                        disabled={busyId === coupon._id}
+                        className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors hover:bg-rose-700 disabled:opacity-50 cursor-pointer"
+                      >
+                        {busyId === coupon._id && <Loader2 className="h-3 w-3 animate-spin" />}
+                        Block code
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBlockingId(null);
+                          setReason("");
+                        }}
+                        className="rounded-lg border border-[var(--border-color)] px-2.5 py-1.5 text-[10px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface)] cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   )}
                 </li>
               );
