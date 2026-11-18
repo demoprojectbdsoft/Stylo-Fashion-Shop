@@ -1,15 +1,20 @@
 import Link from "next/link";
 import { ChevronRight, Crown } from "lucide-react";
-import VendorCard from "./VendorCard";
+import SpotlightVendorCard from "./SpotlightVendorCard";
 import type { PublicStore } from "@/types/stores";
 
 /**
  * The featured-vendors shelf.
  *
- * The rows are the shops a paid placement is lighting up right now. The header
- * is the same one every other homepage section uses, and the words are the
- * caller's: the home page introduces the sellers, a product page says "shops
- * like this one".
+ * The rows are the shops holding a storefront placement right now: the week a
+ * paid plan opens when its period starts, or the run the store team granted
+ * from the promotions desk. Nothing else puts a shop here — a featured listing
+ * does not carry its seller along.
+ *
+ * That is why the card is not the directory's card: a sponsored shop gets the
+ * poster from `SpotlightVendorCard`, so the rail reads as a marquee rather than
+ * a second copy of the vendor list. The header is the same one every other
+ * homepage section draws, and the words are the caller's.
  *
  * When nothing is promoted the section is not rendered at all — an empty
  * "Featured" header over an empty box would advertise a feature the marketplace
@@ -19,10 +24,9 @@ export default function FeaturedVendors({
   vendors,
   eyebrow = "On the marquee",
   title = "Featured Vendors",
-  slogan = "Shops that bought the spotlight this month. Verified sellers, real delivery records, and a storefront worth walking into.",
+  slogan = "The shops holding the marquee right now — a week bought with a paid plan, or a run the store team granted. Verified sellers, real delivery records.",
   href = "/vendors",
   linkLabel = "All vendors",
-  compact = false,
 }: {
   vendors: PublicStore[];
   eyebrow?: string;
@@ -30,7 +34,6 @@ export default function FeaturedVendors({
   slogan?: string;
   href?: string;
   linkLabel?: string;
-  compact?: boolean;
 }) {
   if (vendors.length === 0) return null;
 
@@ -65,10 +68,10 @@ export default function FeaturedVendors({
         </div>
       </div>
 
-      {/* ── Vendor cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {vendors.map((vendor) => (
-          <VendorCard key={vendor._id} vendor={vendor} compact={compact} />
+      {/* ── The sponsored shops, as posters ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {vendors.map((vendor, index) => (
+          <SpotlightVendorCard key={vendor._id} vendor={vendor} rank={index + 1} />
         ))}
       </div>
     </section>
