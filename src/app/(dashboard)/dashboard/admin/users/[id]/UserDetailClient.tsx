@@ -920,7 +920,7 @@ export default function UserDetailClient({
                     </Link>
                   )}
                   <Link
-                    href={`/dashboard/admin/vendors/${vendorDetail.application._id}`}
+                    href={`/dashboard/admin/vendors/applications/${vendorDetail.application._id}`}
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
                   >
                     <Star className="w-3.5 h-3.5" /> Open vendor application review

@@ -150,7 +150,7 @@ export default function VendorReviewClient({ detail }: VendorReviewClientProps) 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
-            href="/dashboard/admin/vendors"
+            href="/dashboard/admin/vendors/applications"
             className="mb-2 inline-flex items-center gap-1 text-[10px] font-semibold text-[var(--foreground-muted)] transition-colors hover:text-[var(--foreground)]"
           >
             <ArrowLeft className="h-3 w-3" />

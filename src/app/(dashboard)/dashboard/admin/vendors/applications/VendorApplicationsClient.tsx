@@ -60,7 +60,8 @@ export default function VendorApplicationsClient({
     if (page > 1) params.set("page", String(page));
 
     const query = params.toString();
-    router.push(query ? `/dashboard/admin/vendors?${query}` : "/dashboard/admin/vendors");
+    const base = "/dashboard/admin/vendors/applications";
+    router.push(query ? `${base}?${query}` : base);
   };
 
   const waiting = (typeCounts.pending || 0) + (typeCounts.under_review || 0);
@@ -159,7 +160,7 @@ export default function VendorApplicationsClient({
               return (
                 <li key={application._id}>
                   <Link
-                    href={`/dashboard/admin/vendors/${application._id}`}
+                    href={`/dashboard/admin/vendors/applications/${application._id}`}
                     className="grid gap-2 px-4 py-3 transition-colors hover:bg-[var(--surface-alt)]/70 lg:grid-cols-[1.4fr_1.2fr_0.8fr_0.8fr_auto] lg:items-center lg:gap-3"
                   >
                     <div className="min-w-0">

@@ -27,6 +27,7 @@ import {
   Truck,
   Store,
   Bike,
+  Inbox,
   Crown,
   type LucideIcon,
 } from "lucide-react";
@@ -81,7 +82,9 @@ const NAV_GROUPS = [
     title: "People",
     items: [
       { name: "Users", href: "/dashboard/admin/users", icon: Users },
-      { name: "Vendor applications", href: "/dashboard/admin/vendors", icon: Store },
+      // The seller board: every shop with its plan, its trade and its record.
+      { name: "Vendors", href: "/dashboard/admin/vendors", icon: Store },
+      { name: "Vendor applications", href: "/dashboard/admin/vendors/applications", icon: Inbox },
       { name: "Rider applications", href: "/dashboard/admin/riders", icon: Bike },
     ],
   },

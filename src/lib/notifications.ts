@@ -165,9 +165,12 @@ export function notificationHref(
       case "rider":
       case "rider_application":
         return "/dashboard/admin/riders";
+      // A seller's own board is the screen that sells the marquee, so a vendor
+      // line lands there; an application line opens the queue that decides it.
       case "vendor":
-      case "vendor_application":
         return "/dashboard/admin/vendors";
+      case "vendor_application":
+        return "/dashboard/admin/vendors/applications";
       // Everything else is somebody else's personal news; the shared board has
       // no screen for it, so it stays where it is.
       default:
