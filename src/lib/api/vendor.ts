@@ -1,6 +1,11 @@
 import { serverFetch } from "../core/server";
 import { withQuery } from "../core/query";
 import type { VendorApplication, VendorPlan } from "@/types/vendor";
+import type {
+  VendorBoardDetail,
+  VendorBoardListResult,
+  VendorBoardQuery,
+} from "@/types/vendorBoard";
 
 /**
  * The marketplace reads: the plan table, one applicant's own application, and
@@ -50,6 +55,32 @@ export const getVendorApplications = async (params?: VendorApplicationQuery) => 
 /** One application plus the account and store it belongs to. */
 export const getVendorApplication = async (id: string) => {
   return serverFetch(`/vendor-applications/${id}`, true);
+};
+
+/**
+ * The store team's board of sellers, filtered, sorted and paged.
+ *
+ * The points each row is ranked by are computed by the API from the rows that
+ * own the money: the payment ledger, the period history, the seller's own
+ * orders and how those orders ended.
+ */
+export const getVendorBoard = async (params?: VendorBoardQuery) => {
+  return serverFetch(withQuery("/vendor-admin", params), true);
+};
+
+/** One seller in full: the row, the account, the shop and its four tables. */
+export const getVendorBoardDetail = async (id: string) => {
+  return serverFetch(`/vendor-admin/${id}`, true);
+};
+
+/** Narrowing helper for the directory page, so a null read becomes an empty table. */
+export const asVendorBoard = (payload: unknown): VendorBoardListResult | null => {
+  return (payload as { data?: VendorBoardListResult } | null)?.data ?? null;
+};
+
+/** Narrowing helper for the vendor dashboard view. */
+export const asVendorBoardDetail = (payload: unknown): VendorBoardDetail | null => {
+  return (payload as { data?: VendorBoardDetail } | null)?.data ?? null;
 };
 
 /** Narrowing helper for the pages, so a null read becomes an empty table. */
