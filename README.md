@@ -1,740 +1,635 @@
 <div align="center">
 
-# ⚡ Sparq — Storefront & Dashboards
+# ⚡ Sparq
 
-### *Next.js frontend for a full-stack e-commerce platform*
+**Modern Electronics E-Commerce Platform**
 
-**Next.js 16 App Router + better-auth powering the shop, live delivery tracking, and four role dashboards (customer, vendor, rider, admin)**
+Full-stack marketplace with multi-vendor support, loyalty system, and comprehensive admin controls
 
-[![Frontend Repo](https://img.shields.io/badge/Frontend-Repository-blue?style=for-the-badge)](https://github.com/demoprojectbdsoft/Sparq-Electronics-Store)
-[![Backend Repo](https://img.shields.io/badge/Backend-Repository-2ea44f?style=for-the-badge)](https://github.com/demoprojectbdsoft/Sparq-Server)
-[![Live API](https://img.shields.io/badge/API-Live-success?style=for-the-badge)](https://sparq-api.vercel.app/api)
+[![Live Demo](https://img.shields.io/badge/Demo-Live-success?style=flat-square)](https://sparq-electronics.vercel.app)
+[![Frontend](https://img.shields.io/badge/Frontend-Next.js_16-black?style=flat-square&logo=next.js)](https://github.com/demoprojectbdsoft/Sparq-Electronics-Store)
+[![Backend](https://img.shields.io/badge/Backend-Express_5-green?style=flat-square&logo=express)](https://github.com/demoprojectbdsoft/Sparq-Server)
 
 </div>
 
 ---
 
-## 📑 Table of Contents
+## 📖 Table of Contents
 
-1. [Overview](#-overview)
-2. [Features](#-features)
-3. [Architecture](#️-architecture)
-4. [Pages & Routes](#-pages--routes)
-5. [Security](#-security)
-6. [Tech Stack](#-tech-stack)
-7. [Project Structure](#-project-structure)
-8. [Setup & Installation](#-setup--installation)
-9. [Environment Variables](#-environment-variables)
-10. [Development](#-development)
-11. [Deployment](#-deployment)
-12. [Project Status](#-project-status)
-13. [Contributing](#-contributing)
-14. [License](#-license)
+1. [What is Sparq?](#what-is-sparq)
+2. [Key Features](#key-features)
+3. [How It Works](#how-it-works)
+4. [Tech Stack](#tech-stack)
+5. [Quick Start](#quick-start)
+6. [Project Structure](#project-structure)
+7. [Environment Setup](#environment-setup)
+8. [Development](#development)
+9. [Deployment](#deployment)
+10. [Demo Accounts](#demo-accounts)
 
 ---
 
-## 📖 Overview
+## What is Sparq?
 
-Sparq is the customer-facing storefront and the dashboard suite for the [Sparq](https://github.com/demoprojectbdsoft/Sparq-Server) marketplace: one Next.js app that serves shoppers, sellers, riders and the store team, plus a demo admin account.
+Sparq is a **production-ready e-commerce platform** for electronics with complete multi-vendor marketplace capabilities. Everything is database-driven - no hardcoded content.
 
-### Core Responsibilities
+### At a Glance
 
-**✅ What This App Owns**
-
-| Responsibility | Description |
-|---------------|-------------|
-| **Authentication** | Sign-up, login, Google sign-in, sessions, password reset, JWTs (better-auth) |
-| **Sessions & JWTs** | Session storage in MongoDB, `/api/auth/jwks` for the API to verify tokens |
-| **All UI** | Storefront, four dashboards, wizards, tracking map, modals, toasts |
-| **Data Access** | Typed API clients (`lib/api`) and server actions (`lib/action`) |
-| **Documents & Exports** | Invoice and receipt PDFs, report PDFs, CSV exports |
-| **Brand** | Colours, logos, favicon and the PWA manifest, all driven by Site Settings |
-| **Maintenance Gate** | `/maintenance` for shoppers while staff keep working |
-
-**❌ What This App Does NOT Own**
-
-- **Pricing & Totals**: computed by the API on every order, never here
-- **Stock, payments, points**: written by the API inside a transaction
-- **Outbound email**: the API owns the SMTP mailbox and the templates
-- **Delivery state**: rider steps, hand-over codes and payouts live in the API
-
-### System Architecture
-
-```mermaid
-graph TB
-    subgraph "Browser"
-        A[Visitor / Account]
-    end
-
-    subgraph "Next.js (this repo)"
-        B[proxy.ts maintenance gate]
-        C[(main) storefront]
-        D[(dashboard) workspaces]
-        E[better-auth /api/auth/*]
-        F[Server Actions]
-        G[API client lib/api]
-    end
-
-    subgraph "Sparq API"
-        H[Express 5 + MongoDB]
-    end
-
-    subgraph "Third party"
-        I[SMTP via API]
-        J[ImgBB image host]
-        K[Google Translate widget]
-    end
-
-    A --> B
-    B --> C
-    B --> D
-    C --> F
-    D --> F
-    F --> G
-    A --> E
-    E -->|session + JWT| A
-    G -->|Bearer JWT| H
-    H -->|reset mail| I
-    C --> J
-    D --> J
-    C --> K
 ```
-
-### Request Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant P as proxy.ts
-    participant L as Workspace layout
-    participant S as Server component
-    participant A as Server Action
-    participant API as Sparq API
-
-    U->>P: GET /dashboard/admin/orders
-    P->>P: Maintenance check (3s cache)
-    alt Maintenance and not staff
-        P-->>U: 307 /maintenance
-    end
-    P->>L: Continue
-    L->>L: getRequiredRole("admin")
-    alt No session
-        L-->>U: redirect /auth/login
-    else Role missing or suspended
-        L-->>U: redirect /forbidden
-    end
-    L->>S: DashboardShell + page
-    S->>API: GET /orders (Bearer JWT)
-    API-->>S: { success, data }
-    S-->>U: HTML (client components hydrate)
-    U->>A: Click "Update status"
-    A->>A: Re-check session and role
-    A->>API: PATCH /orders/:id/status
-    A-->>U: toast + revalidate
+┌─────────────────────────────────────────────────────────────┐
+│                    SPARQ PLATFORM                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  👥 CUSTOMERS          🏪 VENDORS         👨‍💼 ADMIN          │
+│  • Browse & Shop       • Sell Products   • Manage Platform │
+│  • Track Orders        • Fulfillment     • Site Settings   │
+│  • Reviews             • Analytics       • Reports         │
+│  • Loyalty Points      • Coupons         • Users           │
+│  • Warranties          • Promotions      • Support         │
+│                                                             │
+│  🛵 RIDERS             🧪 DEMO ADMIN                        │
+│  • Deliveries          • Sandbox Mode                      │
+│  • Earnings            • Auto-Restore                      │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🧩 Features
+## Key Features
 
-### Storefront
+### 🛍️ For Customers
 
-| Area | What it does |
-|------|--------------|
-| **Home** | Hero slider, promo banners, category rail, featured products, brand marquee — all editable from Site Settings |
-| **Shop** | Search, category and subcategory filters, price and discount ranges, badges, rating filter, sorting and pagination |
-| **Product page** | Gallery with a full-size viewer, stock state, offer countdown, specification table, warranty card, reviews and related items |
-| **Compare** | Up to 3 listings side by side (price, rating, availability, warranty, full specifications), kept in the browser |
-| **Cart & wishlist** | Add, update quantity, remove, clear; out-of-stock items are flagged before checkout |
-| **Checkout** | Saved addresses, COD / bKash / Rocket / Nagad, coupon code, reward points, shipping method and live totals from the API |
-| **Order success** | Official purchase receipt with a printable/downloadable copy and the tracking link |
-| **Track order** | Live Leaflet map with the rider's last position, the step timeline and the hand-over code; the delivery outcome is recorded from the customer's orders screen |
-| **Stores** | Public seller directory, vendor storefront pages and a store locator |
-| **Featured vendors** | The home rail shows only shops holding the marquee — a week bought with a paid plan or a run granted by the store team — drawn as spotlight posters with the delivery record, rating and delivered count |
-| **Content** | About, services, FAQ, support, customer service, privacy, terms, returns, not-found and maintenance pages |
-| **Onboarding** | Become a vendor and become a rider wizards (multi-step, documents, autosaved draft) plus status pages |
-| **Extras** | Dark/light theme, 14-language switcher (Google Translate), PWA manifest, dynamic favicon, floating mobile actions |
+- **Smart Shopping**: Search, filters, comparison (up to 3 products)
+- **Flexible Browsing**: Pagination OR infinite scroll
+- **Checkout Options**: COD, bKash, Rocket, Nagad
+- **Loyalty Rewards**: Earn & redeem points (1 point = $1 spent)
+- **Order Tracking**: Real-time status with delivery map
+- **Reviews**: Star ratings + photos
+- **Warranties**: File claims with photo evidence
+- **Saved Addresses**: Up to 5 addresses with default
+- **Data Export**: Download your data as JSON
 
-### Customer Dashboard
+### 🏪 For Vendors (Multi-Vendor)
 
-- Order history with invoice PDF, per-item detail, buy again and delivery response
-- Wishlist, reviews, notifications, transactions
-- Profile and settings (addresses, account deletion, personal data export as JSON)
+- **Own Storefront**: Custom branding at `/stores/your-shop`
+- **Product Management**: With plan limits (10/50/unlimited)
+- **Order Fulfillment**: Accept → Process → Ready → Ship
+- **Discount Coupons**: Create codes for your products
+- **Featured Promotions**: Buy slots to feature products
+- **Sales Analytics**: Revenue, top products, commission tracking
+- **Subscription Plans**: Free, Basic ($29/mo), Pro ($99/mo)
 
-### Vendor Dashboard
+### 🛵 For Riders
 
-- Order queue with per-seller stages (`accepted` → `processing` → `ready_for_shipment`, or `rejected` with a reason)
-- Product list and editor (images, variants, specifications, warranty fields, offers, badges)
-- Promotions, coupons, deliveries, payouts, transactions, reviews
-- Analytics with the plan's entitlement ladder, subscription desk and plan upgrade
-- Buying a paid period puts the shop on the featured rail for a week by itself (the run is capped at 7 days and never replaces a live grant from the store team) — the seller's bell explains the run, and the store team's activity feed records it
-- A code the store team blocked shows the written reason on the seller's coupons desk instead of silently disappearing
-- Store profile, availability and settings
+- **Delivery Jobs**: Accept requests, track deliveries
+- **Live Tracking**: GPS location sharing
+- **Earnings Dashboard**: Total, monthly, per-delivery stats
+- **Order History**: Completed and cancelled deliveries
 
-### Rider Dashboard
+### 👨‍💼 For Admins
 
-- Offer requests with the countdown window, accept or decline with a reason
-- Active job with the live steps, the buyer's hand-over code entry and the pick-up location
-- Deliveries list, earnings (this month and a 30-day window) and history
-- Profile (identity, vehicle, documents) and settings (availability, password)
+- **Complete Control**: Products, categories, orders, users
+- **CMS Branding**: Logos, colors, fonts, content - no redeploy
+- **User Management**: Role assignment, per-role suspension
+- **Vendor Control**: Approve applications, grant promotions
+- **Support Tools**: Warranties, reviews, contact messages
+- **Reports & Analytics**: CSV + PDF exports with charts
+- **Maintenance Mode**: Close site for customers, keep admin access
 
-### Admin Dashboard
+### 🧪 Demo Admin (Sandbox)
 
-| Screen | What it does |
-|--------|--------------|
-| **Overview** | Counts, KPI cards, a store health bar and the orders that just came in (charts live under Analytics) |
-| **Products** | Add, edit, detail view, visibility and featured state, offer windows |
-| **Categories & subcategories** | Full CRUD |
-| **Orders** | Every order, status changes, customer response, invoice PDF |
-| **Deliveries** | Assign a rider, reassign, cancel, delivery board and history |
-| **Riders** | Rider list, detail page and the application review desk |
-| **Payouts** | What each delivered job paid the rider, with range filters and a chart |
-| **Vendors** | The seller board: search, shop-state / plan / marquee filters, seven sort keys and pages, over one table whose points rank plan money, paid time, sales and the delivery record. Each row opens a full seller dashboard — account, shop record, plan history and payments, listings, placements, codes and recent orders. Applications live in their own review queue under `/vendors/applications` |
-| **Vendor plans** | The editable price list behind the pricing cards |
-| **Promotions & coupons** | Featured placements (granted from the desk or opened by a paid plan), store coupons, banner and slider CMS. The coupons desk carries every seller's codes too: block one with a written reason, put a blocked one back, or remove it — a code that already saved shoppers money is only stopped |
-| **Analytics** | Sales report, vendor desk (subscriptions + commission) and product engagement, with CSV/PDF export |
-| **Users** | Search, roles, per-role suspension, detail page |
-| **Messages** | Contact-form inbox with replies |
-| **Reviews** | Moderation across the catalogue |
-| **Settings** | Site CMS: branding, colours, typography, logos, favicon, top bar, shipping and loyalty rates, legal and about content, maintenance toggle |
-| **Notifications & transactions** | Activity feed and payment records |
-
-### Shared Behaviour
-
-- Notification bell and centre with unread counts and per-type deep links
-- PDFs: order invoice, delivery payout invoice, transaction receipt, analytics report
-- CSV export from the analytics and payout screens
-- Image uploads to ImgBB; application documents go through a server-side proxy
-- Skeletons, empty states, toasts, unsaved-changes guards and autosaved wizard drafts
+- **Safe Exploration**: Edit products, categories, reviews freely
+- **Protected Data**: Cannot change users, orders, site settings
+- **Auto Restore**: All changes reverted daily at midnight
 
 ---
 
-## 🏗️ Architecture
+## How It Works
 
-### Route Groups
-
-```
-src/app/
-├── (auth)/auth/           # login, register, forgot-password, reset-password
-├── (main)/                # storefront: shop, cart, checkout, track-order, content
-├── (dashboard)/dashboard/ # admin, vendor, rider, customer workspaces
-├── api/auth/[...all]/     # better-auth handler (also serves /api/auth/jwks)
-├── api/documents/         # authenticated file proxy to the API
-├── api/maintenance/       # maintenance status for the gate
-├── forbidden/             # the refusal screen
-└── maintenance/           # the maintenance screen
-```
-
-### Data Flow
+### System Overview
 
 ```
-page.tsx (server component)
-  → lib/api/*            typed fetch, cache: "no-store", Bearer token
-  → Client component     props only, no secrets
-  → lib/action/*         "use server" mutation, re-checks the session
-  → revalidate / toast
+Browser                    Frontend (Next.js)              Backend (Express)        Database
+   │                              │                              │                      │
+   │────── Login ────────────────►│                              │                      │
+   │                              │──── Generate JWT ───────────►│                      │
+   │                              │                              │                      │
+   │◄──── JWT Token ──────────────│                              │                      │
+   │                              │                              │                      │
+   │────── Shop/Order ───────────►│                              │                      │
+   │                              │──── API + JWT ──────────────►│                      │
+   │                              │                              │──── Verify JWT ─────►│
+   │                              │                              │                      │
+   │                              │                              │◄──── User Data ──────│
+   │                              │                              │                      │
+   │                              │                              │──── Process ────────►│
+   │                              │◄──── Response ───────────────│                      │
+   │◄──── Display ────────────────│                              │                      │
 ```
 
-- **`lib/api`** — read side: one function per endpoint, typed responses, currency and date helpers
-- **`lib/action`** — write side: server actions that read the session, call the API, report errors as toasts and revalidate paths
-- **`lib/core`** — `session` (session, token, role guard), `roles` (role pools, suspension, workspace map), `mongo`, `query`, `server`
-- **`context`** — `SiteSettingsContext` (brand values for client components) and `RiderLocationContext` (live position)
-- **`hooks`** — countdown, dashboard role, demo admin, rider location, wizard draft
+### Authentication Flow
 
-### Workspace Chrome
+1. **User logs in** → Frontend (better-auth)
+2. **JWT generated** → Stored in browser
+3. **API request** → JWT sent with every request
+4. **Backend verifies** → Via JWKS endpoint (no shared secret)
+5. **Authorization** → Role checked on every endpoint
+6. **Fresh roles** → Always read from DB, never cached in token
+
+### Order Processing
 
 ```
-(dashboard)/layout.tsx           ← pass-through only, draws nothing
-(dashboard)/dashboard/admin/layout.tsx    ← getRequiredRole("admin") → DashboardShell
-(dashboard)/dashboard/vendor/layout.tsx   ← getRequiredRole("vendor") → DashboardShell
-(dashboard)/dashboard/rider/layout.tsx    ← getRequiredRole("rider")  → DashboardShell
-(dashboard)/dashboard/customer/layout.tsx ← getRequiredRole("customer") → DashboardShell
+Place Order                                              Delivered
+    │                                                         │
+    ├─ Validate stock                                        ├─ Mark payment success
+    ├─ Redeem points (atomic)                                ├─ Credit loyalty points
+    ├─ Calculate totals (server-side)                        ├─ Update sell counts
+    ├─ Create order + transaction                            └─ Issue warranties
+    ├─ Decrement stock
+    ├─ Clear cart
+    └─ Split into vendor groups (if multi-vendor)
+
+Status Flow:  confirmed → processing → shipped → delivered
+                   │            │         │
+                   └────────────┴─────────┴──────► cancelled
 ```
 
-The sidebar, header and mobile bar are mounted **after** the guard, so an account that does not hold a role never receives that workspace's navigation, not even for one frame. `DashboardShell` decides which sidebar to draw from the URL, and the session is only the fallback for routes outside a workspace.
+### Multi-Vendor Order Splitting
 
-### Role Model
+When a customer orders from multiple vendors:
 
-```mermaid
-graph TD
-    A[Account] --> B[roles: approved array]
-    A --> C[activeRole: dashboard hint]
-    A --> D[roleSuspensions: parked roles]
-    B --> E[customer]
-    B --> F[vendor]
-    B --> G[rider]
-    B --> H[admin / demoadmin]
-    C --> I{Which workspace opens}
-    D --> J[Approved but closed]
+```
+Customer Cart:
+  - Product A (Vendor X)
+  - Product B (Vendor X)  
+  - Product C (Vendor Y)
+  - Product D (Platform)
+          │
+          ▼
+    One Payment
+    One Order ID
+          │
+          ├──► VendorOrder (Vendor X) → Products A + B
+          ├──► VendorOrder (Vendor Y) → Product C
+          └──► Parent Order → Product D (platform stock)
 ```
 
-- `roles` is the source of truth; `activeRole` only points the shell
-- A suspended role stays approved but its dashboard refuses entry
-- `admin` covers `demoadmin`; a customer entry is always present for non-admin accounts
-- `resolveActiveRole`, `canEnterWorkspace` and `resolveWorkspace` keep the switcher and the guards on the same answer
+Each vendor manages their own group independently, but delivery is coordinated by platform.
 
-### Maintenance Mode
+### Loyalty Points System
 
-```mermaid
-graph LR
-    A[Request] --> B{Exempt path?}
-    B -->|static, /auth, /api/auth| C[Allow]
-    B -->|no| D{Maintenance on?}
-    D -->|off| C
-    D -->|on| E{Admin or demo admin?}
-    E -->|yes| C
-    E -->|no| F[/maintenance]
+```
+EARNING:  $147.50 order → 147 points credited on delivery
+          (1 point per $1 spent, rounded down)
+
+REDEMPTION: 100 points = $1 discount
+            Minimum: 100 points
+            Maximum: Product total (shipping always paid in cash)
+
+TIERS:
+  🥈 Silver:   0 - 999 points
+  🥇 Gold:     1,000 - 3,999 points  
+  💎 Platinum: 4,000 - 9,999 points
+  💎 Diamond:  10,000+ points
 ```
 
-The flag is read from the API's `/site-settings` with a 3-second cache; the session is checked against `/api/auth/get-session` with a 30-second per-cookie cache. If the API is unreachable the last known value is kept, so a backend hiccup cannot lock the shop.
+### Warranty System
 
----
+**5 Types:**
+- **Manufacturer**: Brand handles repairs
+- **Seller**: Platform handles repairs  
+- **Extended**: Extra coverage (can extend up to 3 times)
+- **Other**: Custom terms
+- **None**: No coverage
 
-## 🗺️ Pages & Routes
+**Lifecycle:**  
+`Issued on Delivery` → `Active` → `Claim Filed` → `Under Review` → `Resolved/Rejected`
 
-### Storefront
+### Discount Coupons (Two-Level System)
 
-| Route | Purpose |
-|-------|---------|
-| `/` | Home |
-| `/shop` | Catalogue with filters and sorting |
-| `/shop/[slug]` | Product detail |
-| `/compare` | Side-by-side comparison (max 3) |
-| `/cart`, `/checkout` | Cart and checkout |
-| `/order-success`, `/order-success/[orderId]` | Receipt |
-| `/track-order`, `/track-order/[orderId]` | Live tracking |
-| `/stores`, `/stores/[slug]`, `/store-locator` | Seller directory and map |
-| `/account` | Account menu landing |
-| `/about`, `/services`, `/faq`, `/support`, `/customer-service`, `/privacy`, `/terms`, `/returns`, `/contact` | Content pages |
-| `/become-a-vendor`, `/become-a-vendor/apply`, `/become-a-vendor/status` | Seller onboarding |
-| `/become-a-rider`, `/become-a-rider/apply`, `/become-a-rider/status` | Rider onboarding |
-| `/maintenance`, `/forbidden` | System screens |
+```
+ADMIN COUPONS (Store-Wide)          VENDOR COUPONS (Shop-Specific)
+        │                                    │
+        ├─ Any product/category              ├─ Only vendor's products
+        ├─ Created by platform               ├─ Created by vendor
+        └─ Applies to full cart              └─ Only their items discounted
 
-### Dashboards
-
-| Prefix | Screens |
-|--------|---------|
-| `/dashboard/customer` | orders, wishlist, reviews, notifications, transactions, profile, settings |
-| `/dashboard/vendor` | orders (+ detail), products (+ new, edit, view), promotions, coupons, deliveries, payouts, transactions, reviews, analytics, subscription, profile, settings, notifications |
-| `/dashboard/rider` | requests, active, deliveries, earnings, history, notifications, profile, settings |
-| `/dashboard/admin` | overview, products (+ add, detail), categories, orders, deliveries, riders (+ detail), payouts, vendors (+ `[id]` seller dashboard, `applications`, `applications/[id]` review), vendor-plans, promotions, coupons (store and seller codes), home-slider, promo-banners, analytics, users (+ detail), messages, reviews, transactions, settings, notifications |
-
----
-
-## 🔒 Security
-
-### Authentication
-
-```mermaid
-sequenceDiagram
-    participant B as Browser
-    participant N as Next.js (better-auth)
-    participant M as MongoDB
-    participant A as Sparq API
-
-    B->>N: POST /api/auth/sign-in (password or Google)
-    N->>M: Verify credentials / link account
-    N-->>B: session cookie + JWT
-    A->>N: GET /api/auth/jwks
-    N-->>A: public key
-    B->>A: Request with Bearer JWT
-    A->>A: Verify signature, then read fresh roles
+Both types:
+  • Percentage (1-100%) or Fixed amount
+  • Optional: min order, max discount, usage limits
+  • Date range with auto expiry
+  • Per-customer limits
 ```
 
-- **better-auth** owns sign-up, login, Google OAuth, sessions and the `jwt()` plugin
-- Sessions live in MongoDB; the API only verifies tokens through JWKS, so there is no shared secret between the two apps
-- Password reset: one-hour token, the mailbox is the API's, and `revokeSessionsOnPasswordReset` signs out every existing session
-- Privileged user fields (`role`, `roles`, `points`, `member`, `status`, `vendorStatus`, suspensions) are declared `input: false`, so a browser cannot write them
+### Dynamic Branding (CMS)
 
-### Authorization
+Everything controlled from admin dashboard:
 
-**1. Workspace Guard (server, before any chrome)**
-```typescript
-// (dashboard)/dashboard/admin/layout.tsx
-export default async function AdminLayout({ children }) {
-  await getRequiredRole("admin");          // redirects to /auth/login or /forbidden
-  return <DashboardShell workspace="admin">{children}</DashboardShell>;
-}
 ```
+SITE SETTINGS
+  ├─ Identity: Name, tagline, SEO meta
+  ├─ Typography: Google Fonts selection
+  ├─ Theme: 8 industry palettes + custom color creator
+  ├─ Logos: Light/dark variants, favicon
+  ├─ Shipping: Fees, thresholds, delivery estimates
+  ├─ Contact: Phone, email, hours, social links
+  └─ System: Currency, timezone, maintenance mode
 
-**2. Role Pool and Suspension**
-```typescript
-// lib/core/session.ts → getRequiredRole()
-const parked = suspendedRolesOf(user);
-const hasAccess = role === "admin"
-  ? isAdminRole(user) && !parked.includes("admin")   // demo admin passes too
-  : rolesOf(user).includes(role) && !parked.includes(role);
-```
-
-**3. Server Actions Re-Check**
-```typescript
-// lib/action/* — every mutation starts by resolving the caller
-const user = await getUserSession();
-if (!user) throw new Error("Sign in first");
-// then the API enforces ownership a second time
-```
-
-**4. Token Forwarding**
-```typescript
-// lib/core/session.ts
-export const getToken = async () => (await readSession())?.session?.token ?? null;
-// lib/api/* attaches it as `Authorization: Bearer <token>`
-```
-
-**5. Server-Only Secrets**
-```typescript
-// app/api/documents/route.ts
-// The browser cannot post to the API and be believed: the internal key lives here.
-const user = await getUserSession();
-if (!user) return NextResponse.json({ message: "Sign in first" }, { status: 401 });
-// ... MIME checked against an allowlist, size capped at 8 MB, then forwarded
-// as base64 JSON with `x-internal-key`
-```
-
-**6. Maintenance Gate**
-```typescript
-// src/proxy.ts
-if (isExempt(pathname)) return NextResponse.next();
-if (!(await isMaintenanceActive())) return NextResponse.next();
-if (await isStaff(request)) return NextResponse.next();   // admin / demo admin only
-return NextResponse.redirect(new URL("/maintenance", request.url));
-```
-
-### Security Best Practices
-
-✅ **Implemented:**
-- Sessions and JWTs handled by better-auth, verified by the API via JWKS
-- Role guard in every workspace layout, mounted before the sidebar exists
-- Per-role suspension honoured in the UI and again in the API
-- Privileged account fields are not writable from the browser
-- Server actions re-check the session before mutating; the API re-checks ownership
-- `INTERNAL_API_KEY` never leaves the server (document proxy)
-- Document uploads limited to an allowlist of MIME types and 8 MB
-- Password reset revokes every existing session
-- Maintenance mode fails open on the last known setting, never on a stale "on"
-- Account deletion and personal data export available from settings
-
-⚠️ **Known Gaps:**
-- No rate limiting on app routes or the document proxy
-- `next.config.ts` sets no CSP or security headers
-- Images accept any HTTPS host (`remotePatterns: "**"`); tighten this for production
-- `NEXT_PUBLIC_IMGBB_API_KEY` is a browser-side upload key, so it is public by design — rotate it if abused
-- The language switcher loads Google Translate and sends page text to Google
-
----
-
-## 🧰 Tech Stack
-
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| **Framework** | Next.js (App Router, React Compiler) | 16.2 |
-| **UI runtime** | React | 19.2 |
-| **Language** | TypeScript | 5.x |
-| **Auth** | better-auth (+ JWT plugin, Mongo adapter) | 1.7 |
-| **Components** | HeroUI + HeroUI styles | 3.2 |
-| **Styling** | Tailwind CSS | 4.x |
-| **Icons** | lucide-react, react-icons | latest |
-| **Charts** | Recharts | 3.x |
-| **Maps** | Leaflet | 1.9 |
-| **PDF** | jsPDF | 2.5 |
-| **Toasts** | react-toastify | 11.x |
-| **Theme** | next-themes | 0.4 |
-| **Database driver** | mongodb (sessions + activity writes) | 7.x |
-| **Deployment** | Vercel | — |
-
-### Key Dependencies
-
-```json
-{
-  "next": "16.2.12",
-  "react": "19.2.4",
-  "better-auth": "^1.7.1",
-  "@heroui/react": "^3.2.3",
-  "tailwindcss": "^4",
-  "leaflet": "^1.9.4",
-  "jspdf": "^2.5.2",
-  "recharts": "^3.10.1",
-  "mongodb": "^7.6.0"
-}
+All changes take effect immediately - no redeploy needed.
 ```
 
 ---
 
-## 📁 Project Structure
+## Tech Stack
+
+### Frontend
+- **Framework**: Next.js 16.2 (App Router), React 19
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS v4, HeroUI v3
+- **Auth**: better-auth 1.7 (JWT + MongoDB adapter)
+- **Charts**: Recharts
+- **PDF**: jsPDF (client-side)
+- **Maps**: Leaflet + OpenStreetMap
+
+### Backend
+- **Runtime**: Node.js 20+
+- **Framework**: Express 5.2
+- **Language**: TypeScript (CommonJS)
+- **Database**: MongoDB 7 + Mongoose 9
+- **Validation**: Zod 4
+- **Auth**: jose-cjs (JWKS verification)
+- **Email**: Nodemailer (SMTP)
+- **Jobs**: node-cron + Vercel Cron
+
+### Infrastructure
+- **Hosting**: Vercel (frontend + backend serverless)
+- **Database**: MongoDB Atlas
+- **Images**: ImgBB CDN
+- **Email**: SMTP (Gmail compatible)
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+```bash
+✓ Node.js 20+
+✓ MongoDB (Atlas or local)
+✓ SMTP credentials (for emails)
+✓ ImgBB API key (for uploads)
+```
+
+### 1. Clone & Install
+
+```bash
+# Clone frontend
+git clone https://github.com/demoprojectbdsoft/Sparq-Electronics-Store.git
+cd Sparq-Electronics-Store
+npm install
+
+# Clone backend (separate terminal)
+git clone https://github.com/demoprojectbdsoft/Sparq-Server.git
+cd Sparq-Server
+npm install
+```
+
+### 2. Configure Backend First
+
+Create `sparq-server/.env.local`:
+
+```env
+# Database
+MONGODB_URI=mongodb://localhost:27017
+DATABASE=sparq
+
+# Server
+PORT=5000
+NEXT_PUBLIC_CLIENT_URL=http://localhost:3000
+
+# Security
+INTERNAL_API_KEY=your_random_32_char_key_here
+CRON_SECRET=your_random_32_char_key_here
+
+# Email (Gmail example)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+MAIL_FROM=your-email@gmail.com
+
+# Demo
+DEMO_ADMIN_EMAIL=demoadmin@example.com
+```
+
+### 3. Configure Frontend
+
+Create `sparq/.env.local`:
+
+```env
+# Backend API
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+
+# Auth
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=your_random_32_char_secret
+JWT_SECRET=your_random_32_char_secret
+
+# Database (same as backend)
+MONGODB_URI=mongodb://localhost:27017
+DATABASE=sparq
+
+# Google OAuth (optional)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Internal Key (MUST match backend)
+INTERNAL_API_KEY=your_random_32_char_key_here
+
+# Image Uploads
+NEXT_PUBLIC_IMGBB_API_KEY=your_imgbb_api_key
+```
+
+### 4. Start Both Servers
+
+```bash
+# Terminal 1: Backend
+cd sparq-server
+npm run dev
+# Runs at http://localhost:5000
+
+# Terminal 2: Frontend  
+cd sparq
+npm run dev
+# Runs at http://localhost:3000
+```
+
+### 5. Test It!
+
+Open http://localhost:3000 and:
+1. Register a customer account
+2. Browse products
+3. Add to cart & checkout
+4. Check admin dashboard (create admin via MongoDB)
+
+---
+
+## Project Structure
 
 ```
 sparq/
-├── public/                         # icons, logos, static assets
 ├── src/
-│   ├── app/
-│   │   ├── (auth)/auth/            # login, register, forgot/reset password
-│   │   ├── (main)/                 # storefront routes
-│   │   ├── (dashboard)/dashboard/  # admin, vendor, rider, customer
-│   │   ├── api/
-│   │   │   ├── auth/[...all]/      # better-auth handler
-│   │   │   ├── documents/          # authenticated document proxy
-│   │   │   └── maintenance/status/ # maintenance flag for the gate
-│   │   ├── forbidden/              # refusal screen
-│   │   ├── maintenance/            # maintenance screen
-│   │   ├── layout.tsx              # root layout, brand from Site Settings
-│   │   ├── manifest.ts             # PWA manifest from live settings
-│   │   └── globals.css             # Tailwind + brand tokens
+│   ├── app/                          # Next.js 16 App Router
+│   │   ├── (auth)/auth/              # Login, register, password reset
+│   │   ├── (dashboard)/dashboard/    # Role-based dashboards
+│   │   │   ├── admin/                # Platform management
+│   │   │   ├── customer/             # Customer portal
+│   │   │   ├── vendor/               # Seller workspace
+│   │   │   └── rider/                # Delivery management
+│   │   ├── (main)/                   # Public storefront
+│   │   │   ├── page.tsx              # Homepage
+│   │   │   ├── shop/                 # Product catalog
+│   │   │   ├── stores/               # Vendor storefronts
+│   │   │   ├── cart/                 # Shopping cart
+│   │   │   ├── checkout/             # Checkout flow
+│   │   │   └── ...                   # Other public pages
+│   │   ├── api/auth/[...all]/        # better-auth endpoints
+│   │   ├── maintenance/              # Maintenance page
+│   │   └── proxy.ts                  # Middleware (maintenance gate)
 │   │
 │   ├── components/
-│   │   ├── homepage/               # hero, promos, category rail, marquee
-│   │   ├── shop/                   # filters, product grid, gallery
-│   │   ├── dashboard/              # shells, sidebars, bell, notification centre
-│   │   ├── rider/                  # rider-specific widgets
-│   │   ├── store/                  # storefront and locator pieces
-│   │   ├── tracking/               # live map and step timeline
-│   │   └── shared/                 # navbar, footer, cards, pickers, uploaders
+│   │   ├── dashboard/                # Dashboard components
+│   │   ├── homepage/                 # Homepage sections
+│   │   ├── shared/                   # Reusable UI
+│   │   ├── shop/                     # Shopping components
+│   │   └── vendor/                   # Vendor components
 │   │
-│   ├── context/                    # SiteSettingsContext, RiderLocationContext
-│   ├── hooks/                      # countdown, roles, demo admin, location, drafts
 │   ├── lib/
-│   │   ├── action/                 # server actions (writes)
-│   │   ├── api/                    # typed API clients (reads)
-│   │   ├── core/                   # session, roles, mongo, query, server
-│   │   ├── *.ts                    # pricing, currency, dates, PDFs, status maps
-│   │   └── ...
-│   ├── types/                      # shared TypeScript types
-│   └── proxy.ts                    # maintenance gate (Next proxy)
+│   │   ├── api/                      # Server-side API clients
+│   │   ├── action/                   # Server actions (mutations)
+│   │   ├── core/                     # Core utilities
+│   │   ├── auth.ts                   # better-auth config
+│   │   ├── compare.ts                # Product comparison
+│   │   ├── csvExport.ts              # CSV reports
+│   │   ├── dashboardPdf.ts           # PDF reports with charts
+│   │   └── ...                       # Other utilities
+│   │
+│   ├── types/                        # TypeScript definitions
+│   ├── context/                      # React contexts
+│   └── hooks/                        # Custom hooks
 │
-├── next.config.ts                  # React Compiler on, remote image hosts
-├── eslint.config.mjs
-├── tsconfig.json
+├── public/                           # Static assets
+├── .env.local                        # Environment (DO NOT COMMIT)
+├── next.config.ts
+├── tailwind.config.ts
 └── package.json
 ```
 
 ---
 
-## 🚀 Setup & Installation
+## Environment Setup
 
-### Prerequisites
-
-- **Node.js** 20+ and npm
-- **MongoDB** 7+ (sessions live there; it can be the same cluster the API uses)
-- **Sparq API** running and reachable
-- **Google OAuth credentials** (optional, only for "Continue with Google")
-
-### Installation
-
-1. **Clone repository**
-```bash
-git clone https://github.com/demoprojectbdsoft/Sparq-Electronics-Store.git
-cd Sparq-Electronics-Store
-```
-
-2. **Install dependencies**
-```bash
-npm install
-```
-
-3. **Configure environment**
-
-Create `.env.local`:
-
-```env
-# API
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-INTERNAL_API_KEY=your_internal_key_here
-
-# better-auth
-BETTER_AUTH_SECRET=your_random_secret
-BETTER_AUTH_URL=http://localhost:3000
-
-# Sessions database
-MONGODB_URI=mongodb://localhost:27017
-DATABASE=sparq
-
-# Google sign-in (optional)
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-
-# Image uploads
-NEXT_PUBLIC_IMGBB_API_KEY=your_imgbb_key
-```
-
-4. **Start the dev server**
-```bash
-npm run dev
-```
-
-The app runs at `http://localhost:3000`. Start the API first: the dashboard, the tracking map and the maintenance gate all read from it.
-
----
-
-## 🔐 Environment Variables
-
-### Required
+### Required Variables
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `NEXT_PUBLIC_API_URL` | Base URL of the Sparq API | `http://localhost:5000/api` |
-| `BETTER_AUTH_SECRET` | Signing secret for sessions | Random 32+ characters |
-| `BETTER_AUTH_URL` | Public origin of this app (OAuth redirects) | `http://localhost:3000` |
-| `MONGODB_URI` | MongoDB connection string for sessions | `mongodb://localhost:27017` |
+| `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:5000/api` |
+| `BETTER_AUTH_SECRET` | Signs JWT tokens | 32+ random chars |
+| `BETTER_AUTH_URL` | Frontend URL | `http://localhost:3000` |
+| `MONGODB_URI` | MongoDB connection | `mongodb://localhost:27017` |
 | `DATABASE` | Database name | `sparq` |
+| `INTERNAL_API_KEY` | Shared with backend | Match backend value |
 
-### Optional
+### Optional Variables
 
 | Variable | Description |
 |----------|-------------|
-| `INTERNAL_API_KEY` | Must match the API's key; required for document uploads |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Enable "Continue with Google" |
-| `NEXT_PUBLIC_IMGBB_API_KEY` | Browser-side image uploads for product and profile photos |
+| `GOOGLE_CLIENT_ID` | Google OAuth ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth secret |
+| `NEXT_PUBLIC_IMGBB_API_KEY` | Image uploads |
 
-### Security Notes
+### Important Notes
 
-- **Never commit `.env.local`**
-- Only `NEXT_PUBLIC_*` values reach the browser — keep `INTERNAL_API_KEY`, `BETTER_AUTH_SECRET` and the Google secret out of that prefix
-- `INTERNAL_API_KEY` must match the API's value exactly, or document uploads return 401
-- `BETTER_AUTH_URL` must match the deployed origin, or OAuth callbacks land on the wrong host
+- ⚠️ **Never commit `.env.local`** to git
+- ⚠️ **`INTERNAL_API_KEY` must match backend** exactly
+- ⚠️ **Rebuild after changing `NEXT_PUBLIC_*`** variables
+- ⚠️ **Emails sent by backend** - configure SMTP there
 
 ---
 
-## 💻 Development
+## Development
 
 ### Available Scripts
 
 ```bash
-# Dev server (Turbopack, React Compiler)
-npm run dev
-
-# Production build
-npm run build
-
-# Serve the build
-npm start
-
-# Lint
-npx eslint
-
-# Type check
-npx tsc --noEmit
-
-# Regenerate route types after adding or deleting a page
-npx next typegen
+npm run dev          # Development server (port 3000)
+npm run build        # Production build
+npm start            # Production server
+npm run lint         # ESLint
 ```
 
 ### Development Workflow
 
-1. **Start MongoDB** (sessions and the API share it locally)
-2. **Start the API** at `http://localhost:5000`
-3. **Start this app** at `http://localhost:3000`
-4. **Sign in** with an account that holds the role you are testing
+**Server Components** (default)
+- Fetch data directly from API
+- No client state management needed
+- Example: Product listing, order history
 
-> After deleting or renaming a route, generated validators in `.next/types` can keep pointing at the old page and break `tsc`. Run `npx next typegen` to rewrite them.
+**Client Components** (`"use client"`)
+- Interactive UI elements
+- Named `*Client.tsx` by convention
+- Example: Cart button, wishlist toggle
 
-### Conventions
+**Server Actions** (`"use server"`)
+- Handle mutations (add to cart, place order)
+- Located in `lib/action/`
+- Automatic revalidation
 
-- **Reads** go through `lib/api`, **writes** through `lib/action`; never fetch the API from a client component
-- **Every dashboard page** starts with the matching `getRequiredRole` call
-- **Currency, dates and statuses** come from the helpers in `lib/` so the same order reads the same everywhere
-- **Copy that promises a feature** lives next to the feature — product copy stays in sync with what the API actually does
+### Adding a Feature
+
+1. Define types in `src/types/`
+2. Create API client in `src/lib/api/` (if reading data)
+3. Create server action in `src/lib/action/` (if mutating)
+4. Build components in `src/components/`
+5. Create page in `src/app/`
+6. Add backend route (see backend README)
 
 ---
 
-## 🚀 Deployment
+## Deployment
 
-### Vercel Deployment
+### Vercel (Recommended)
 
 1. **Push to GitHub**
-2. **Import the repository** in Vercel (framework detected as Next.js)
-3. **Add every variable** from `.env.local` to the project
-4. **Point `NEXT_PUBLIC_API_URL`** at the deployed API
-5. **Deploy**
+2. **Import to Vercel**
+3. **Set environment variables** (all from `.env.local`)
+4. **Deploy**
 
 ### Production Checklist
 
-- [ ] `BETTER_AUTH_URL` matches the production domain
-- [ ] `NEXT_PUBLIC_API_URL` uses HTTPS and ends with `/api`
-- [ ] `INTERNAL_API_KEY` matches the API's value
-- [ ] Google OAuth redirect URI updated to the production host
-- [ ] `MONGODB_URI` allows the Vercel egress IPs (Atlas whitelist)
-- [ ] Restrict the remote image hosts in `next.config.ts`
-- [ ] Add a CSP and security headers
-- [ ] Confirm `/api/auth/jwks` is reachable by the API
-- [ ] Verify the maintenance toggle still lets staff through
+- [ ] Set production `NEXT_PUBLIC_API_URL`
+- [ ] Generate strong `BETTER_AUTH_SECRET` and `JWT_SECRET`
+- [ ] Configure MongoDB Atlas whitelist
+- [ ] Set up Google OAuth (production credentials)
+- [ ] Update `INTERNAL_API_KEY` (match backend)
+- [ ] Test all user flows
+- [ ] Verify maintenance mode works
+- [ ] Check mobile responsiveness
+
+### Important URLs
+
+After deployment, update:
+- `BETTER_AUTH_URL` → Your Vercel URL
+- `NEXT_PUBLIC_API_URL` → Your backend URL
+- Google OAuth redirect → Your Vercel URL
 
 ---
 
-## 📊 Project Status
+## Demo Accounts
+
+### Test Users
+
+**Customer**
+- Register at `/auth/register`
+- Full shopping experience
+
+**Admin**
+- Create via MongoDB: `db.users.updateOne({email: "..."}, {$set: {role: "admin"}})`
+- Access all dashboards
+
+**Demo Admin**
+- Email configured in backend `DEMO_ADMIN_EMAIL`
+- Sandbox mode with auto-restore
+
+**Vendor**
+- Apply at `/become-a-vendor`
+- Admin must approve application
+
+### Test Payments
+
+**Cash on Delivery**: Works immediately  
+**Mobile Wallets**: Enter any transaction ID (demo mode)
+
+---
+
+## Project Status
 
 | Feature | Status |
 |---------|--------|
-| **Storefront** | ✅ Complete |
-| **Authentication** | ✅ Complete (better-auth + Google) |
-| **Customer Dashboard** | ✅ Complete |
-| **Vendor Dashboard** | ✅ Complete (orders, products, plan, analytics) |
-| **Rider Dashboard** | ✅ Complete (offers, active job, earnings) |
-| **Admin Dashboard** | ✅ Complete |
-| **Vendor Board (admin)** | ✅ Complete (points directory + one-seller dashboard) |
-| **Featured Placements** | ✅ Complete (admin grants, plan spotlight, poster rail) |
-| **Coupon Moderation** | ✅ Complete (block with a reason, put back, remove) |
-| **Live Delivery Tracking** | ✅ Complete (Leaflet map, steps, code) |
-| **Site Settings CMS** | ✅ Complete (brand, colours, content) |
-| **Maintenance Mode** | ✅ Complete (staff exempt) |
-| **PDF & CSV Exports** | ✅ Complete |
-| **Notifications** | ✅ Complete (bell + centre) |
-| **PWA Manifest** | ✅ Complete (dynamic) |
-| **Product Warranty** | ✅ Complete (shown on the listing, no claim screens) |
-| **Localisation** | 🌐 Third-party widget (Google Translate) |
-| **Rate Limiting** | ⏳ Planned |
-| **Security Headers / CSP** | ⏳ Planned |
+| Public Storefront | ✅ Complete |
+| Customer Dashboard | ✅ Complete |
+| Admin Dashboard | ✅ Complete |
+| Vendor Marketplace | ✅ Complete |
+| Rider Deliveries | ✅ Complete |
+| Loyalty Points | ✅ Complete |
+| Warranty System | ✅ Complete |
+| Discount Coupons | ✅ Complete |
+| Multi-Vendor Orders | ✅ Complete |
+| Dynamic CMS | ✅ Complete |
+| Notifications | ✅ Complete |
+| Demo Admin | ✅ Complete |
+| Live GPS Tracking | 🚧 In Progress |
+| Real Payment Gateway | 📋 Planned |
 
 ---
 
-## 🤝 Contributing
+## Roadmap
 
-Contributions welcome! Please follow the existing structure.
+**Phase 1: Core Platform** ✅
+- Authentication, catalog, shopping, orders
 
-### Contribution Guidelines
+**Phase 2: Multi-Vendor** ✅
+- Applications, storefronts, subscriptions, analytics
 
-1. Fork repository
-2. Create feature branch
-3. Keep reads in `lib/api` and writes in `lib/action`
-4. Guard every dashboard route with `getRequiredRole`
-5. Run `npx tsc --noEmit` and `npx eslint` before opening a pull request
+**Phase 3: Delivery System** 🚧
+- Rider dashboard, live tracking, OTP verification
 
----
+**Phase 4: Advanced**
+- Real payments, advanced analytics, email marketing
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE)
-
----
-
-## 🙏 Acknowledgments
-
-**Built by:** [BD Soft](https://github.com/demoprojectbdsoft)
-
-**Technologies:**
-- [Next.js](https://nextjs.org/) - Framework
-- [better-auth](https://better-auth.com/) - Authentication
-- [HeroUI](https://www.heroui.com/) - Components
-- [Tailwind CSS](https://tailwindcss.com/) - Styling
-- [Leaflet](https://leafletjs.com/) - Maps
-- [Recharts](https://recharts.org/) - Charts
-- [jsPDF](https://github.com/parallax/jsPDF) - PDF export
-- [Vercel](https://vercel.com/) - Hosting
+**Phase 5: Mobile**
+- React Native apps, push notifications, offline mode
 
 ---
 
-## 📞 Support
+## Contributing
 
-- **Backend Docs**: [Sparq Server README](https://github.com/demoprojectbdsoft/Sparq-Server)
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/AmazingFeature`
+3. Commit changes: `git commit -m 'Add AmazingFeature'`
+4. Push to branch: `git push origin feature/AmazingFeature`
+5. Open Pull Request
+
+**Guidelines:**
+- Follow existing code structure
+- Use TypeScript with proper types
+- Test thoroughly
+- Update documentation
+
+---
+
+## Support & Links
+
+- **Backend Docs**: [Sparq-Server README](https://github.com/demoprojectbdsoft/Sparq-Server)
 - **Issues**: [GitHub Issues](https://github.com/demoprojectbdsoft/Sparq-Electronics-Store/issues)
-- **Email**: dev@bdsoft.com
+- **Live Demo**: [sparq-electronics.vercel.app](https://sparq-electronics.vercel.app)
+
+---
+
+## License
+
+MIT License - See [LICENSE](LICENSE)
 
 ---
 
 <div align="center">
 
-**⚡ Sparq Storefront — the shop, the map, and every desk**
+**Built with ❤️ by [BD Soft](https://github.com/demoprojectbdsoft)**
 
-Made with ❤️ by [BD Soft](https://github.com/demoprojectbdsoft)
-
-[⬆ Back to Top](#-sparq--storefront--dashboards)
+⚡ Sparq - Better products. A brighter you.
 
 </div>
