@@ -162,7 +162,7 @@ export default function VendorCouponForm({
             id="coupon-code"
             value={draft.code}
             onChange={(event) => set("code", event.target.value.toUpperCase())}
-            placeholder="DIWALI25"
+            placeholder="SUMMER25"
             className={`${inputClass} font-mono uppercase tracking-widest`}
           />
         </div>
@@ -175,7 +175,7 @@ export default function VendorCouponForm({
             id="coupon-title"
             value={draft.title}
             onChange={(event) => set("title", event.target.value)}
-            placeholder="Festival push"
+            placeholder="Summer sale"
             className={inputClass}
           />
         </div>
