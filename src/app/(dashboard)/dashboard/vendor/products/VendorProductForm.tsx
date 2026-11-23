@@ -148,7 +148,7 @@ export default function VendorProductForm({
   });
 
   const [isVisible, setIsVisible] = useState(product?.isVisible !== false);
-  const [saving, setSaving] = useState<"draft" | "publish" | "save" | null>(null);
+  const [saving, setSaving] = useState<"publish" | "save" | null>(null);
 
   const visibleSubs = useMemo(
     () =>
@@ -230,7 +230,7 @@ export default function VendorProductForm({
     return true;
   };
 
-  const save = async (intent: "draft" | "publish" | "save") => {
+  const save = async (intent: "publish" | "save") => {
     if (saving) return;
     if (!validate()) return;
 
@@ -247,15 +247,13 @@ export default function VendorProductForm({
 
       const res =
         mode === "create"
-          ? await createVendorProduct(payload, intent === "publish")
+          ? await createVendorProduct(payload, true)
           : await updateVendorProduct(product!._id, {
               ...payload,
               status:
                 intent === "publish"
                   ? "published"
-                  : intent === "draft"
-                    ? "draft"
-                    : undefined,
+                  : undefined,
             });
 
       if (res?.success === false) {
@@ -266,9 +264,7 @@ export default function VendorProductForm({
       toast.success(
         intent === "publish"
           ? "Product published"
-          : intent === "draft"
-            ? "Draft saved"
-            : "Product saved"
+          : "Product saved"
       );
       router.push("/dashboard/vendor/products");
       router.refresh();
@@ -672,19 +668,6 @@ export default function VendorProductForm({
                   )}
                   Save and publish
                 </button>
-                <button
-                  type="button"
-                  onClick={() => save("draft")}
-                  disabled={saving !== null}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--border-color)] px-3 py-2.5 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-60 cursor-pointer"
-                >
-                  {saving === "draft" ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Save className="h-3.5 w-3.5" />
-                  )}
-                  Save as draft
-                </button>
               </>
             ) : (
               <>
@@ -715,22 +698,6 @@ export default function VendorProductForm({
                       <Check className="h-3.5 w-3.5" />
                     )}
                     Publish
-                  </button>
-                )}
-
-                {product?.vendorProductStatus === "published" && (
-                  <button
-                    type="button"
-                    onClick={() => save("draft")}
-                    disabled={saving !== null}
-                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--border-color)] px-3 py-2.5 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-60 cursor-pointer"
-                  >
-                    {saving === "draft" ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <X className="h-3.5 w-3.5" />
-                    )}
-                    Unpublish
                   </button>
                 )}
               </>

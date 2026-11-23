@@ -75,7 +75,6 @@ const TABS = [
   { key: "all", label: "All" },
   { key: "published", label: "Published" },
   { key: "out_of_stock", label: "Out of stock" },
-  { key: "draft", label: "Drafts" },
   { key: "archived", label: "Archived" },
 ];
 
@@ -438,7 +437,7 @@ export default function VendorProductsClient({
             <p className="text-[11px] text-[var(--foreground-muted)]">
               {filters.search || filters.status !== "all"
                 ? "Nothing matches this view."
-                : "Add your first product and it appears here as a draft."}
+                : "Add your first product to get started."}
             </p>
             <Link
               href="/dashboard/vendor/products/new"
