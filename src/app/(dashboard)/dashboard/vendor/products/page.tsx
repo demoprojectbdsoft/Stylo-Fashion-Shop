@@ -19,6 +19,9 @@ interface VendorProductsPageProps {
   searchParams: Promise<{
     status?: string;
     search?: string;
+    /** A category / subcategory slug, read the same way the shop reads one. */
+    category?: string;
+    subCategory?: string;
     /** The same in/out stock reading the admin desk uses. */
     stock?: string;
     sort?: string;
@@ -37,6 +40,8 @@ export default async function VendorProductsPage({ searchParams }: VendorProduct
   const limit = [10, 20, 50].includes(requestedLimit) ? requestedLimit : 10;
   const status = params?.status || "all";
   const search = params?.search?.trim() || "";
+  const category = params?.category?.trim() || "all";
+  const subCategory = params?.subCategory?.trim() || "all";
   // Only the values the API accepts; anything else falls back to the default
   // rather than reaching Mongo as an unknown key.
   const stockParam = params?.stock;
@@ -49,7 +54,16 @@ export default async function VendorProductsPage({ searchParams }: VendorProduct
   const editId = params?.edit;
 
   const [resultRes, categoriesRes, subCategoriesRes] = await Promise.all([
-    getMyProducts({ status, search, stock, sort, page, limit }),
+    getMyProducts({
+      status,
+      search,
+      category: category === "all" ? undefined : category,
+      subCategory: subCategory === "all" ? undefined : subCategory,
+      stock,
+      sort,
+      page,
+      limit,
+    }),
     getCategories(),
     getSubCategories(),
   ]);
@@ -83,7 +97,7 @@ export default async function VendorProductsPage({ searchParams }: VendorProduct
       typeCounts={result?.typeCounts ?? {}}
       pagination={result?.pagination ?? { page, limit, total: 0, totalPages: 1 }}
       plan={result?.plan ?? fallbackPlan}
-      filters={{ status, search, stock, sort }}
+      filters={{ status, search, stock, sort, category, subCategory }}
       categories={categories.filter((c) => c.isActive !== false)}
       subcategories={subCategories}
       initialEditId={editId}

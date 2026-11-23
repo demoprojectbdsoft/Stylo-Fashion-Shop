@@ -114,13 +114,16 @@ export default function CatalogFiltersBar({
                 className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                   active
                     ? "bg-primary text-white shadow-xs"
-                    : "text-[var(--foreground-secondary)] dark:text-[var(--foreground-muted)] hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)]"
+                    : "text-[var(--foreground-muted)] hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)]"
                 }`}
               >
                 {tab.label}
+                {/* On the filled tab the badge darkens instead of lightening:
+                    white on a washed-out chip is the one place this bar loses
+                    its count. */}
                 <span
                   className={`rounded px-1 text-[10px] font-bold ${
-                    active ? "bg-white/20" : "bg-[var(--surface-alt)]"
+                    active ? "bg-black/20" : "bg-[var(--surface-alt)]"
                   }`}
                 >
                   {statusCounts[tab.id] ?? 0}
@@ -157,7 +160,7 @@ export default function CatalogFiltersBar({
                     className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                       active
                         ? "bg-primary text-white shadow-xs"
-                        : "text-[var(--foreground-secondary)] dark:text-[var(--foreground-muted)] hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)]"
+                        : "text-[var(--foreground-muted)] hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)]"
                     }`}
                   >
                     {st.label}

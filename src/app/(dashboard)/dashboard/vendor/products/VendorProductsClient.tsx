@@ -66,7 +66,14 @@ interface VendorProductsClientProps {
   typeCounts: Record<string, number>;
   pagination: VendorPagination;
   plan: VendorProductPlan;
-  filters: { status: string; search: string; stock: string; sort: string };
+  filters: {
+    status: string;
+    search: string;
+    stock: string;
+    sort: string;
+    category: string;
+    subCategory: string;
+  };
   categories?: Category[];
   subcategories?: SubCategory[];
   initialEditId?: string;
@@ -287,6 +294,30 @@ export default function VendorProductsClient({
   const atLimit = plan.used >= plan.maxProducts;
 
   /**
+   * A subcategory only makes sense inside the category that offered it, so the
+   * picker lists the children of the chosen category and nothing else — the
+   * same pair the admin desk builds.
+   */
+  const filterableSubCategories = useMemo(() => {
+    const active = categories.find((c) => (c.slug || c.name) === filters.category);
+    const catId = active?._id || active?.id;
+    if (!catId) return [];
+    return subcategories.filter((sub) => {
+      const parent = sub.categoryId as unknown;
+      const parentId =
+        typeof parent === "object" && parent !== null
+          ? (parent as { _id?: string; id?: string })._id ||
+            (parent as { _id?: string; id?: string }).id
+          : parent;
+      return Boolean(parentId && String(parentId) === String(catId));
+    });
+  }, [categories, filters.category, subcategories]);
+
+  // A list read that predates the "all" bucket still shows the right total.
+  const tabCounts =
+    typeCounts.all === undefined ? { ...typeCounts, all: pagination.total } : typeCounts;
+
+  /**
    * Rebuilds the list URL from the settled set of filters. Every control hands
    * over only what it changed; the rest is read back from the current filters,
    * so a sort never quietly drops a search the seller typed.
@@ -297,12 +328,16 @@ export default function VendorProductsClient({
     status?: string;
     stock?: string;
     sort?: string;
+    category?: string;
+    subCategory?: string;
   }) => {
     const settled = {
       search: (next.search ?? filters.search).trim(),
       status: next.status ?? filters.status,
       stock: next.stock ?? filters.stock,
       sort: next.sort ?? filters.sort,
+      category: next.category ?? filters.category,
+      subCategory: next.subCategory ?? filters.subCategory,
     };
     const page = next.page ?? 1;
 
@@ -311,6 +346,10 @@ export default function VendorProductsClient({
     if (settled.status && settled.status !== "all") params.set("status", settled.status);
     if (settled.stock && settled.stock !== "all") params.set("stock", settled.stock);
     if (settled.sort && settled.sort !== "newest") params.set("sort", settled.sort);
+    if (settled.category && settled.category !== "all") params.set("category", settled.category);
+    if (settled.subCategory && settled.subCategory !== "all") {
+      params.set("subCategory", settled.subCategory);
+    }
     if (page > 1) params.set("page", String(page));
 
     const query = params.toString();
@@ -461,7 +500,7 @@ export default function VendorProductsClient({
           seller's own rows */}
       <CatalogFiltersBar
         statusOptions={TABS.map((tab) => ({ id: tab.key, label: tab.label }))}
-        statusCounts={typeCounts}
+        statusCounts={tabCounts}
         status={filters.status}
         onStatusChange={(id) => go({ status: id, page: 1 })}
         total={pagination.total}
@@ -474,19 +513,59 @@ export default function VendorProductsClient({
           onSubmit: (value) => go({ search: value, page: 1 }),
           placeholder: "Title, SKU or brand",
         }}
+        category={
+          categories.length > 0
+            ? {
+                value: filters.category,
+                // A subcategory from the old category would narrow the new one
+                // to nothing, so switching starts the pair over.
+                onChange: (value) =>
+                  go({ category: value, subCategory: "all", page: 1 }),
+                options: [
+                  { value: "all", label: "All categories" },
+                  ...categories.map((c) => ({ value: c.slug || c.name, label: c.name })),
+                ],
+              }
+            : undefined
+        }
+        subCategory={
+          filterableSubCategories.length > 0
+            ? {
+                value: filters.subCategory,
+                onChange: (value) => go({ subCategory: value, page: 1 }),
+                options: [
+                  { value: "all", label: "All subcategories" },
+                  ...filterableSubCategories.map((sub) => ({
+                    value: sub.slug || sub.name,
+                    label: sub.name,
+                  })),
+                ],
+              }
+            : undefined
+        }
         sort={{
           value: filters.sort,
           onChange: (value) => go({ sort: value || "newest", page: 1 }),
           options: SORT_OPTIONS,
         }}
         onReset={() =>
-          go({ status: "all", stock: "all", search: "", sort: "newest", page: 1 })
+          go({
+            status: "all",
+            stock: "all",
+            search: "",
+            sort: "newest",
+            category: "all",
+            subCategory: "all",
+            page: 1,
+          })
         }
         canReset={Boolean(
           filters.search ||
             filters.status !== "all" ||
             filters.stock !== "all" ||
-            filters.sort !== "newest"
+            filters.sort !== "newest" ||
+            filters.category !== "all" ||
+            filters.subCategory !== "all"
         )}
       />
 
@@ -497,7 +576,11 @@ export default function VendorProductsClient({
             <Package className="h-6 w-6 text-[var(--foreground-muted)]" />
             <p className="text-xs font-semibold text-[var(--foreground)]">No products here</p>
             <p className="text-[11px] text-[var(--foreground-muted)]">
-              {filters.search || filters.status !== "all" || filters.stock !== "all"
+              {filters.search ||
+              filters.status !== "all" ||
+              filters.stock !== "all" ||
+              filters.category !== "all" ||
+              filters.subCategory !== "all"
                 ? "Nothing matches this view."
                 : "Add your first product to get started."}
             </p>

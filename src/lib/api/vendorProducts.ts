@@ -12,6 +12,9 @@ import type { VendorProduct, VendorProductListResult } from "@/types/vendor";
 export type VendorProductQuery = {
   status?: string;
   search?: string;
+  /** Category and subcategory slugs, the pair the storefront's shelves read. */
+  category?: string;
+  subCategory?: string;
   /** "in" / "out" read the same stock columns the admin desk filters on. */
   stock?: string;
   sort?: string;
