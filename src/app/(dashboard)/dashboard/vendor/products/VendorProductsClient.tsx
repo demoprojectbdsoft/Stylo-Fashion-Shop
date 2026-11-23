@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Archive,
+  ArchiveRestore,
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
@@ -19,7 +20,7 @@ import {
 import { toast } from "react-toastify";
 import type { VendorPagination, VendorProduct, VendorProductPlan } from "@/types/vendor";
 import { formatTaka, getVendorProductStatusStyle } from "@/lib/vendorProductStatus";
-import { archiveVendorProduct } from "@/lib/action/vendor";
+import { archiveVendorProduct, unarchiveVendorProduct } from "@/lib/action/vendor";
 
 /**
  * The vendor's catalogue.
@@ -83,6 +84,25 @@ export default function VendorProductsClient({
         return;
       }
       toast.success("Product archived");
+      router.refresh();
+    } catch (err) {
+      toast.error((err as Error).message || "An error occurred");
+    } finally {
+      setArchiving(null);
+    }
+  };
+
+  const unarchive = async (product: VendorProduct) => {
+    if (archiving) return;
+
+    setArchiving(product._id);
+    try {
+      const res = await unarchiveVendorProduct(product._id);
+      if (res?.success === false) {
+        toast.error(res.message || "The product could not be unarchived");
+        return;
+      }
+      toast.success("Product unarchived and moved to Drafts");
       router.refresh();
     } catch (err) {
       toast.error((err as Error).message || "An error occurred");
@@ -273,7 +293,22 @@ export default function VendorProductsClient({
                       Edit
                     </Link>
 
-                    {product.vendorProductStatus !== "archived" && (
+                    {product.vendorProductStatus === "archived" ? (
+                      <button
+                        type="button"
+                        onClick={() => unarchive(product)}
+                        disabled={archiving === product._id}
+                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/30 px-2 py-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-50 cursor-pointer"
+                        title="Unarchive and move to drafts"
+                      >
+                        {archiving === product._id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <ArchiveRestore className="h-3 w-3" />
+                        )}
+                        Unarchive
+                      </button>
+                    ) : (
                       <button
                         type="button"
                         onClick={() => archive(product)}

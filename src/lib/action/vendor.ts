@@ -235,6 +235,15 @@ export const archiveVendorProduct = async (productId: string) => {
   return serverMutation(`/vendor-products/${productId}`, {}, "DELETE");
 };
 
+/** Unarchives a product and restores it to drafts. */
+export const unarchiveVendorProduct = async (productId: string) => {
+  const user = await getUserSession();
+  if (!isVendorRole(user)) {
+    return { success: false as const, message: "Vendor access required." };
+  }
+  return serverMutation(`/vendor-products/${productId}/unarchive`, {}, "PATCH");
+};
+
 /**
  * Buys one plan period with the demo wallet.
  *
