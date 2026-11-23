@@ -61,17 +61,17 @@ const SORT_OPTIONS = [
  * The desk's listing-status filter.
  *
  * Platform stock carries no vendor status and is always live, so it only shows
- * under "All". A seller's rows are named exactly as the review queue names
- * them, which is what makes "Awaiting review" a workable queue.
+ * under "All". "Live" answers for the sold-out rows too — an approved listing
+ * is live whether or not it has units, and the Stock column is where the desk
+ * reads which ones are empty — so there is no separate sold-out tab.
  */
 const LISTING_STATUS_OPTIONS = [
   { id: "all", label: "All listings" },
-  { id: "pending_review", label: "Awaiting review" },
+  { id: "pending_review", label: "Review" },
   { id: "published", label: "Live" },
   { id: "draft", label: "Drafts" },
   { id: "rejected", label: "Rejected" },
   { id: "archived", label: "Archived" },
-  { id: "out_of_stock", label: "Live, sold out" },
 ];
 
 /** The statuses worth a pill in the row: live rows already say so in Stock. */
