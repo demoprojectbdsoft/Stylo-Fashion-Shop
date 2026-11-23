@@ -171,6 +171,10 @@ export function notificationHref(
         return "/dashboard/admin/vendors";
       case "vendor_application":
         return "/dashboard/admin/vendors/applications";
+      // A listing filed for review is decided on the products desk, so the line
+      // opens that desk already narrowed to the rows waiting for an answer.
+      case "vendor_product":
+        return "/dashboard/admin/products?vendorStatus=pending_review";
       // Everything else is somebody else's personal news; the shared board has
       // no screen for it, so it stays where it is.
       default:
@@ -189,6 +193,10 @@ export function notificationHref(
     // that holds two roles reads one collection, so refuse politely instead of
     // sending the line to the order search below.
     if (notification.type === "rider" || notification.type === "vendor") return "";
+    // A seller's listing news is about a screen only the seller's dashboard
+    // has; its ref is a product id no order list can match, so the shopper's
+    // copy stays text with no link rather than an empty orders page.
+    if (notification.type.startsWith("vendor_")) return "";
     // Delivery updates and the shipped line both carry the order id, and a
     // shipped order always has a rider on it, so either opens the live tracking
     // page rather than the orders list.
