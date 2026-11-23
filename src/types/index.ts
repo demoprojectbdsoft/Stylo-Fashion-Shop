@@ -181,7 +181,6 @@ export interface Product {
   sellCount?: number;
   rating?: number;
   reviewCount?: number;
-  badges?: string[];
   sku?: string;
   description?: string;
   specifications?: Record<string, string>;

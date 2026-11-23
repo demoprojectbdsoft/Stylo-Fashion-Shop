@@ -12,6 +12,7 @@ const SORT_OPTIONS = [
   { id: "price_asc",  label: "Price: Low to High" },
   { id: "price_desc", label: "Price: High to Low" },
   { id: "rating",     label: "Customer Rating" },
+  { id: "sellCount",  label: "Best Selling" },
   { id: "featured",   label: "Featured" },
 ];
 
@@ -34,7 +35,6 @@ export default function ProductsTopBar({ categories = [], subCategories = [], to
     searchParams.get("minPrice") ||
     searchParams.get("maxPrice") ||
     searchParams.get("discount") ||
-    searchParams.get("badge") ||
     searchParams.get("isFeatured") ||
     searchParams.get("inStock") ||
     searchParams.get("minRating") ||

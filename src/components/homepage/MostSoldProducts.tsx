@@ -7,30 +7,21 @@ import ProductCard from "@/components/shared/ProductCard";
 import ProductCardSkeleton from "@/components/shared/ProductCardSkeleton";
 import { Product } from "@/types";
 
-interface PopularProductsProps {
+interface MostSoldProductsProps {
   products?: Product[];
-  popularProducts?: Product[];
   loading?: boolean;
 }
 
-export default function PopularProducts({
+export default function MostSoldProducts({
   products = [],
-  popularProducts = [],
   loading = false,
-}: PopularProductsProps) {
-  const allProducts: Product[] =
-    popularProducts.length > 0
-      ? popularProducts
-      : products.length > 0
-      ? products
-      : [];
-
+}: MostSoldProductsProps) {
   const [activePageIndex, setActivePageIndex] = useState(0);
   const ITEMS_PER_PAGE = 5;
-  const totalPages = Math.max(1, Math.ceil(allProducts.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(products.length / ITEMS_PER_PAGE));
   const currentPage = Math.min(activePageIndex, totalPages - 1);
 
-  const visibleProducts = allProducts.slice(
+  const visibleProducts = products.slice(
     currentPage * ITEMS_PER_PAGE,
     (currentPage + 1) * ITEMS_PER_PAGE
   );
@@ -41,18 +32,18 @@ export default function PopularProducts({
       <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3 mb-6">
         <div className="relative inline-block">
           <h2 className="text-xl md:text-2xl font-light text-[var(--foreground)]">
-            Popular products
+            Most sold
           </h2>
           {/* Active Accent Underline using Gradient Primary */}
           <div className="absolute -bottom-[13px] left-0 w-full h-[2.5px] bg-gradient-to-r from-primary to-primary-hover rounded-full" />
         </div>
 
-        {/* Go to Category Filter Link */}
+        {/* Go to the shop, ordered by how many units each product moved */}
         <Link
-          href="/shop?badge=popular"
+          href="/shop?sort=sellCount"
           className="text-xs text-[var(--foreground-muted)] hover:text-primary transition-colors flex items-center gap-1 font-medium cursor-pointer group"
         >
-          <span>Go to Popular products</span>
+          <span>Go to Most sold</span>
           <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </div>
@@ -65,16 +56,16 @@ export default function PopularProducts({
             <ProductCardSkeleton key={i} hasRightBorder={i < 4} />
           ))}
         </div>
-      ) : allProducts.length === 0 ? (
+      ) : products.length === 0 ? (
         <div className="w-full py-12 px-4 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] flex flex-col items-center justify-center text-center space-y-3">
           <div className="p-3 rounded-full bg-primary/10 text-primary">
             <PackageX className="w-6 h-6" />
           </div>
           <p className="text-sm font-semibold text-[var(--foreground)]">
-            No popular products available right now
+            No sales to rank yet
           </p>
           <p className="text-xs text-[var(--foreground-muted)] max-w-sm">
-            Check back soon or explore our dynamic category catalog for the latest deals.
+            The products our shoppers buy the most will show up here.
           </p>
         </div>
       ) : (

@@ -2,20 +2,12 @@
 
 import React, { useState, useEffect, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Filter, Sparkles, CheckCircle2, Sliders, ChevronDown, DollarSign, Percent, Star, Tag, Zap } from "lucide-react";
+import { Filter, Sparkles, CheckCircle2, Sliders, ChevronDown, DollarSign, Percent, Star, Zap } from "lucide-react";
 import { RadioGroup, Radio, Switch } from "@heroui/react";
 import { ProductsSidebarFilterProps } from "@/types";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 
 const DISCOUNT_TABS = ["0-20", "20-40", "40-60", "60-80", "80-100"] as const;
-const BADGE_OPTIONS = [
-  { id: "new", label: "New" },
-  { id: "hot", label: "Hot" },
-  { id: "popular", label: "Popular" },
-  { id: "trending", label: "Trending" },
-  { id: "top-seller", label: "Top Seller" },
-  { id: "value-of-the-day", label: "Value of the Day" },
-] as const;
 const RATING_OPTIONS = [4, 3, 2, 1] as const;
 
 const MIN_PRICE = 0;
@@ -33,7 +25,6 @@ export default function ProductsSidebarFilter({}: ProductsSidebarFilterProps) {
   const activeInStock   = searchParams.get("inStock") === "true";
   const activeHasOffer  = searchParams.get("hasOffer") === "true";
   const activeMinRating = Number(searchParams.get("minRating")) || 0;
-  const activeBadge     = searchParams.get("badge") || "";
   const activeDiscount  = searchParams.get("discount") || "";
   const urlMin          = Number(searchParams.get("minPrice")) || MIN_PRICE;
   const urlMax          = Number(searchParams.get("maxPrice")) || MAX_PRICE;
@@ -56,7 +47,7 @@ export default function ProductsSidebarFilter({}: ProductsSidebarFilterProps) {
 
   const hasActiveFilters = Boolean(
     activeFeatured || activeInStock || activeHasOffer || activeMinRating ||
-    activeBadge || activeDiscount || urlMin > MIN_PRICE || urlMax < MAX_PRICE
+    activeDiscount || urlMin > MIN_PRICE || urlMax < MAX_PRICE
   );
 
   const fillLeft  = ((rangeMin - MIN_PRICE) / (MAX_PRICE - MIN_PRICE)) * 100;
@@ -173,48 +164,6 @@ export default function ProductsSidebarFilter({}: ProductsSidebarFilterProps) {
               )}
             </button>
           ))}
-        </div>
-      </div>
-
-      {/* Badge Filter */}
-      <div className="space-y-2.5 pt-2 border-t border-[var(--border-color)]">
-        <label className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider flex items-center gap-1.5">
-          <Tag className="w-3.5 h-3.5 text-primary" /> Badges
-        </label>
-        <div className="flex flex-wrap gap-1.5">
-          {BADGE_OPTIONS.map((badge) => {
-            const isActive = activeBadge.toLowerCase() === badge.id.toLowerCase();
-            const badgeColors: Record<string, string> = {
-              new: isActive
-                ? "bg-emerald-500 text-white shadow-xs border-emerald-500"
-                : "border-emerald-200 dark:border-emerald-800/80 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40",
-              hot: isActive
-                ? "bg-red-500 text-white shadow-xs border-red-500"
-                : "border-red-200 dark:border-red-800/80 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40",
-              popular: isActive
-                ? "bg-amber-500 text-white shadow-xs border-amber-500"
-                : "border-amber-200 dark:border-amber-800/80 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40",
-              trending: isActive
-                ? "bg-purple-600 text-white shadow-xs border-purple-600"
-                : "border-purple-200 dark:border-purple-800/80 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40",
-              "top-seller": isActive
-                ? "bg-primary text-white shadow-xs border-primary"
-                : "border-primary/30 text-primary hover:bg-primary/10",
-              "value-of-the-day": isActive
-                ? "bg-orange-500 text-white shadow-xs border-orange-500"
-                : "border-orange-200 dark:border-orange-800/80 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40",
-            };
-            return (
-              <button
-                key={badge.id}
-                type="button"
-                onClick={() => updateParams({ badge: isActive ? null : badge.id })}
-                className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-all cursor-pointer border ${badgeColors[badge.id] || (isActive ? "bg-primary text-white" : "border-[var(--border-color)] text-[var(--foreground-muted)]")}`}
-              >
-                {badge.label}
-              </button>
-            );
-          })}
         </div>
       </div>
 

@@ -72,13 +72,6 @@ interface VendorProductsClientProps {
   initialEditId?: string;
 }
 
-const AVAILABLE_BADGES = [
-  { id: "new", label: "New" },
-  { id: "hot", label: "Hot" },
-  { id: "popular", label: "Popular" },
-  { id: "trending", label: "Trending" },
-];
-
 const TABS = [
   { key: "all", label: "All" },
   { key: "draft", label: "Drafts" },
@@ -126,7 +119,6 @@ export default function VendorProductsClient({
     additionalImages: [] as string[],
     categoryId: "",
     subCategoryIds: new Set<string>(),
-    badges: new Set<string>(),
     offerEndDate: null as string | null,
     warrantyType: "none",
     warrantyPeriodMonths: 0,
@@ -163,8 +155,6 @@ export default function VendorProductsClient({
       });
     }
 
-    const badgesSet = new Set<string>((p as any).badges || []);
-
     const calc = recalcPricing(
       {
         price: p.price != null ? String(p.price) : "",
@@ -189,7 +179,6 @@ export default function VendorProductsClient({
       additionalImages: Array.isArray(p.additionalImages) ? [...p.additionalImages] : [],
       categoryId: catId,
       subCategoryIds: subIds,
-      badges: badgesSet,
       offerEndDate: (p as any).offerEndDate ? new Date((p as any).offerEndDate).toISOString() : null,
       warrantyType: (p as any).warrantyType || "none",
       warrantyPeriodMonths: (p as any).warrantyPeriodMonths || 0,
@@ -263,7 +252,6 @@ export default function VendorProductsClient({
         additionalImages: editForm.additionalImages,
         categoryId: editForm.categoryId || undefined,
         subCategoryIds: Array.from(editForm.subCategoryIds),
-        badges: Array.from(editForm.badges),
         offerEndDate: editForm.offerEndDate,
         warrantyType: editForm.warrantyType,
         warrantyPeriodMonths: Number(editForm.warrantyPeriodMonths) || 0,
@@ -938,40 +926,11 @@ export default function VendorProductsClient({
                   </div>
                 </div>
 
-                {/* 5. Badges & Limited-Time Offer */}
+                {/* 5. Limited-Time Offer */}
                 <div className="space-y-4 pt-4 border-t border-[var(--border-color)]">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
-                    Badges & Limited-Time Offer
+                    Limited-Time Offer
                   </h3>
-                  <div>
-                    <label className="text-xs font-semibold text-[var(--foreground)] block mb-1.5">
-                      Display Badges
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {AVAILABLE_BADGES.map((b) => {
-                        const isSelected = editForm.badges.has(b.id);
-                        return (
-                          <button
-                            type="button"
-                            key={b.id}
-                            onClick={() => {
-                              const next = new Set(editForm.badges);
-                              if (isSelected) next.delete(b.id);
-                              else next.add(b.id);
-                              setEditForm((prev) => ({ ...prev, badges: next }));
-                            }}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                              isSelected
-                                ? "bg-primary text-white shadow-xs"
-                                : "bg-[var(--surface-alt)] text-[var(--foreground-muted)] hover:bg-[var(--surface-elevated)] border border-[var(--border-color)]"
-                            }`}
-                          >
-                            {b.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
 
                   <div>
                     <label className="text-xs font-semibold text-[var(--foreground)] block mb-1">

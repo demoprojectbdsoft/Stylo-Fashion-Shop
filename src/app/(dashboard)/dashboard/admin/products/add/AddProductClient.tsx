@@ -52,15 +52,6 @@ interface AddProductClientProps {
   mode?: "admin" | "vendor";
 }
 
-const AVAILABLE_BADGES = [
-  { id: "new", label: "New" },
-  { id: "hot", label: "Hot" },
-  { id: "popular", label: "Popular" },
-  { id: "trending", label: "Trending" },
-  { id: "top-seller", label: "Top Seller" },
-  { id: "value-of-the-day", label: "Value of the Day" },
-];
-
 // ─── Converts a name into a URL-friendly slug ─────────────────────────────────
 function generateSlug(text: string): string {
   return text
@@ -124,9 +115,6 @@ export default function AddProductClient({
   // ── Category & subcategory selection ───────────────────────────────────────
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedSubCategoryIds, setSelectedSubCategoryIds] = useState<Set<string>>(new Set());
-
-  // ── Badge selection ────────────────────────────────────────────────────────
-  const [selectedBadges, setSelectedBadges] = useState<Set<string>>(new Set());
 
   // ── Image state ────────────────────────────────────────────────────────────
   const [mainImageUrl, setMainImageUrl] = useState("");
@@ -334,7 +322,6 @@ export default function AddProductClient({
       description: formState.description || undefined,
       image: mainImageUrl,
       additionalImages: galleryImages,
-      badges: Array.from(selectedBadges),
       specifications: Object.keys(specObj).length > 0 ? specObj : undefined,
       inStock: hasPositiveStock ? true : formState.inStock,
       warrantyPeriodMonths: formState.warrantyPeriodMonths
@@ -371,7 +358,6 @@ export default function AddProductClient({
               description: payload.description,
               image: payload.image,
               additionalImages: payload.additionalImages,
-              badges: payload.badges,
               specifications: payload.specifications,
               offerEndDate: payload.offerEndDate ?? null,
               warrantyPeriodMonths: payload.warrantyPeriodMonths,
@@ -1090,59 +1076,13 @@ export default function AddProductClient({
               </Card.Content>
             </Card>
 
-            {/* ── Section: Badges & Visibility ── */}
+            {/* ── Section: Stock & Visibility ── */}
             <Card className={cardClass}>
               <Card.Content className="p-6 space-y-4">
                 <h2 className={sectionHeadingClass}>
                   <Sparkles className="w-4 h-4 text-primary" />
-                  Badges & Visibility
+                  Stock & Visibility
                 </h2>
-
-                <div className={fieldClass}>
-                  <div className="flex items-center justify-between">
-                    <label className={labelClass}>Product Badges</label>
-                    {selectedBadges.size > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedBadges(new Set())}
-                        className="text-[11px] text-primary hover:underline cursor-pointer"
-                      >
-                        Clear all ({selectedBadges.size})
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-[var(--foreground-muted)]">
-                    Click to select one or multiple badges to highlight this product.
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {AVAILABLE_BADGES.map((b) => {
-                      const isSelected = selectedBadges.has(b.id);
-                      return (
-                        <button
-                          type="button"
-                          key={b.id}
-                          onClick={() => {
-                            setSelectedBadges((prev) => {
-                              const next = new Set(prev);
-                              if (isSelected) next.delete(b.id);
-                              else next.add(b.id);
-                              return next;
-                            });
-                          }}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer touch-manipulation flex items-center gap-1.5 border ${
-                            isSelected
-                              ? "bg-primary text-white border-primary shadow-xs"
-                              : "bg-[var(--surface-alt)] text-[var(--foreground)] hover:bg-[var(--surface-alt)]/80 border-[var(--border-color)]"
-                          }`}
-                        >
-                          {isSelected && <Check className="w-3.5 h-3.5" />}
-                          {b.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
 
                 {/* In Stock toggle — only for a product with a stock count */}
                 <div className={switchRowStaticClass}>

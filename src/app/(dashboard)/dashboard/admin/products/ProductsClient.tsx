@@ -51,15 +51,6 @@ import { recalcPricing } from "@/lib/pricing";
 import { isStockTracked } from "@/lib/stock";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 
-const AVAILABLE_BADGES = [
-  { id: "new", label: "New" },
-  { id: "hot", label: "Hot" },
-  { id: "popular", label: "Popular" },
-  { id: "trending", label: "Trending" },
-  { id: "top-seller", label: "Top Seller" },
-  { id: "value-of-the-day", label: "Value of the Day" },
-];
-
 const SORT_OPTIONS = [
   { key: "newest", label: "Newest First" },
   { key: "oldest", label: "Oldest First" },
@@ -202,7 +193,6 @@ export default function ProductsClient({
     additionalImages: [] as string[],
     categoryId: "",
     subCategoryIds: new Set<string>(),
-    badges: new Set<string>(),
     inStock: true,
     warrantyPeriodMonths: "",
     warrantyType: "manufacturer-warranty",
@@ -263,9 +253,6 @@ export default function ProductsClient({
       });
     }
 
-    // Resolve badges
-    const badgeSet = new Set<string>(p.badges || []);
-
     // Resolve specifications
     const specs: SpecRow[] = [];
     if (p.specifications && typeof p.specifications === "object") {
@@ -313,7 +300,6 @@ export default function ProductsClient({
       additionalImages: p.additionalImages || [],
       categoryId: catId,
       subCategoryIds: subSet,
-      badges: badgeSet,
       inStock: p.inStock,
       warrantyPeriodMonths:
         p.warrantyPeriodMonths != null ? String(p.warrantyPeriodMonths) : "",
@@ -423,7 +409,6 @@ export default function ProductsClient({
       additionalImages: editForm.additionalImages,
       categoryId: editForm.categoryId || undefined,
       subCategoryIds: Array.from(editForm.subCategoryIds),
-      badges: Array.from(editForm.badges),
       inStock: hasEditPositiveStock ? true : editForm.inStock,
       warrantyPeriodMonths: editForm.warrantyPeriodMonths
         ? parseInt(editForm.warrantyPeriodMonths, 10)
@@ -880,7 +865,6 @@ export default function ProductsClient({
                   <th className="py-3.5 px-4 text-center">Sold</th>
                   <th className="py-3.5 px-4 text-center">Stock</th>
                   <th className="py-3.5 px-4 text-center">Status</th>
-                  <th className="py-3.5 px-4">Badges</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -1060,24 +1044,6 @@ export default function ProductsClient({
                             Out of Stock
                           </span>
                         )}
-                      </td>
-
-                      {/* Badges */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex flex-wrap gap-1 max-w-[150px]">
-                          {product.badges && product.badges.length > 0 ? (
-                            product.badges.map((b) => (
-                              <span
-                                key={b}
-                                className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[var(--surface-alt)] text-[var(--foreground-muted)] border border-[var(--border-color)] capitalize"
-                              >
-                                {b}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-[var(--foreground-muted)] text-[11px]">—</span>
-                          )}
-                        </div>
                       </td>
 
                       {/* Actions */}
@@ -1635,10 +1601,10 @@ export default function ProductsClient({
                   </div>
                 </div>
 
-                {/* 4. Taxonomy & Badges */}
+                {/* 4. Taxonomy */}
                 <div className="space-y-4 pt-4 border-t border-[var(--border-color)]">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
-                    Category & Badges
+                    Category
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1715,36 +1681,6 @@ export default function ProductsClient({
                         </div>
                       </div>
                     )}
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-[var(--foreground)] block mb-1.5">
-                      Promotional Badges
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {AVAILABLE_BADGES.map((b) => {
-                        const isSelected = editForm.badges.has(b.id);
-                        return (
-                          <button
-                            type="button"
-                            key={b.id}
-                            onClick={() => {
-                              const next = new Set(editForm.badges);
-                              if (isSelected) next.delete(b.id);
-                              else next.add(b.id);
-                              setEditForm((prev) => ({ ...prev, badges: next }));
-                            }}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                              isSelected
-                                ? "bg-primary text-white shadow-xs"
-                                : "bg-[var(--surface-alt)] text-[var(--foreground-secondary)] dark:text-[var(--foreground-muted)] hover:bg-[var(--surface-alt)]"
-                            }`}
-                          >
-                            {b.label}
-                          </button>
-                        );
-                      })}
-                    </div>
                   </div>
                 </div>
 

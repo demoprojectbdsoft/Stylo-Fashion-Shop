@@ -255,14 +255,6 @@ export default function ProductDetailClient({ product, mode = "admin" }: Product
               </span>
             )}
 
-            {product.badges?.map((b) => (
-              <span
-                key={b}
-                className="text-xs font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary uppercase tracking-wider border border-primary/20"
-              >
-                {b}
-              </span>
-            ))}
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--foreground)]">

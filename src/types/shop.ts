@@ -11,7 +11,6 @@ export interface ShopQueryParams {
   minPrice?: string;
   maxPrice?: string;
   discount?: string;
-  badge?: string;
   isFeatured?: string;
   inStock?: string;
   minRating?: string;

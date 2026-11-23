@@ -3,8 +3,7 @@ import HeroSlider from "@/components/homepage/HeroSlider";
 import CategoriesDropdown from "@/components/shared/CategoriesDropdown";
 import PromoBanners from "@/components/homepage/PromoBanners";
 import WarehouseDeals from "@/components/homepage/WarehouseDeals";
-import TrendingProducts from "@/components/homepage/TrendingProducts";
-import PopularProducts from "@/components/homepage/PopularProducts";
+import MostSoldProducts from "@/components/homepage/MostSoldProducts";
 import NewArrivals from "@/components/homepage/NewArrivals";
 import FeaturedVendors from "@/components/vendor/FeaturedVendors";
 import FeaturedProducts from "@/components/vendor/FeaturedProducts";
@@ -40,16 +39,12 @@ async function NewArrivalsSection() {
   return <NewArrivals products={products} />;
 }
 
-async function TrendingSection() {
-  const res = await getProducts({ badge: "trending", limit: 14 });
+// The units that actually moved: ranked by the sell counter the order pipeline
+// keeps, so the shelf is what shoppers buy rather than a hand-picked label.
+async function MostSoldSection() {
+  const res = await getProducts({ sort: "sellCount", limit: 14 });
   const products: Product[] = res?.data?.products ?? [];
-  return <TrendingProducts products={products} />;
-}
-
-async function PopularSection() {
-  const res = await getProducts({ badge: "popular", limit: 14 });
-  const products: Product[] = res?.data?.products ?? [];
-  return <PopularProducts products={products} />;
+  return <MostSoldProducts products={products} />;
 }
 
 // The listings a running placement is lifting right now, read in the shelf's own
@@ -140,14 +135,9 @@ export default function Home() {
         <PromoTilesSection />
       </Suspense>
 
-      {/* Trending Products — shows skeleton while fetching */}
-      <Suspense fallback={<TrendingProducts loading />}>
-        <TrendingSection />
-      </Suspense>
-
-      {/* Popular Products — shows skeleton while fetching */}
-      <Suspense fallback={<PopularProducts loading />}>
-        <PopularSection />
+      {/* Most sold — ranked by the units each product moved */}
+      <Suspense fallback={<MostSoldProducts loading />}>
+        <MostSoldSection />
       </Suspense>
 
       {/* Featured vendors — the last shelf before the wide promo strip */}

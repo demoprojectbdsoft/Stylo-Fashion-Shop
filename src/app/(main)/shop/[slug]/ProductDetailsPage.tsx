@@ -630,20 +630,6 @@ export default function ProductDetailsPage({
     }
   };
 
-  const getBadgeStyle = (badge: string) => {
-    const b = badge.toLowerCase();
-    if (b.includes("hot") || b.includes("sale")) {
-      return "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-sm shadow-red-500/30 border border-red-400/30";
-    }
-    if (b.includes("trend") || b.includes("popular")) {
-      return "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-sm shadow-amber-500/30 border border-amber-400/30";
-    }
-    if (b.includes("new") || b.includes("feature")) {
-      return "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-sm shadow-emerald-500/30 border border-emerald-400/30";
-    }
-    return "bg-[var(--surface-elevated)] text-[var(--foreground)] shadow-xs border border-[var(--border-color)]";
-  };
-
   return (
     <>
     <SuspendedAccountModal
@@ -697,7 +683,7 @@ export default function ProductDetailsPage({
             }}
             className="relative aspect-square w-full rounded-2xl overflow-hidden bg-gradient-to-br from-[var(--surface-elevated)] via-[var(--surface-alt)] to-[var(--surface-elevated)] border border-[var(--border-color)] shadow-xl shadow-primary/5 backdrop-blur-md group cursor-zoom-in"
           >
-            {/* Badges */}
+            {/* Featured and discount markers */}
             <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
               {product.isFeatured && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-amber-500/40 border border-amber-300/50">
@@ -711,17 +697,6 @@ export default function ProductDetailsPage({
                   -{discountPercent}% OFF
                 </span>
               ) : null}
-
-              {product.badges?.map((badge) => (
-                <span
-                  key={badge}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getBadgeStyle(
-                    badge
-                  )}`}
-                >
-                  {badge.replace(/-/g, " ")}
-                </span>
-              ))}
             </div>
 
             <Image
@@ -867,7 +842,7 @@ export default function ProductDetailsPage({
                 </div>
               </div>
 
-              {/* Right: Countdown OR Value-of-Day badge */}
+              {/* Right: the offer countdown while one is running */}
               {showCountdown ? (
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-[9px] font-bold uppercase tracking-widest text-red-500 dark:text-red-400 flex items-center gap-1">
@@ -893,11 +868,6 @@ export default function ProductDetailsPage({
                       </div>
                     ))}
                   </div>
-                </div>
-              ) : product.badges?.includes("value-of-the-day") ? (
-                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/80 px-3 py-1.5 rounded-xl border border-amber-300 dark:border-amber-700/60 shadow-xs">
-                  <Zap className="w-4 h-4 fill-amber-500 text-amber-500" />
-                  Value of the Day
                 </div>
               ) : null}
             </div>
