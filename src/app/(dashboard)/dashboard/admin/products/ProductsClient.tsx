@@ -9,8 +9,6 @@ import {
   Input,
   TextArea,
   Button,
-  Select,
-  ListBox,
   Switch,
   Modal,
   Pagination,
@@ -40,6 +38,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import ImageUploader from "@/components/shared/ImageUploader";
+import AppSelect from "@/components/shared/AppSelect";
 import HeroUIDateTimePicker from "@/components/shared/HeroUIDateTimePicker";
 import { Product, Category, SubCategory } from "@/types";
 import { updateProduct, deleteProduct, archiveProduct, unarchiveProduct, reviewVendorProduct } from "@/lib/action/products";
@@ -102,6 +101,8 @@ interface PaginationMeta {
 interface ProductsClientProps {
   initialProducts: Product[];
   pagination: PaginationMeta;
+  /** Rows per listing-status tab, counted with the other filters applied. */
+  statusCounts?: Record<string, number>;
   categories?: Category[];
   subcategories?: SubCategory[];
 }
@@ -109,6 +110,7 @@ interface ProductsClientProps {
 export default function ProductsClient({
   initialProducts = [],
   pagination,
+  statusCounts = {},
   categories = [],
   subcategories = [],
 }: ProductsClientProps) {
@@ -648,86 +650,87 @@ export default function ProductsClient({
         </div>
       </div>
 
-      {/* ── Filters & Search Toolbar ── */}
-      <div className="space-y-4 bg-[var(--surface-elevated)] p-4 rounded-2xl border border-[var(--border-color)] shadow-xs">
+      {/* ── Status Tabs, Search & Filters ── */}
+      <div className="space-y-3 bg-[var(--surface-elevated)] p-4 rounded-2xl border border-[var(--border-color)] shadow-xs">
+        {/* Listing status: the review queue's own view, one tab per bucket */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {LISTING_STATUS_OPTIONS.map((tab) => {
+              const active = currentListing === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() =>
+                    updateParams({ vendorStatus: tab.id === "all" ? undefined : tab.id })
+                  }
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                    active
+                      ? "bg-primary text-white shadow-xs"
+                      : "text-[var(--foreground-secondary)] dark:text-[var(--foreground-muted)] hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)]"
+                  }`}
+                >
+                  {tab.label}
+                  <span
+                    className={`rounded px-1 text-[10px] font-bold ${
+                      active ? "bg-white/20" : "bg-[var(--surface-alt)]"
+                    }`}
+                  >
+                    {statusCounts[tab.id] ?? 0}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="text-xs font-semibold text-[var(--foreground-muted)] shrink-0">
+            Total products: <span className="font-extrabold text-[var(--foreground)]">{total}</span>
+          </div>
+        </div>
+
+        {/* Search, category, stock and sort share one row of browsing controls */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pt-3 border-t border-[var(--border-color)]">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative flex-1 max-w-md flex items-center gap-2"
+          >
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--foreground-muted)] z-10" />
+              <Input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search by title, SKU, or category..."
+                className="w-full pl-9 pr-4 h-9 bg-[var(--surface-alt)] dark:bg-[var(--surface)] border border-[var(--border-color)] rounded-xl text-xs"
+              />
+            </div>
+            <Button
+              type="submit"
+              size="sm"
+              className="h-9 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer shrink-0"
+            >
+              Search
+            </Button>
+          </form>
+
+          <div className="flex flex-wrap items-center gap-2">
             {/* Category Filter */}
             {categories.length > 0 && (
-              <div className="w-48">
-                <Select
-                  aria-label="Filter by Category"
-                  selectedKey={currentCategory}
-                  onSelectionChange={(key) =>
-                    updateParams({ category: key && String(key) !== "all" ? String(key) : undefined })
-                  }
-                >
-                  <Select.Trigger className="h-10 w-full px-3.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] dark:bg-[var(--surface)] text-xs font-semibold text-[var(--foreground-secondary)] flex items-center justify-between gap-1.5 cursor-pointer hover:border-primary transition-colors shadow-xs [&>span]:text-xs [&>span]:font-semibold">
-                    <Select.Value className="text-xs font-semibold truncate" />
-                    <Select.Indicator className="[&>svg]:w-3.5 [&>svg]:h-3.5 text-[var(--foreground-muted)] shrink-0" />
-                  </Select.Trigger>
-                  <Select.Popover className="w-52 p-1.5 bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl shadow-xl z-50 max-h-72 overflow-y-auto">
-                    <ListBox>
-                      <ListBox.Item
-                        id="all"
-                        textValue="All Categories"
-                        className="text-xs font-medium px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-[var(--surface)] text-[var(--foreground)] cursor-pointer flex items-center justify-between"
-                      >
-                        All Categories
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
-                      {categories.map((c) => {
-                        const val = c.slug || c.name;
-                        return (
-                          <ListBox.Item
-                            key={c._id || c.id || c.name}
-                            id={val}
-                            textValue={c.name}
-                            className="text-xs font-medium px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-[var(--surface)] text-[var(--foreground)] cursor-pointer flex items-center justify-between"
-                          >
-                            {c.name}
-                            <ListBox.ItemIndicator />
-                          </ListBox.Item>
-                        );
-                      })}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              </div>
-            )}
-
-            {/* Listing Status Filter — the review queue's own view */}
-            <div className="w-48">
-              <Select
-                aria-label="Filter by Listing Status"
-                selectedKey={currentListing}
-                onSelectionChange={(key) =>
-                  updateParams({
-                    vendorStatus: key && String(key) !== "all" ? String(key) : undefined,
-                  })
+              <AppSelect
+                ariaLabel="Filter by category"
+                size="sm"
+                icon={<Layers />}
+                className="w-44"
+                value={currentCategory}
+                onChange={(value) =>
+                  updateParams({ category: value === "all" ? undefined : value })
                 }
-              >
-                <Select.Trigger className="h-10 w-full px-3.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] dark:bg-[var(--surface)] text-xs font-semibold text-[var(--foreground-secondary)] flex items-center justify-between gap-1.5 cursor-pointer hover:border-primary transition-colors shadow-xs [&>span]:text-xs [&>span]:font-semibold">
-                  <Select.Value className="text-xs font-semibold truncate" />
-                  <Select.Indicator className="[&>svg]:w-3.5 [&>svg]:h-3.5 text-[var(--foreground-muted)] shrink-0" />
-                </Select.Trigger>
-                <Select.Popover className="w-52 p-1.5 bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl shadow-xl z-50 max-h-72 overflow-y-auto">
-                  <ListBox>
-                    {LISTING_STATUS_OPTIONS.map((opt) => (
-                      <ListBox.Item
-                        key={opt.id}
-                        id={opt.id}
-                        textValue={opt.label}
-                        className="text-xs font-medium px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-[var(--surface)] text-[var(--foreground)] cursor-pointer flex items-center justify-between"
-                      >
-                        {opt.label}
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
-                    ))}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-            </div>
+                options={[
+                  { value: "all", label: "All categories" },
+                  ...categories.map((c) => ({ value: c.slug || c.name, label: c.name })),
+                ]}
+              />
+            )}
 
             {/* Stock Filter */}
             <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-alt)] dark:bg-[var(--surface)] border border-[var(--border-color)]/60 dark:border-[var(--border-color)]">
@@ -740,6 +743,7 @@ export default function ProductsClient({
               ).map((st) => (
                 <button
                   key={st.id}
+                  type="button"
                   onClick={() => updateParams({ inStock: st.id === "all" ? undefined : st.id })}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
                     currentStock === st.id
@@ -751,70 +755,27 @@ export default function ProductsClient({
                 </button>
               ))}
             </div>
-          </div>
 
-          <div className="text-xs font-semibold text-[var(--foreground-muted)]">
-            Total products: <span className="font-extrabold text-[var(--foreground)]">{total}</span>
-          </div>
-        </div>
-
-        {/* Search, Sort & Reset Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-[var(--border-color)]">
-          <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--foreground-muted)] z-10" />
-              <Input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search by title, SKU, or category..."
-                className="w-full pl-9 pr-4 h-10 bg-[var(--surface-alt)] dark:bg-[var(--surface)] border border-[var(--border-color)] rounded-xl text-xs"
-              />
-            </div>
-            <Button
-              type="submit"
-              size="sm"
-              className="h-10 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer shrink-0"
-            >
-              Search
-            </Button>
-          </form>
-
-          <div className="flex items-center gap-2 self-end sm:self-auto">
             {/* Sort Select */}
-            <div className="w-48">
-              <Select
-                aria-label="Sort Products"
-                selectedKey={currentSort}
-                onSelectionChange={(key) => updateParams({ sort: key ? String(key) : "newest" })}
-              >
-                <Select.Trigger className="h-10 w-full px-3.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] dark:bg-[var(--surface)] text-xs font-semibold text-[var(--foreground-secondary)] flex items-center justify-between gap-1.5 cursor-pointer hover:border-primary transition-colors shadow-xs [&>span]:text-xs [&>span]:font-semibold">
-                  <Select.Value className="text-xs font-semibold truncate" />
-                  <Select.Indicator className="[&>svg]:w-3.5 [&>svg]:h-3.5 text-[var(--foreground-muted)] shrink-0" />
-                </Select.Trigger>
-                <Select.Popover className="w-52 p-1.5 bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl shadow-xl z-50">
-                  <ListBox>
-                    {SORT_OPTIONS.map((opt) => (
-                      <ListBox.Item
-                        key={opt.key}
-                        id={opt.key}
-                        textValue={opt.label}
-                        className="text-xs font-medium px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-[var(--surface)] text-[var(--foreground)] cursor-pointer flex items-center justify-between"
-                      >
-                        {opt.label}
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
-                    ))}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-            </div>
+            <AppSelect
+              ariaLabel="Sort products"
+              size="sm"
+              icon={<ArrowUpDown />}
+              className="w-48"
+              value={currentSort}
+              onChange={(value) => updateParams({ sort: value || "newest" })}
+              options={SORT_OPTIONS.map((opt) => ({ value: opt.key, label: opt.label }))}
+            />
 
-            {(currentSearch || currentCategory !== "all" || currentStock !== "all" || currentSort !== "newest" || currentListing !== "all") && (
+            {(currentSearch ||
+              currentCategory !== "all" ||
+              currentStock !== "all" ||
+              currentSort !== "newest" ||
+              currentListing !== "all") && (
               <Button
                 size="sm"
                 onPress={handleResetFilters}
-                className="h-10 px-3 rounded-xl bg-[var(--surface-alt)] text-[var(--foreground-secondary)] dark:text-[var(--foreground-muted)] hover:text-[var(--foreground)] dark:hover:text-[var(--foreground)] text-xs font-semibold cursor-pointer flex items-center gap-1"
+                className="h-9 px-3 rounded-xl bg-[var(--surface-alt)] text-[var(--foreground-secondary)] dark:text-[var(--foreground-muted)] hover:text-[var(--foreground)] dark:hover:text-[var(--foreground)] text-xs font-semibold cursor-pointer flex items-center gap-1"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Reset</span>
@@ -1473,40 +1434,26 @@ export default function ProductsClient({
                     <label className="text-xs font-bold text-[var(--foreground)] block mb-1 flex items-center gap-1">
                       <Shield className="w-3.5 h-3.5 text-primary" /> Warranty Type
                     </label>
-                    <Select
-                      selectedKey={editForm.warrantyType}
-                      onSelectionChange={(key) => {
-                        const warrantyType = String(key);
+                    <AppSelect
+                      ariaLabel="Warranty type"
+                      value={editForm.warrantyType}
+                      placeholder="Select warranty type"
+                      // One option per type the server accepts, taken from the
+                      // shared catalog so the form and the dashboards agree.
+                      options={WARRANTY_TYPE_OPTIONS.map((option) => ({
+                        value: option.value,
+                        label: option.label,
+                      }))}
+                      onChange={(warrantyType) =>
                         // "No warranty" clears the period so the two fields can
                         // never contradict each other.
                         setEditForm((prev) => ({
                           ...prev,
                           warrantyType,
                           ...(warrantyType === "none" ? { warrantyPeriodMonths: "" } : {}),
-                        }));
-                      }}
-                      placeholder="Select warranty type"
-                    >
-                      <Select.Trigger className="w-full cursor-pointer">
-                        <Select.Value />
-                        <Select.Indicator />
-                      </Select.Trigger>
-                      <Select.Popover className="w-56 p-1.5 bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl shadow-xl">
-                        <ListBox>
-                          {/* One option per type the server accepts, taken from the
-                              shared catalog so the form and the dashboards agree. */}
-                          {WARRANTY_TYPE_OPTIONS.map((option) => (
-                            <ListBox.Item
-                              key={option.value}
-                              id={option.value}
-                              textValue={option.label}
-                            >
-                              {option.label}
-                            </ListBox.Item>
-                          ))}
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
+                        }))
+                      }
+                    />
                     {/* Says who carries the repair, so the choice is not a guess. */}
                     <p className="text-[10px] text-[var(--foreground-muted)] mt-1">
                       {
@@ -1612,41 +1559,22 @@ export default function ProductsClient({
                       <label className="text-xs font-bold text-[var(--foreground)] block mb-1">
                         Category
                       </label>
-                      <Select
-                        aria-label="Product Category"
-                        selectedKey={editForm.categoryId}
-                        onSelectionChange={(key) =>
+                      <AppSelect
+                        ariaLabel="Product category"
+                        value={editForm.categoryId}
+                        placeholder="Select Category"
+                        onChange={(categoryId) =>
                           setEditForm((prev) => ({
                             ...prev,
-                            categoryId: key ? String(key) : "",
+                            categoryId,
                             subCategoryIds: new Set<string>(),
                           }))
                         }
-                        placeholder="Select Category"
-                      >
-                        <Select.Trigger className="w-full h-10 px-3 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] dark:bg-[var(--surface)] text-xs font-semibold text-[var(--foreground-secondary)] flex items-center justify-between gap-1.5 cursor-pointer hover:border-primary transition-colors shadow-xs [&>span]:text-xs [&>span]:font-semibold">
-                          <Select.Value className="text-xs font-semibold truncate" />
-                          <Select.Indicator className="[&>svg]:w-3.5 [&>svg]:h-3.5 text-[var(--foreground-muted)] shrink-0" />
-                        </Select.Trigger>
-                        <Select.Popover className="w-64 p-1.5 bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl shadow-xl z-50 max-h-72 overflow-y-auto">
-                          <ListBox>
-                            {categories.map((c) => {
-                              const cid = (c._id || c.id || c.slug) as string;
-                              return (
-                                <ListBox.Item
-                                  key={cid}
-                                  id={cid}
-                                  textValue={c.name}
-                                  className="text-xs font-medium px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-[var(--surface)] text-[var(--foreground)] cursor-pointer flex items-center justify-between"
-                                >
-                                  {c.name}
-                                  <ListBox.ItemIndicator />
-                                </ListBox.Item>
-                              );
-                            })}
-                          </ListBox>
-                        </Select.Popover>
-                      </Select>
+                        options={categories.map((c) => ({
+                          value: (c._id || c.id || c.slug) as string,
+                          label: c.name,
+                        }))}
+                      />
                     </div>
 
                     {editAvailableSubCategories.length > 0 && (

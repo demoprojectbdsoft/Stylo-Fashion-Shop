@@ -38,6 +38,9 @@ export default async function AdminProductsPage({
     const total = Number(res?.data?.pagination?.total ?? res?.data?.total ?? list.length) || 0;
     return {
       list,
+      // How many rows sit under each listing-status tab, counted with the rest
+      // of the desk's filters applied — the tabs' badges come from here.
+      statusCounts: (res?.data?.statusCounts ?? {}) as Record<string, number>,
       pagination: {
         page: targetPage,
         limit,
@@ -57,9 +60,9 @@ export default async function AdminProductsPage({
   // requested page past the end of it. Read the last page that exists instead of
   // showing an empty table and a footer that counts backwards — the same list a
   // stale link in another tab asks for.
-  let { list: products, pagination } = first;
+  let { list: products, pagination, statusCounts } = first;
   if (page > pagination.totalPages) {
-    ({ list: products, pagination } = await readCatalog(pagination.totalPages));
+    ({ list: products, pagination, statusCounts } = await readCatalog(pagination.totalPages));
   }
 
   const categories = Array.isArray(categoriesRes?.data)
@@ -78,6 +81,7 @@ export default async function AdminProductsPage({
     <ProductsClient
       initialProducts={products}
       pagination={pagination}
+      statusCounts={statusCounts}
       categories={categories}
       subcategories={subcategories}
     />
