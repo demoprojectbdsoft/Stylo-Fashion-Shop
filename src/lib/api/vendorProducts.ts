@@ -12,6 +12,9 @@ import type { VendorProduct, VendorProductListResult } from "@/types/vendor";
 export type VendorProductQuery = {
   status?: string;
   search?: string;
+  /** "in" / "out" read the same stock columns the admin desk filters on. */
+  stock?: string;
+  sort?: string;
   page?: number;
   limit?: number;
 };

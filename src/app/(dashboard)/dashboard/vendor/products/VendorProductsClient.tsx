@@ -14,7 +14,6 @@ import {
   Package,
   Pencil,
   Plus,
-  Search,
   TriangleAlert,
   Clock,
   Sparkles,
@@ -37,6 +36,7 @@ import {
   ListBox,
 } from "@heroui/react";
 import { toast } from "react-toastify";
+import CatalogFiltersBar from "@/components/dashboard/CatalogFiltersBar";
 import type { VendorPagination, VendorProduct, VendorProductPlan } from "@/types/vendor";
 import type { Category, SubCategory } from "@/types";
 import { getVendorProductStatusStyle } from "@/lib/vendorProductStatus";
@@ -66,20 +66,31 @@ interface VendorProductsClientProps {
   typeCounts: Record<string, number>;
   pagination: VendorPagination;
   plan: VendorProductPlan;
-  filters: { status: string; search: string };
+  filters: { status: string; search: string; stock: string; sort: string };
   categories?: Category[];
   subcategories?: SubCategory[];
   initialEditId?: string;
 }
 
+/**
+ * The strip's tabs. "Published" is the live shelf, sold-out rows included —
+ * the stock chips below ask that question on their own.
+ */
 const TABS = [
   { key: "all", label: "All" },
   { key: "draft", label: "Drafts" },
   { key: "pending_review", label: "In review" },
   { key: "published", label: "Published" },
-  { key: "out_of_stock", label: "Out of stock" },
   { key: "rejected", label: "Rejected" },
   { key: "archived", label: "Archived" },
+];
+
+/** The same order the admin desk offers, read against the seller's own rows. */
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest First" },
+  { value: "oldest", label: "Oldest First" },
+  { value: "price_desc", label: "Price: High to Low" },
+  { value: "price_asc", label: "Price: Low to High" },
 ];
 
 export default function VendorProductsClient({
@@ -94,7 +105,6 @@ export default function VendorProductsClient({
 }: VendorProductsClientProps) {
   const router = useRouter();
   const { formatPrice, currencySymbol } = useSiteSettings();
-  const [search, setSearch] = useState(filters.search);
   const [archiving, setArchiving] = useState<string | null>(null);
   // A review move (submit or withdraw) is its own busy flag, so the archive
   // buttons stay usable while a submission is in flight.
@@ -276,14 +286,31 @@ export default function VendorProductsClient({
 
   const atLimit = plan.used >= plan.maxProducts;
 
-  const go = (next: { page?: number; search?: string; status?: string }) => {
-    const params = new URLSearchParams();
-    const nextSearch = (next.search ?? search).trim();
-    const nextStatus = next.status ?? filters.status;
+  /**
+   * Rebuilds the list URL from the settled set of filters. Every control hands
+   * over only what it changed; the rest is read back from the current filters,
+   * so a sort never quietly drops a search the seller typed.
+   */
+  const go = (next: {
+    page?: number;
+    search?: string;
+    status?: string;
+    stock?: string;
+    sort?: string;
+  }) => {
+    const settled = {
+      search: (next.search ?? filters.search).trim(),
+      status: next.status ?? filters.status,
+      stock: next.stock ?? filters.stock,
+      sort: next.sort ?? filters.sort,
+    };
     const page = next.page ?? 1;
 
-    if (nextSearch) params.set("search", nextSearch);
-    if (nextStatus && nextStatus !== "all") params.set("status", nextStatus);
+    const params = new URLSearchParams();
+    if (settled.search) params.set("search", settled.search);
+    if (settled.status && settled.status !== "all") params.set("status", settled.status);
+    if (settled.stock && settled.stock !== "all") params.set("stock", settled.stock);
+    if (settled.sort && settled.sort !== "newest") params.set("sort", settled.sort);
     if (page > 1) params.set("page", String(page));
 
     const query = params.toString();
@@ -430,49 +457,38 @@ export default function VendorProductsClient({
         </div>
       </section>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-3 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {TABS.map((tab) => {
-            const active = filters.status === tab.key;
-            const count = tab.key === "all" ? pagination.total : typeCounts[tab.key] || 0;
-
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => go({ status: tab.key, page: 1 })}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-colors cursor-pointer ${
-                  active
-                    ? "bg-brand-gradient text-[var(--on-grad-text)] shadow-xs"
-                    : "text-[var(--foreground-muted)] hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)]"
-                }`}
-              >
-                {tab.label}
-                <span className={`rounded px-1 text-[9px] font-bold ${active ? "bg-white/20" : "bg-[var(--surface-alt)]"}`}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            go({ search, page: 1 });
-          }}
-          className="relative w-full sm:w-64"
-        >
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--foreground-muted)]" />
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Title, SKU or brand"
-            className="h-9 w-full rounded-xl border border-[var(--border-color)] bg-[var(--surface)] pl-9 pr-3 text-[11px] text-[var(--foreground)] placeholder:text-[var(--foreground-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--brand-flat)]/35"
-          />
-        </form>
-      </div>
+      {/* Filters — the same browsing bar as the admin desk, read against the
+          seller's own rows */}
+      <CatalogFiltersBar
+        statusOptions={TABS.map((tab) => ({ id: tab.key, label: tab.label }))}
+        statusCounts={typeCounts}
+        status={filters.status}
+        onStatusChange={(id) => go({ status: id, page: 1 })}
+        total={pagination.total}
+        stock={{
+          value: filters.stock,
+          onChange: (value) => go({ stock: value, page: 1 }),
+        }}
+        search={{
+          value: filters.search,
+          onSubmit: (value) => go({ search: value, page: 1 }),
+          placeholder: "Title, SKU or brand",
+        }}
+        sort={{
+          value: filters.sort,
+          onChange: (value) => go({ sort: value || "newest", page: 1 }),
+          options: SORT_OPTIONS,
+        }}
+        onReset={() =>
+          go({ status: "all", stock: "all", search: "", sort: "newest", page: 1 })
+        }
+        canReset={Boolean(
+          filters.search ||
+            filters.status !== "all" ||
+            filters.stock !== "all" ||
+            filters.sort !== "newest"
+        )}
+      />
 
       {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] shadow-2xs">
@@ -481,7 +497,7 @@ export default function VendorProductsClient({
             <Package className="h-6 w-6 text-[var(--foreground-muted)]" />
             <p className="text-xs font-semibold text-[var(--foreground)]">No products here</p>
             <p className="text-[11px] text-[var(--foreground-muted)]">
-              {filters.search || filters.status !== "all"
+              {filters.search || filters.status !== "all" || filters.stock !== "all"
                 ? "Nothing matches this view."
                 : "Add your first product to get started."}
             </p>

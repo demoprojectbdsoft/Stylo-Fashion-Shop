@@ -16,7 +16,6 @@ import {
 import {
   Package,
   Plus,
-  Search,
   Eye,
   Edit2,
   Trash2,
@@ -30,8 +29,6 @@ import {
   X,
   CheckCircle2,
   XCircle,
-  ArrowUpDown,
-  RotateCcw,
   Shield,
   Info,
   Loader2,
@@ -39,6 +36,7 @@ import {
 import { toast } from "react-toastify";
 import ImageUploader from "@/components/shared/ImageUploader";
 import AppSelect from "@/components/shared/AppSelect";
+import CatalogFiltersBar from "@/components/dashboard/CatalogFiltersBar";
 import HeroUIDateTimePicker from "@/components/shared/HeroUIDateTimePicker";
 import { Product, Category, SubCategory } from "@/types";
 import { updateProduct, deleteProduct, archiveProduct, unarchiveProduct, reviewVendorProduct } from "@/lib/action/products";
@@ -132,12 +130,6 @@ export default function ProductsClient({
   const currentSort = searchParams.get("sort") || "newest";
   const currentListing = searchParams.get("vendorStatus") || "all";
 
-  const [searchInput, setSearchInput] = useState(currentSearch);
-
-  useEffect(() => {
-    setSearchInput(currentSearch);
-  }, [currentSearch]);
-
   const updateParams = useCallback(
     (updates: Record<string, string | undefined>) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -168,13 +160,7 @@ export default function ProductsClient({
     [router, searchParams]
   );
 
-  const handleSearchSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    updateParams({ search: searchInput.trim() });
-  };
-
   const handleResetFilters = () => {
-    setSearchInput("");
     startTransition(() => {
       router.push("/dashboard/admin/products", { scroll: false });
     });
@@ -671,203 +657,75 @@ export default function ProductsClient({
       </div>
 
       {/* ── Status Tabs, Search & Filters ── */}
-      <div className="space-y-3 bg-[var(--surface-elevated)] p-4 rounded-2xl border border-[var(--border-color)] shadow-xs">
-        {/* Listing status: the review queue's own view, one tab per bucket */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {LISTING_STATUS_OPTIONS.map((tab) => {
-              const active = currentListing === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() =>
-                    updateParams({ vendorStatus: tab.id === "all" ? undefined : tab.id })
-                  }
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
-                    active
-                      ? "bg-primary text-white shadow-xs"
-                      : "text-[var(--foreground-secondary)] dark:text-[var(--foreground-muted)] hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)]"
-                  }`}
-                >
-                  {tab.label}
-                  <span
-                    className={`rounded px-1 text-[10px] font-bold ${
-                      active ? "bg-white/20" : "bg-[var(--surface-alt)]"
-                    }`}
-                  >
-                    {statusCounts[tab.id] ?? 0}
-                  </span>
-                </button>
-              );
-            })}
-
-            {/* Stock narrowing the same rows, so it reads as the next group of
-                pills in the same strip — a hairline keeps the two questions
-                apart instead of boxing the second one off */}
-            <span aria-hidden className="mx-1.5 h-5 w-px shrink-0 bg-[var(--border-color)]" />
-
-            {(
-              [
-                { id: "true", label: "In stock" },
-                { id: "false", label: "Out of stock" },
-              ] as const
-            ).map((st) => {
-              const active = currentStock === st.id;
-              // No "All stock" pill: the strip opens on every row, so pressing
-              // the live chip a second time is how the desk clears it.
-              return (
-                <button
-                  key={st.id}
-                  type="button"
-                  aria-pressed={active}
-                  title={active ? "Show every listing again" : undefined}
-                  onClick={() => updateParams({ inStock: active ? undefined : st.id })}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
-                    active
-                      ? "bg-primary text-white shadow-xs"
-                      : "text-[var(--foreground-secondary)] dark:text-[var(--foreground-muted)] hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)]"
-                  }`}
-                >
-                  {st.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="text-xs font-semibold text-[var(--foreground-muted)] shrink-0">
-            Total products: <span className="font-extrabold text-[var(--foreground)]">{total}</span>
-          </div>
-        </div>
-
-        {/* Search, category and sort. On a phone the search keeps a line of its
-            own and the category shares the next one with the sort; when the
-            chosen category offers subcategories the two pickers fill that line
-            and the sort drops below them. */}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-3 pt-3 border-t border-[var(--border-color)]">
-          <form
-            onSubmit={handleSearchSubmit}
-            className="relative flex w-full max-w-md min-w-0 items-center gap-2 xl:w-auto xl:flex-1"
-          >
-            <div className="relative flex-1 min-w-0">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--foreground-muted)] z-10" />
-              <Input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search by title, SKU, or category..."
-                className="w-full pl-9 pr-4 h-9 bg-[var(--surface-alt)] dark:bg-[var(--surface)] border border-[var(--border-color)] rounded-xl text-xs"
-              />
-            </div>
-            <Button
-              type="submit"
-              size="sm"
-              className="h-9 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer shrink-0"
-            >
-              Search
-            </Button>
-          </form>
-
-          {/* Category Filter — a little air after the search once they share
-              the row */}
-          {categories.length > 0 && (
-            <div
-              className={
-                filterableSubCategories.length > 0
-                  ? "w-[calc(50%-0.25rem)] shrink-0 xl:ml-4 xl:w-40"
-                  : "min-w-0 flex-1 sm:flex-none sm:w-40 xl:ml-4"
-              }
-            >
-              <AppSelect
-                ariaLabel="Filter by category"
-                size="sm"
-                icon={<Layers />}
-                className="w-full"
-                value={currentCategory}
-                onChange={(value) =>
-                  // A subcategory only means something inside the category that
-                  // offered it, so switching categories starts the pair over.
+      <CatalogFiltersBar
+        statusOptions={LISTING_STATUS_OPTIONS}
+        statusCounts={statusCounts}
+        status={currentListing}
+        onStatusChange={(id) => updateParams({ vendorStatus: id === "all" ? undefined : id })}
+        total={total}
+        stock={{
+          // The URL keeps the public "inStock" token; the bar speaks in/out.
+          value: currentStock === "true" ? "in" : currentStock === "false" ? "out" : "all",
+          onChange: (value) =>
+            updateParams({
+              inStock: value === "all" ? undefined : value === "in" ? "true" : "false",
+            }),
+        }}
+        search={{
+          value: currentSearch,
+          onSubmit: (value) => updateParams({ search: value }),
+          placeholder: "Search by title, SKU, or category...",
+        }}
+        category={
+          categories.length > 0
+            ? {
+                value: currentCategory,
+                // A subcategory only means something inside the category that
+                // offered it, so switching categories starts the pair over.
+                onChange: (value) =>
                   updateParams({
                     category: value === "all" ? undefined : value,
                     subCategory: undefined,
-                  })
-                }
-                options={[
+                  }),
+                options: [
                   { value: "all", label: "All categories" },
                   ...categories.map((c) => ({ value: c.slug || c.name, label: c.name })),
-                ]}
-              />
-            </div>
-          )}
-
-          {/* Subcategory Filter — only once the chosen category has any */}
-          {filterableSubCategories.length > 0 && (
-            <div className="w-[calc(50%-0.25rem)] shrink-0 xl:w-40">
-              <AppSelect
-                ariaLabel="Filter by subcategory"
-                size="sm"
-                icon={<Package />}
-                className="w-full"
-                value={currentSubCategory}
-                onChange={(value) =>
-                  updateParams({ subCategory: value === "all" ? undefined : value })
-                }
-                options={[
+                ],
+              }
+            : undefined
+        }
+        subCategory={
+          filterableSubCategories.length > 0
+            ? {
+                value: currentSubCategory,
+                onChange: (value) =>
+                  updateParams({ subCategory: value === "all" ? undefined : value }),
+                options: [
                   { value: "all", label: "All subcategories" },
                   ...filterableSubCategories.map((sub) => ({
                     value: sub.slug || sub.name,
                     label: sub.name,
                   })),
-                ]}
-              />
-            </div>
-          )}
-
-          {/* Sort and reset — beside the category, or on its own line when both
-              category pickers are out */}
-          <div
-            className={`flex items-center gap-2 ${
-              filterableSubCategories.length > 0
-                ? "w-full xl:ml-auto xl:w-auto"
-                : "shrink-0 xl:ml-auto"
-            }`}
-          >
-            <div
-              className={
-                filterableSubCategories.length > 0
-                  ? "min-w-0 flex-1 xl:w-48 xl:flex-none"
-                  : "w-40 sm:w-44 xl:w-48"
+                ],
               }
-            >
-              <AppSelect
-                ariaLabel="Sort products"
-                size="sm"
-                icon={<ArrowUpDown />}
-                className="w-full"
-                value={currentSort}
-                onChange={(value) => updateParams({ sort: value || "newest" })}
-                options={SORT_OPTIONS.map((opt) => ({ value: opt.key, label: opt.label }))}
-              />
-            </div>
+            : undefined
+        }
+        sort={{
+          value: currentSort,
+          onChange: (value) => updateParams({ sort: value || "newest" }),
+          options: SORT_OPTIONS.map((opt) => ({ value: opt.key, label: opt.label })),
+        }}
+        onReset={handleResetFilters}
+        canReset={Boolean(
+          currentSearch ||
+            currentCategory !== "all" ||
+            currentSubCategory !== "all" ||
+            currentStock !== "all" ||
+            currentSort !== "newest" ||
+            currentListing !== "all"
+        )}
+      />
 
-            {(currentSearch ||
-              currentCategory !== "all" ||
-              currentSubCategory !== "all" ||
-              currentStock !== "all" ||
-              currentSort !== "newest" ||
-              currentListing !== "all") && (
-              <Button
-                size="sm"
-                onPress={handleResetFilters}
-                className="h-9 px-3 rounded-xl bg-[var(--surface-alt)] text-[var(--foreground-secondary)] dark:text-[var(--foreground-muted)] hover:text-[var(--foreground)] dark:hover:text-[var(--foreground)] text-xs font-semibold cursor-pointer flex items-center gap-1 shrink-0"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset</span>
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* ── Products Table ── */}
       {isPending ? (
