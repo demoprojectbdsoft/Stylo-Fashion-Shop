@@ -22,10 +22,24 @@ export const dynamic = "force-dynamic";
 
 interface VendorPageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ q?: string; sort?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; sort?: string; filter?: string; page?: string }>;
 }
 
 const SORT_KEYS = ["", "featured", "rating", "price_asc", "price_desc"];
+
+/**
+ * The shelf's filter tokens, each mapped to the one question the API answers.
+ * An unknown token is dropped rather than guessed at, so a hand-edited link
+ * shows the whole shelf instead of some other shop's rules.
+ */
+const FILTER_QUERIES: Record<
+  string,
+  { inStock?: boolean; hasOffer?: boolean; minRating?: number }
+> = {
+  in_stock: { inStock: true },
+  offer: { hasOffer: true },
+  top_rated: { minRating: 4 },
+};
 
 /** The shop name as a page title, read from the row the render is about to use. */
 export async function generateMetadata({ params }: VendorPageProps): Promise<Metadata> {
@@ -63,6 +77,7 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
   const page = Math.max(1, Number(query.page) || 1);
   const shelfSearch = (query.q || "").trim();
   const shelfSort = SORT_KEYS.includes(query.sort || "") ? (query.sort as string) : "";
+  const shelfFilter = query.filter && FILTER_QUERIES[query.filter] ? query.filter : "";
 
   const shelfRes = await getProducts({
     storeSlug: store.slug,
@@ -70,6 +85,7 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
     sort: shelfSort || undefined,
     page,
     limit: 12,
+    ...FILTER_QUERIES[shelfFilter],
   });
 
   const products = shelfRes?.data?.products ?? [];
@@ -275,7 +291,7 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
           storeSlug={store.slug}
           initialProducts={products}
           initialPagination={pagination}
-          initialFilters={{ search: shelfSearch, sort: shelfSort }}
+          initialFilters={{ search: shelfSearch, sort: shelfSort, filter: shelfFilter }}
         />
       </div>
     </section>
