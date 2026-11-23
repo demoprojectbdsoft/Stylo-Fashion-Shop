@@ -709,18 +709,20 @@ export default function ProductsClient({
 
             {(
               [
-                { id: "all", label: "All stock" },
                 { id: "true", label: "In stock" },
                 { id: "false", label: "Out of stock" },
               ] as const
             ).map((st) => {
               const active = currentStock === st.id;
+              // No "All stock" pill: the strip opens on every row, so pressing
+              // the live chip a second time is how the desk clears it.
               return (
                 <button
                   key={st.id}
                   type="button"
                   aria-pressed={active}
-                  onClick={() => updateParams({ inStock: st.id === "all" ? undefined : st.id })}
+                  title={active ? "Show every listing again" : undefined}
+                  onClick={() => updateParams({ inStock: active ? undefined : st.id })}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                     active
                       ? "bg-primary text-white shadow-xs"
