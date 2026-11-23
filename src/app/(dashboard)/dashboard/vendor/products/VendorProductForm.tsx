@@ -33,9 +33,10 @@ import { formatTaka, getVendorProductStatusStyle } from "@/lib/vendorProductStat
  * The product editor, shared by "Add product" and every edit afterwards.
  *
  * The form mirrors what the API accepts and nothing more: ownership, slug,
- * featured placement and the vendor id are decided on the server. Saving keeps
- * the answers as they are; submitting files them for review, and only an
- * admin's approval puts the listing on the shelf.
+ * featured placement and the vendor id are decided on the server. A save never
+ * publishes — a new listing lands in the review queue, and only an admin's
+ * approval puts it on the shelf. An edit keeps the row's status unless the
+ * seller files a rejected listing for review again.
  */
 
 interface VendorProductFormProps {
@@ -148,7 +149,7 @@ export default function VendorProductForm({
   });
 
   const [isVisible, setIsVisible] = useState(product?.isVisible !== false);
-  const [saving, setSaving] = useState<"submit" | "draft" | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const visibleSubs = useMemo(
     () =>
@@ -230,21 +231,27 @@ export default function VendorProductForm({
     return true;
   };
 
-  const save = async (intent: "submit" | "draft") => {
+  /**
+   * Saves the answers. A new listing is always a submission — it lands in the
+   * review queue, and only the desk's approval puts it on the shelf. An edit
+   * keeps the row's status, so `submit` is only sent when a rejected listing is
+   * filed for review again in the same move.
+   */
+  const save = async (submit = false) => {
     if (saving) return;
     if (!validate()) return;
 
-    setSaving(intent);
+    setSaving(true);
     try {
       const payload = buildPayload();
 
       const res =
         mode === "create"
-          ? await createVendorProduct(payload, intent === "submit")
-          : await updateVendorProduct(product!._id, {
-              ...payload,
-              status: intent === "submit" ? "pending_review" : undefined,
-            });
+          ? await createVendorProduct(payload)
+          : await updateVendorProduct(
+              product!._id,
+              submit ? { ...payload, status: "pending_review" } : payload
+            );
 
       if (res?.success === false) {
         toast.error(res.message || "The product could not be saved");
@@ -252,16 +259,16 @@ export default function VendorProductForm({
       }
 
       toast.success(
-        intent === "submit"
+        mode === "create" || submit
           ? "Submitted for review — the store team will take a look."
-          : "Saved. Submit it whenever you are ready."
+          : "Product saved."
       );
       router.push("/dashboard/vendor/products");
       router.refresh();
     } catch (err) {
       toast.error((err as Error).message || "An error occurred");
     } finally {
-      setSaving(null);
+      setSaving(false);
     }
   };
 
@@ -643,69 +650,42 @@ export default function VendorProductForm({
           </Section>
 
           <div className="space-y-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-4 shadow-2xs">
-            {mode === "create" ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => save("draft")}
-                  disabled={saving !== null}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--border-color)] px-3 py-2.5 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-60 cursor-pointer"
-                >
-                  {saving === "draft" ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Save className="h-3.5 w-3.5" />
-                  )}
-                  Save as draft
-                </button>
-                <button
-                  type="button"
-                  onClick={() => save("submit")}
-                  disabled={saving !== null}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-3 py-2.5 text-[11px] font-bold text-[var(--on-grad-text)] shadow-xs disabled:opacity-60 cursor-pointer"
-                >
-                  {saving === "submit" ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Check className="h-3.5 w-3.5" />
-                  )}
-                  Submit for review
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => save("draft")}
-                  disabled={saving !== null}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-3 py-2.5 text-[11px] font-bold text-[var(--on-grad-text)] shadow-xs disabled:opacity-60 cursor-pointer"
-                >
-                  {saving === "draft" ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Save className="h-3.5 w-3.5" />
-                  )}
-                  Save changes
-                </button>
+            <button
+              type="button"
+              onClick={() => save()}
+              disabled={saving}
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-3 py-2.5 text-[11px] font-bold text-[var(--on-grad-text)] shadow-xs disabled:opacity-60 cursor-pointer"
+            >
+              {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="h-3.5 w-3.5" />
+              )}
+              {mode === "create" ? "Submit for review" : "Save changes"}
+            </button>
 
-                {(product?.vendorProductStatus === "draft" ||
-                  product?.vendorProductStatus === "rejected") && (
-                  <button
-                    type="button"
-                    onClick={() => save("submit")}
-                    disabled={saving !== null}
-                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--border-color)] px-3 py-2.5 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-60 cursor-pointer"
-                  >
-                    {saving === "submit" ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Check className="h-3.5 w-3.5" />
-                    )}
-                    Submit for review
-                  </button>
+            {(product?.vendorProductStatus === "draft" ||
+              product?.vendorProductStatus === "rejected") && (
+              <button
+                type="button"
+                onClick={() => save(true)}
+                disabled={saving}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--border-color)] px-3 py-2.5 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-60 cursor-pointer"
+              >
+                {saving ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Check className="h-3.5 w-3.5" />
                 )}
-              </>
+                Submit for review
+              </button>
             )}
+
+            <p className="text-[10px] leading-relaxed text-[var(--foreground-muted)]">
+              {mode === "create"
+                ? "Every listing waits for the store team's review, and goes live once it is approved."
+                : "A rejected listing stays rejected until you submit it for review again."}
+            </p>
           </div>
         </div>
       </div>

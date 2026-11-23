@@ -61,19 +61,31 @@ const SORT_OPTIONS = [
  * Platform stock carries no vendor status and is always live, so it only shows
  * under "All". "Live" answers for the sold-out rows too — an approved listing
  * is live whether or not it has units, and the Stock column is where the desk
- * reads which ones are empty — so there is no separate sold-out tab.
+ * reads which ones are empty — so there is no separate sold-out tab. There is
+ * no drafts tab either: a saved listing enters the review queue directly.
  */
 const LISTING_STATUS_OPTIONS = [
   { id: "all", label: "All listings" },
   { id: "pending_review", label: "Review" },
   { id: "published", label: "Live" },
-  { id: "draft", label: "Drafts" },
   { id: "rejected", label: "Rejected" },
   { id: "archived", label: "Archived" },
 ];
 
 /** The statuses worth a pill in the row: live rows already say so in Stock. */
 const REVIEW_STATUSES = ["draft", "pending_review", "rejected", "archived"];
+
+/**
+ * Whether a row is a seller's stock rather than the store's own.
+ *
+ * Archiving is the owner's shelf move. The store's desk keeps what the store
+ * itself sells, and a seller's row leaves the shop through the review decision
+ * that owns it, so the archive control is not offered here.
+ */
+function isSellerListing(product: Product) {
+  const owner = product as Product & { vendorId?: string | null };
+  return Boolean(product.seller || owner.vendorId);
+}
 
 function generateSlug(text: string): string {
   return text
@@ -493,6 +505,12 @@ export default function ProductsClient({
   const handleToggleArchive = async (p: Product) => {
     const id = p.id || (p as any)._id;
     if (!id || archivingId) return;
+
+    // A seller's row is answered on the review desk, never shelved from here.
+    if (isSellerListing(p)) {
+      toast.error("A seller's listing is managed from the review queue.");
+      return;
+    }
 
     const isArchived = (p as any).vendorProductStatus === "archived";
     setArchivingId(id);
@@ -993,27 +1011,29 @@ export default function ProductsClient({
                               </button>
                             </>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleArchive(product)}
-                            disabled={archivingId === (product.id || (product as any)._id)}
-                            className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors cursor-pointer bg-transparent ${
-                              (product as any).vendorProductStatus === "archived"
-                                ? "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
-                                : "text-[var(--foreground-muted)] hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50"
-                            }`}
-                            title={
-                              (product as any).vendorProductStatus === "archived"
-                                ? "Unarchive Product"
-                                : "Archive Product"
-                            }
-                          >
-                            {(product as any).vendorProductStatus === "archived" ? (
-                              <ArchiveRestore className="w-[18px] h-[18px]" />
-                            ) : (
-                              <Archive className="w-[18px] h-[18px]" />
-                            )}
-                          </button>
+                          {!isSellerListing(product) && (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleArchive(product)}
+                              disabled={archivingId === (product.id || (product as any)._id)}
+                              className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors cursor-pointer bg-transparent ${
+                                (product as any).vendorProductStatus === "archived"
+                                  ? "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                                  : "text-[var(--foreground-muted)] hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50"
+                              }`}
+                              title={
+                                (product as any).vendorProductStatus === "archived"
+                                  ? "Unarchive Product"
+                                  : "Archive Product"
+                              }
+                            >
+                              {(product as any).vendorProductStatus === "archived" ? (
+                                <ArchiveRestore className="w-[18px] h-[18px]" />
+                              ) : (
+                                <Archive className="w-[18px] h-[18px]" />
+                              )}
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleOpenDelete(product)}

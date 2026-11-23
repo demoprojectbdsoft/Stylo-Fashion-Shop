@@ -278,7 +278,7 @@ export default async function VendorOverviewPage() {
 
           <p className="mt-3 text-[10px] leading-relaxed text-[var(--foreground-muted)]">
             {planIsLive
-              ? "Limits are counted from publishing, not from drafts. Archiving a product frees a slot immediately."
+              ? "Limits are counted from approved listings only. Archiving a product frees a slot immediately."
               : "Your period is not active, so publishing is on hold. Everything you already have is kept — renew from Plan & billing to publish again."}
           </p>
         </section>

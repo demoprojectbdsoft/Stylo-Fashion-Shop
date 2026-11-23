@@ -24,7 +24,6 @@ import {
   Link2,
   Loader2,
   Shield,
-  Save,
   Send,
 } from "lucide-react";
 import { Category, SubCategory } from "@/types";
@@ -134,9 +133,6 @@ export default function AddProductClient({
   const [galleryUrlInput, setGalleryUrlInput] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Which footer button was used. A vendor can keep the answers as a draft or
-  // file them for review; the admin's single button is unaffected.
-  const [intent, setIntent] = useState<"draft" | "submit">("draft");
 
   // ── Filtered subcategories for the selected category ───────────────────────
   const availableSubCategories = useMemo(() => {
@@ -341,39 +337,34 @@ export default function AddProductClient({
       // waits for the admin desk instead of going live. The featured flag is
       // not part of a listing a seller owns, so it is left out of this payload.
       const result = isVendor
-        ? await createVendorProduct(
-            {
-              title: payload.title,
-              slug: payload.slug,
-              categoryId: payload.categoryId,
-              subCategoryIds: payload.subCategoryIds,
-              price: payload.price,
-              originalPrice: payload.originalPrice ?? null,
-              investPrice: payload.investPrice,
-              stockQuantity: payload.stockQuantity,
-              sku: payload.sku,
-              brand: Object.entries(specObj).find(
-                ([key]) => key.toLowerCase() === "brand"
-              )?.[1],
-              description: payload.description,
-              image: payload.image,
-              additionalImages: payload.additionalImages,
-              specifications: payload.specifications,
-              offerEndDate: payload.offerEndDate ?? null,
-              warrantyPeriodMonths: payload.warrantyPeriodMonths,
-              warrantyType: payload.warrantyType,
-              warrantyTerms: payload.warrantyTerms,
-            },
-            intent === "submit"
-          )
+        ? await createVendorProduct({
+            title: payload.title,
+            slug: payload.slug,
+            categoryId: payload.categoryId,
+            subCategoryIds: payload.subCategoryIds,
+            price: payload.price,
+            originalPrice: payload.originalPrice ?? null,
+            investPrice: payload.investPrice,
+            stockQuantity: payload.stockQuantity,
+            sku: payload.sku,
+            brand: Object.entries(specObj).find(
+              ([key]) => key.toLowerCase() === "brand"
+            )?.[1],
+            description: payload.description,
+            image: payload.image,
+            additionalImages: payload.additionalImages,
+            specifications: payload.specifications,
+            offerEndDate: payload.offerEndDate ?? null,
+            warrantyPeriodMonths: payload.warrantyPeriodMonths,
+            warrantyType: payload.warrantyType,
+            warrantyTerms: payload.warrantyTerms,
+          })
         : await addProduct(payload);
 
       if (result?.success) {
         toast.success(
           isVendor
-            ? intent === "submit"
-              ? "Listing submitted — the store team will review it."
-              : "Draft saved. Submit it whenever you are ready."
+            ? "Listing submitted — the store team will review it."
             : "Product added successfully!"
         );
         router.push(isVendor ? "/dashboard/vendor/products" : "/dashboard/admin/products");
@@ -425,7 +416,7 @@ export default function AddProductClient({
         </h1>
         <p className="text-xs md:text-sm text-[var(--foreground-muted)] mt-1">
           {isVendor
-            ? "Your listing stays a draft until you submit it, and goes live once the store team approves it."
+            ? "A saved listing goes to the store team's review queue, and only an approval puts it on the shelf."
             : "Create a product entry mapped to your standard Product interface type."}
         </p>
       </div>
@@ -1137,28 +1128,16 @@ export default function AddProductClient({
             {/* ── Save buttons ── */}
             {isVendor ? (
               <div className="space-y-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Button
-                    type="submit"
-                    onClick={() => setIntent("draft")}
-                    isDisabled={isSubmitting || categories.length === 0}
-                    className="w-full border border-[var(--border-color)] bg-[var(--surface-elevated)] text-[var(--foreground)] font-bold text-xs py-6 rounded-2xl inline-flex items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Save className="w-4 h-4" />
-                    {isSubmitting && intent === "draft" ? "Saving Draft..." : "Save as draft"}
-                  </Button>
-                  <Button
-                    type="submit"
-                    onClick={() => setIntent("submit")}
-                    isDisabled={isSubmitting || categories.length === 0}
-                    className="w-full bg-primary hover:bg-primary-hover text-white font-bold text-xs py-6 rounded-2xl shadow-md shadow-primary/20 inline-flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Send className="w-4 h-4" />
-                    {isSubmitting && intent === "submit" ? "Submitting..." : "Submit for review"}
-                  </Button>
-                </div>
+                <Button
+                  type="submit"
+                  isDisabled={isSubmitting || categories.length === 0}
+                  className="w-full bg-primary hover:bg-primary-hover text-white font-bold text-xs py-6 rounded-2xl shadow-md shadow-primary/20 inline-flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Send className="w-4 h-4" />
+                  {isSubmitting ? "Submitting..." : "Submit for review"}
+                </Button>
                 <p className="text-[10px] text-[var(--foreground-muted)] text-center">
-                  A draft is yours alone. A submitted listing goes live once the store team approves it.
+                  Every listing waits for the store team's review, and goes live once it is approved.
                 </p>
               </div>
             ) : (

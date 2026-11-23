@@ -198,9 +198,9 @@ export const updateMyVendorProfile = async (data: VendorProfileUpdate) => {
 };
 
 /**
- * Saves a new listing — always as a draft, or straight into the review queue
- * when the seller submits it in the same call. Nothing here can publish: the
- * shop only shows a row an admin has approved.
+ * Files a new listing for review. There is no draft stop: a saved listing is a
+ * submission, and nothing here can publish — the shop only shows a row an admin
+ * has approved.
  */
 export const createVendorProduct = async (
   data: Partial<VendorProductDraft> & {
@@ -208,14 +208,13 @@ export const createVendorProduct = async (
     categoryId: string;
     price: number;
     image: string;
-  },
-  submit: boolean
+  }
 ) => {
   const user = await getUserSession();
   if (!isVendorRole(user)) {
     return { success: false as const, message: "Vendor access required." };
   }
-  return serverMutation("/vendor-products", { ...data, submit }, "POST");
+  return serverMutation("/vendor-products", data, "POST");
 };
 
 /** Edits one of the vendor's own products; the id is checked against the token. */
@@ -239,7 +238,7 @@ export const archiveVendorProduct = async (productId: string) => {
   return serverMutation(`/vendor-products/${productId}`, {}, "DELETE");
 };
 
-/** Unarchives a product and restores it to drafts. */
+/** Unarchives a product by filing it for review again. */
 export const unarchiveVendorProduct = async (productId: string) => {
   const user = await getUserSession();
   if (!isVendorRole(user)) {
@@ -260,15 +259,6 @@ export const submitVendorProduct = async (productId: string) => {
     return { success: false as const, message: "Vendor access required." };
   }
   return serverMutation(`/vendor-products/${productId}`, { status: "pending_review" }, "PATCH");
-};
-
-/** Pulls a submission back to drafts while it is still waiting for review. */
-export const withdrawVendorProduct = async (productId: string) => {
-  const user = await getUserSession();
-  if (!isVendorRole(user)) {
-    return { success: false as const, message: "Vendor access required." };
-  }
-  return serverMutation(`/vendor-products/${productId}`, { status: "draft" }, "PATCH");
 };
 
 /**

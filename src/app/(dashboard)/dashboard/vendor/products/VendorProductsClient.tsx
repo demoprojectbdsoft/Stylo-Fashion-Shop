@@ -26,7 +26,6 @@ import {
   Layers,
   Sparkle,
   Send,
-  Undo2,
 } from "lucide-react";
 import {
   Modal,
@@ -45,7 +44,6 @@ import {
   submitVendorProduct,
   unarchiveVendorProduct,
   updateVendorProduct,
-  withdrawVendorProduct,
 } from "@/lib/action/vendor";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { recalcPricing } from "@/lib/pricing";
@@ -80,12 +78,12 @@ interface VendorProductsClientProps {
 }
 
 /**
- * The strip's tabs. "Published" is the live shelf, sold-out rows included —
- * the stock chips below ask that question on their own.
+ * The strip's tabs. There is no drafts tab: a saved listing is a submission,
+ * and "Published" is the live shelf, sold-out rows included — the stock chips
+ * below ask that question on their own.
  */
 const TABS = [
   { key: "all", label: "All" },
-  { key: "draft", label: "Drafts" },
   { key: "pending_review", label: "In review" },
   { key: "published", label: "Published" },
   { key: "rejected", label: "Rejected" },
@@ -385,7 +383,7 @@ export default function VendorProductsClient({
         toast.error(res.message || "The product could not be unarchived");
         return;
       }
-      toast.success("Product moved back to drafts");
+      toast.success("Product filed for review again");
       router.refresh();
     } catch (err) {
       toast.error((err as Error).message || "An error occurred");
@@ -417,26 +415,6 @@ export default function VendorProductsClient({
     }
   };
 
-  /** Pulls a submission back while the review desk has not decided yet. */
-  const withdraw = async (product: VendorProduct) => {
-    if (reviewing) return;
-
-    setReviewing(product._id);
-    try {
-      const res = await withdrawVendorProduct(product._id);
-      if (res?.success === false) {
-        toast.error(res.message || "The submission could not be withdrawn");
-        return;
-      }
-      toast.success("Moved back to drafts");
-      router.refresh();
-    } catch (err) {
-      toast.error((err as Error).message || "An error occurred");
-    } finally {
-      setReviewing(null);
-    }
-  };
-
   const usagePercent = plan.maxProducts > 0 ? Math.min(100, Math.round((plan.used / plan.maxProducts) * 100)) : 100;
 
   return (
@@ -445,7 +423,7 @@ export default function VendorProductsClient({
         <div>
           <h1 className="text-lg font-bold text-[var(--foreground)]">Products</h1>
           <p className="text-[11px] text-[var(--foreground-muted)]">
-            Drafts wait for you, submissions wait for the store team, and only live products count
+            Every listing waits for the store team's review, and only approved products count
             against your plan.
           </p>
         </div>
@@ -678,30 +656,13 @@ export default function VendorProductsClient({
                       </button>
                     )}
 
-                    {product.vendorProductStatus === "pending_review" && (
-                      <button
-                        type="button"
-                        onClick={() => withdraw(product)}
-                        disabled={reviewing === product._id}
-                        className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2 py-1.5 text-[10px] font-semibold text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)] disabled:opacity-50 cursor-pointer"
-                        title="Pull the submission back to drafts"
-                      >
-                        {reviewing === product._id ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Undo2 className="h-3 w-3" />
-                        )}
-                        Withdraw
-                      </button>
-                    )}
-
                     {product.vendorProductStatus === "archived" ? (
                       <button
                         type="button"
                         onClick={() => unarchive(product)}
                         disabled={archiving === product._id}
                         className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/30 px-2 py-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-50 cursor-pointer"
-                        title="Restore it as a draft you can submit again"
+                        title="File it for review again"
                       >
                         {archiving === product._id ? (
                           <Loader2 className="h-3 w-3 animate-spin" />

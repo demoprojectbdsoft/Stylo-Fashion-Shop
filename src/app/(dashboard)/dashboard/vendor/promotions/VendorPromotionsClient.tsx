@@ -310,8 +310,9 @@ export default function VendorPromotionsClient({
                 Choose the listing to pin
               </p>
               <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--foreground-muted)]">
-                Only your own listings that buyers can reach are offered — a draft
-                or an archived row would use a slot on something nobody can find.
+                Only your own listings that buyers can reach are offered — a row
+                still in review or an archived one would use a slot on something
+                nobody can find.
                 {allowance.durationDays > 0 &&
                   ` It stays up for ${allowance.durationDays} day${allowance.durationDays === 1 ? "" : "s"}.`}
               </p>
