@@ -1,16 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Loader2, PackageSearch, Search } from "lucide-react";
 import ProductCard from "@/components/shared/ProductCard";
-import ProductCardSkeleton from "@/components/shared/ProductCardSkeleton";
-import { getProducts } from "@/lib/api/products";
 import type { Product } from "@/types";
 
 interface VendorShelfProps {
   storeSlug: string;
-  /** The first page, rendered by the server before any query runs. */
+  /** The page's rows, already narrowed and ordered by the query in the URL. */
   initialProducts: Product[];
   initialPagination: { page: number; limit: number; total: number; totalPages: number };
   initialFilters: { search: string; sort: string };
@@ -27,10 +25,14 @@ const SORTS = [
 /**
  * One vendor's shelf.
  *
- * The page is `/vendors/<slug>`, so the shelf lives in the URL's query string
- * (`q`, `sort`, `page`) and refetches through the public products read with
- * `storeSlug` pinned by the server-rendered page — a shopper cannot type a
- * second vendor's slug into this box, because the box never sends one.
+ * The page is `/vendors/<slug>`, so the shelf's whole state — the search, the
+ * sort and the page — lives in that URL's query string. Every control writes
+ * the query and the server reads it back, which means the rows on screen are
+ * always the rows the address names: no second copy of the list to fall out of
+ * step, and a filtered shelf is a link a shopper can share.
+ *
+ * `storeSlug` is pinned by the server-rendered page, so a shopper cannot type a
+ * second vendor's slug into this box — the box never sends one.
  */
 export default function VendorShelf({
   storeSlug,
@@ -39,56 +41,67 @@ export default function VendorShelf({
   initialFilters,
 }: VendorShelfProps) {
   const router = useRouter();
-  const [search, setSearch] = useState(initialFilters.search);
-  const [sort, setSort] = useState(initialFilters.sort);
-  const [page, setPage] = useState(initialPagination.page);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [pagination, setPagination] = useState(initialPagination);
-  const [loading, setLoading] = useState(false);
-  const requestId = useRef(0);
+  const [isPending, startTransition] = useTransition();
+  const [draft, setDraft] = useState(initialFilters.search);
+  const [settled, setSettled] = useState(initialFilters.search);
 
-  // A slow response must not overwrite a newer one, so every read carries a
-  // serial and stale answers are dropped on arrival.
-  const load = useCallback(async () => {
-    const id = ++requestId.current;
-    setLoading(true);
-    const res = await getProducts({
-      storeSlug,
-      search: search || undefined,
-      sort: sort || undefined,
-      page,
-      limit: 12,
-    });
-    if (id !== requestId.current) return;
-    setProducts(res?.data?.products ?? []);
-    setPagination(
-      res?.data?.pagination ?? { page: 1, limit: 12, total: 0, totalPages: 1 }
-    );
-    setLoading(false);
-  }, [storeSlug, search, sort, page]);
+  // The field follows the query the server rendered, so a back button or a
+  // shared link rewrites the box as well as the rows.
+  if (initialFilters.search !== settled) {
+    setSettled(initialFilters.search);
+    setDraft(initialFilters.search);
+  }
 
-  // The first render already shows the server's rows; only later changes query.
-  const mounted = useRef(false);
-  useEffect(() => {
-    if (!mounted.current) {
-      mounted.current = true;
-      return;
-    }
-    const timer = setTimeout(load, 300);
-    return () => clearTimeout(timer);
-  }, [load]);
+  // Typing is debounced; leaving the page before the timer fires must not
+  // navigate the next one.
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    []
+  );
 
-  // Keep the URL honest about what is on screen, so a shelf view can be shared.
-  useEffect(() => {
-    if (!mounted.current) return;
+  /**
+   * Writes the shelf's query and lets the server answer it.
+   *
+   * A value left out of `next` keeps what the page currently shows, so the sort
+   * chips never disturb the search and paging never disturbs either.
+   */
+  const go = (next: { q?: string; sort?: string; page?: number }) => {
+    // An explicit control wins over a search still waiting on its timer, so a
+    // sort clicked right after typing keeps the new sort instead of being
+    // overwritten by the debounce's older closure.
+    if (timer.current) clearTimeout(timer.current);
+
+    const q = next.q !== undefined ? next.q : draft;
+    const sort = next.sort !== undefined ? next.sort : initialFilters.sort;
+    const page = next.page !== undefined ? next.page : initialPagination.page;
+
     const params = new URLSearchParams();
-    if (search) params.set("q", search);
+    if (q.trim()) params.set("q", q.trim());
     if (sort) params.set("sort", sort);
     if (page > 1) params.set("page", String(page));
-    router.replace(`/vendors/${storeSlug}${params.toString() ? `?${params.toString()}` : ""}`, {
-      scroll: false,
+
+    const qs = params.toString();
+    startTransition(() => {
+      router.replace(`/vendors/${storeSlug}${qs ? `?${qs}` : ""}`, { scroll: false });
     });
-  }, [search, sort, page, storeSlug, router]);
+  };
+
+  const changeSearch = (value: string) => {
+    setDraft(value);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => go({ q: value, page: 1 }), 350);
+  };
+
+  const clearSearch = () => {
+    setDraft("");
+    go({ q: "", page: 1 });
+  };
+
+  const { page, total, totalPages } = initialPagination;
+  const searching = Boolean(initialFilters.search);
 
   return (
     <div className="space-y-5">
@@ -100,11 +113,8 @@ export default function VendorShelf({
           </div>
           <input
             type="text"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
+            value={draft}
+            onChange={(e) => changeSearch(e.target.value)}
             placeholder="Search this vendor's shelf..."
             className="w-full pl-10 pr-4 py-2.5 bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-[var(--foreground-muted)]"
           />
@@ -114,12 +124,9 @@ export default function VendorShelf({
             <button
               key={option.key || "default"}
               type="button"
-              onClick={() => {
-                setSort(option.key);
-                setPage(1);
-              }}
+              onClick={() => go({ sort: option.key, page: 1 })}
               className={`px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-colors cursor-pointer ${
-                sort === option.key
+                initialFilters.sort === option.key
                   ? "bg-brand-gradient text-[var(--on-grad-text)] border-transparent"
                   : "bg-[var(--surface-elevated)] text-[var(--foreground-muted)] border-[var(--border-color)] hover:text-[var(--foreground)]"
               }`}
@@ -132,9 +139,9 @@ export default function VendorShelf({
 
       <div className="flex items-center justify-between text-xs text-[var(--foreground-muted)]">
         <span>
-          {pagination.total} {pagination.total === 1 ? "listing" : "listings"} in this shop
+          {total} {total === 1 ? "listing" : "listings"} in this shop
         </span>
-        {loading && (
+        {isPending && (
           <span className="inline-flex items-center gap-1.5">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             Refreshing
@@ -143,26 +150,23 @@ export default function VendorShelf({
       </div>
 
       {/* ── Grid ── */}
-      {products.length === 0 && !loading ? (
+      {initialProducts.length === 0 && !isPending ? (
         <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-10 text-center space-y-3 shadow-2xs">
           <div className="w-12 h-12 mx-auto rounded-full bg-[var(--surface-alt)] flex items-center justify-center">
             <PackageSearch className="w-5 h-5 text-[var(--foreground-muted)]" />
           </div>
           <h3 className="text-sm font-bold text-[var(--foreground)]">
-            {search ? "Nothing here matches that" : "This vendor has nothing on the shelf yet"}
+            {searching ? "Nothing here matches that" : "This vendor has nothing on the shelf yet"}
           </h3>
           <p className="text-xs text-[var(--foreground-muted)] max-w-sm mx-auto">
-            {search
+            {searching
               ? "Try a shorter word, or clear the search to see everything the shop sells."
               : "The shop is trading, but it has no published listings right now. Check back soon."}
           </p>
-          {search && (
+          {searching && (
             <button
               type="button"
-              onClick={() => {
-                setSearch("");
-                setPage(1);
-              }}
+              onClick={clearSearch}
               className="px-4 py-2 rounded-xl bg-brand-gradient text-[var(--on-grad-text)] text-[11px] font-bold cursor-pointer"
             >
               Clear the search
@@ -171,30 +175,27 @@ export default function VendorShelf({
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {(loading && products.length === 0
-            ? (Array.from({ length: 8 }) as unknown as Product[])
-            : products
-          ).map((product, index) =>
-            product ? (
-              <ProductCard key={product.id || product._id || index} product={product} hasRightBorder={false} />
-            ) : (
-              <ProductCardSkeleton key={`skeleton-${index}`} hasRightBorder={false} />
-            )
-          )}
+          {initialProducts.map((product, index) => (
+            <ProductCard
+              key={product.id || product._id || index}
+              product={product}
+              hasRightBorder={false}
+            />
+          ))}
         </div>
       )}
 
       {/* ── Paging ── */}
-      {pagination.totalPages > 1 && (
+      {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-[10px] text-[var(--foreground-muted)]">
-            Page {pagination.page} of {pagination.totalPages}
+            Page {page} of {totalPages}
           </p>
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              disabled={page <= 1 || loading}
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={page <= 1 || isPending}
+              onClick={() => go({ page: Math.max(1, page - 1) })}
               className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2.5 py-1.5 text-[10px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-40 cursor-pointer"
             >
               <ChevronLeft className="h-3 w-3" />
@@ -202,8 +203,8 @@ export default function VendorShelf({
             </button>
             <button
               type="button"
-              disabled={page >= pagination.totalPages || loading}
-              onClick={() => setPage((current) => current + 1)}
+              disabled={page >= totalPages || isPending}
+              onClick={() => go({ page: page + 1 })}
               className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2.5 py-1.5 text-[10px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-40 cursor-pointer"
             >
               Next
