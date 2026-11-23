@@ -13,6 +13,8 @@ interface AdminProductsPageProps {
     sort?: string;
     page?: string;
     limit?: string;
+    /** The desk's listing-status filter, forwarded to the admin read. */
+    vendorStatus?: string;
   }>;
 }
 

@@ -186,6 +186,14 @@ export interface Product {
   description?: string;
   specifications?: Record<string, string>;
   isFeatured?: boolean;
+  /**
+   * A seller's own lifecycle, present only on rows a vendor listed. The public
+   * catalogue serves nothing outside `published` / `out_of_stock`, so a desk
+   * reads these to see what is still waiting in the review queue.
+   */
+  vendorProductStatus?: string;
+  /** Why a submission was sent back; shown to the seller until they resubmit. */
+  vendorRejectionReason?: string;
   warrantyPeriodMonths?: number;
   warrantyType?: "manufacturer-warranty" | "seller-warranty" | "extended-warranty" | "other" | "none";
   warrantyTerms?: string;

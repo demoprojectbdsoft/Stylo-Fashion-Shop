@@ -2,12 +2,12 @@
  * One palette for every vendor product badge.
  *
  * The catalogue list, the editor and the storefront preview all name the same
- * six states, so the wording and colours live once. An unknown state falls back
- * to the neutral "draft" look instead of rendering an unreadable pill.
+ * states, so the wording and colours live once. An unknown state falls back to
+ * the neutral look instead of rendering an unreadable pill.
  */
 
 import type { LucideIcon } from "lucide-react";
-import { Archive, CheckCircle2, Clock, PackageX, XCircle } from "lucide-react";
+import { Archive, CheckCircle2, Clock, FileText, PackageX, XCircle } from "lucide-react";
 
 export interface VendorProductStatusStyle {
   label: string;
@@ -18,6 +18,14 @@ export interface VendorProductStatusStyle {
 }
 
 const STYLES: Record<string, VendorProductStatusStyle> = {
+  draft: {
+    label: "Draft",
+    description: "Only you can see this. Submit it when it is ready for review.",
+    badge:
+      "bg-slate-100 text-slate-600 border border-slate-300 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/30",
+    dot: "bg-slate-400 dark:bg-slate-300",
+    icon: FileText,
+  },
   pending_review: {
     label: "Pending review",
     description: "The store team is checking this product.",

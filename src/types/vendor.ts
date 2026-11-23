@@ -361,6 +361,10 @@ export interface VendorProduct {
   isVisible?: boolean;
   isFeatured?: boolean;
   vendorProductStatus?: string;
+  /** The admin's words when a submission was sent back; the seller fixes it. */
+  vendorRejectionReason?: string;
+  /** When the seller last filed it for review. */
+  submittedAt?: string | null;
   categoryId?: { name: string; slug: string; _id?: string; id?: string } | string;
   subCategoryIds?: { name: string; slug: string; _id?: string; id?: string }[];
   rating?: number;

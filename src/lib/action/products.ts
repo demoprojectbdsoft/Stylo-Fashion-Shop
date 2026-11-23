@@ -24,3 +24,17 @@ export const unarchiveProduct = async (id: string) => {
   return serverMutation(`/products/${id}/unarchive`, {}, "PATCH");
 };
 
+/**
+ * The review desk's decision on a seller's listing.
+ *
+ * Approving is the only way a listing reaches the shop; a rejection must carry
+ * the reason the seller needs in order to fix it and resubmit.
+ */
+export const reviewVendorProduct = async (
+  id: string,
+  decision: "approve" | "reject",
+  reason?: string
+) => {
+  return serverMutation(`/products/${id}/review`, { decision, reason }, "PATCH");
+};
+

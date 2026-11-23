@@ -33,9 +33,9 @@ import { formatTaka, getVendorProductStatusStyle } from "@/lib/vendorProductStat
  * The product editor, shared by "Add product" and every edit afterwards.
  *
  * The form mirrors what the API accepts and nothing more: ownership, slug,
- * featured placement and the vendor id are decided on the server. "Save draft"
- * never touches the plan limit; publish does, so a vendor at their limit is told
- * before the request rather than by a failed one.
+ * featured placement and the vendor id are decided on the server. Saving keeps
+ * the answers as they are; submitting files them for review, and only an
+ * admin's approval puts the listing on the shelf.
  */
 
 interface VendorProductFormProps {
@@ -148,7 +148,7 @@ export default function VendorProductForm({
   });
 
   const [isVisible, setIsVisible] = useState(product?.isVisible !== false);
-  const [saving, setSaving] = useState<"publish" | "save" | null>(null);
+  const [saving, setSaving] = useState<"submit" | "draft" | null>(null);
 
   const visibleSubs = useMemo(
     () =>
@@ -230,16 +230,9 @@ export default function VendorProductForm({
     return true;
   };
 
-  const save = async (intent: "publish" | "save") => {
+  const save = async (intent: "submit" | "draft") => {
     if (saving) return;
     if (!validate()) return;
-
-    if (intent === "publish" && plan.used >= plan.maxProducts && product?.vendorProductStatus !== "published") {
-      toast.warning(
-        `Your ${plan.name} plan allows ${plan.maxProducts} live products. Archive one or upgrade to publish.`
-      );
-      return;
-    }
 
     setSaving(intent);
     try {
@@ -247,13 +240,10 @@ export default function VendorProductForm({
 
       const res =
         mode === "create"
-          ? await createVendorProduct(payload, true)
+          ? await createVendorProduct(payload, intent === "submit")
           : await updateVendorProduct(product!._id, {
               ...payload,
-              status:
-                intent === "publish"
-                  ? "published"
-                  : undefined,
+              status: intent === "submit" ? "pending_review" : undefined,
             });
 
       if (res?.success === false) {
@@ -262,9 +252,9 @@ export default function VendorProductForm({
       }
 
       toast.success(
-        intent === "publish"
-          ? "Product published"
-          : "Product saved"
+        intent === "submit"
+          ? "Submitted for review — the store team will take a look."
+          : "Saved. Submit it whenever you are ready."
       );
       router.push("/dashboard/vendor/products");
       router.refresh();
@@ -291,7 +281,7 @@ export default function VendorProductForm({
           </h1>
           <p className="text-[11px] text-[var(--foreground-muted)]">
             {mode === "create"
-              ? "Fill in the product details and publish it to your store."
+              ? "Fill in the product details, then keep them as a draft or submit them for review."
               : `Editing ${product?.slug || "this product"}`}
           </p>
         </div>
@@ -657,27 +647,40 @@ export default function VendorProductForm({
               <>
                 <button
                   type="button"
-                  onClick={() => save("publish")}
+                  onClick={() => save("draft")}
+                  disabled={saving !== null}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--border-color)] px-3 py-2.5 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-60 cursor-pointer"
+                >
+                  {saving === "draft" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Save className="h-3.5 w-3.5" />
+                  )}
+                  Save as draft
+                </button>
+                <button
+                  type="button"
+                  onClick={() => save("submit")}
                   disabled={saving !== null}
                   className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-3 py-2.5 text-[11px] font-bold text-[var(--on-grad-text)] shadow-xs disabled:opacity-60 cursor-pointer"
                 >
-                  {saving === "publish" ? (
+                  {saving === "submit" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Check className="h-3.5 w-3.5" />
                   )}
-                  Save and publish
+                  Submit for review
                 </button>
               </>
             ) : (
               <>
                 <button
                   type="button"
-                  onClick={() => save("save")}
+                  onClick={() => save("draft")}
                   disabled={saving !== null}
                   className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-3 py-2.5 text-[11px] font-bold text-[var(--on-grad-text)] shadow-xs disabled:opacity-60 cursor-pointer"
                 >
-                  {saving === "save" ? (
+                  {saving === "draft" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Save className="h-3.5 w-3.5" />
@@ -685,19 +688,20 @@ export default function VendorProductForm({
                   Save changes
                 </button>
 
-                {product?.vendorProductStatus !== "published" && (
+                {(product?.vendorProductStatus === "draft" ||
+                  product?.vendorProductStatus === "rejected") && (
                   <button
                     type="button"
-                    onClick={() => save("publish")}
+                    onClick={() => save("submit")}
                     disabled={saving !== null}
                     className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--border-color)] px-3 py-2.5 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-60 cursor-pointer"
                   >
-                    {saving === "publish" ? (
+                    {saving === "submit" ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
                       <Check className="h-3.5 w-3.5" />
                     )}
-                    Publish
+                    Submit for review
                   </button>
                 )}
               </>

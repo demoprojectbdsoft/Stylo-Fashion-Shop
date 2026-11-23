@@ -26,6 +26,8 @@ import {
   DollarSign,
   Layers,
   Sparkle,
+  Send,
+  Undo2,
 } from "lucide-react";
 import {
   Modal,
@@ -38,7 +40,13 @@ import { toast } from "react-toastify";
 import type { VendorPagination, VendorProduct, VendorProductPlan } from "@/types/vendor";
 import type { Category, SubCategory } from "@/types";
 import { getVendorProductStatusStyle } from "@/lib/vendorProductStatus";
-import { archiveVendorProduct, unarchiveVendorProduct, updateVendorProduct } from "@/lib/action/vendor";
+import {
+  archiveVendorProduct,
+  submitVendorProduct,
+  unarchiveVendorProduct,
+  updateVendorProduct,
+  withdrawVendorProduct,
+} from "@/lib/action/vendor";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { recalcPricing } from "@/lib/pricing";
 import { WARRANTY_TYPE_OPTIONS } from "@/lib/warranty";
@@ -73,8 +81,11 @@ const AVAILABLE_BADGES = [
 
 const TABS = [
   { key: "all", label: "All" },
+  { key: "draft", label: "Drafts" },
+  { key: "pending_review", label: "In review" },
   { key: "published", label: "Published" },
   { key: "out_of_stock", label: "Out of stock" },
+  { key: "rejected", label: "Rejected" },
   { key: "archived", label: "Archived" },
 ];
 
@@ -92,6 +103,9 @@ export default function VendorProductsClient({
   const { formatPrice, currencySymbol } = useSiteSettings();
   const [search, setSearch] = useState(filters.search);
   const [archiving, setArchiving] = useState<string | null>(null);
+  // A review move (submit or withdraw) is its own busy flag, so the archive
+  // buttons stay usable while a submission is in flight.
+  const [reviewing, setReviewing] = useState<string | null>(null);
 
   // ── Edit Modal State ──
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -317,12 +331,55 @@ export default function VendorProductsClient({
         toast.error(res.message || "The product could not be unarchived");
         return;
       }
-      toast.success("Product unarchived and published");
+      toast.success("Product moved back to drafts");
       router.refresh();
     } catch (err) {
       toast.error((err as Error).message || "An error occurred");
     } finally {
       setArchiving(null);
+    }
+  };
+
+  /**
+   * Files a listing for review. The admin desk is the only place that can
+   * publish it, so the seller's job ends here with a submission.
+   */
+  const submitForReview = async (product: VendorProduct) => {
+    if (reviewing) return;
+
+    setReviewing(product._id);
+    try {
+      const res = await submitVendorProduct(product._id);
+      if (res?.success === false) {
+        toast.error(res.message || "The product could not be submitted");
+        return;
+      }
+      toast.success("Submitted for review — the store team will take a look.");
+      router.refresh();
+    } catch (err) {
+      toast.error((err as Error).message || "An error occurred");
+    } finally {
+      setReviewing(null);
+    }
+  };
+
+  /** Pulls a submission back while the review desk has not decided yet. */
+  const withdraw = async (product: VendorProduct) => {
+    if (reviewing) return;
+
+    setReviewing(product._id);
+    try {
+      const res = await withdrawVendorProduct(product._id);
+      if (res?.success === false) {
+        toast.error(res.message || "The submission could not be withdrawn");
+        return;
+      }
+      toast.success("Moved back to drafts");
+      router.refresh();
+    } catch (err) {
+      toast.error((err as Error).message || "An error occurred");
+    } finally {
+      setReviewing(null);
     }
   };
 
@@ -334,7 +391,8 @@ export default function VendorProductsClient({
         <div>
           <h1 className="text-lg font-bold text-[var(--foreground)]">Products</h1>
           <p className="text-[11px] text-[var(--foreground-muted)]">
-            Everything you sell. Published products count against your plan.
+            Drafts wait for you, submissions wait for the store team, and only live products count
+            against your plan.
           </p>
         </div>
 
@@ -363,7 +421,7 @@ export default function VendorProductsClient({
               className="inline-flex items-center gap-1 text-[10px] font-bold text-[var(--brand-flat)] hover:underline"
             >
               <TriangleAlert className="h-3 w-3" />
-              Limit reached — upgrade to publish more
+              Limit reached — free a slot or upgrade before your next listing is approved
             </Link>
           ) : (
             <Link
@@ -480,6 +538,12 @@ export default function VendorProductsClient({
                       {category}
                       {product.sku ? ` · ${product.sku}` : ""} · {stock}
                     </p>
+                    {product.vendorProductStatus === "rejected" && product.vendorRejectionReason ? (
+                      <p className="mt-0.5 flex items-start gap-1 text-[10px] font-medium text-rose-600 dark:text-rose-400">
+                        <TriangleAlert className="mt-px h-3 w-3 shrink-0" />
+                        <span className="line-clamp-2">{product.vendorRejectionReason}</span>
+                      </p>
+                    ) : null}
                   </div>
 
                   <p className="text-xs font-bold text-[var(--foreground)]">{formatPrice(product.price)}</p>
@@ -509,13 +573,48 @@ export default function VendorProductsClient({
                       Edit
                     </button>
 
+                    {(product.vendorProductStatus === "draft" ||
+                      product.vendorProductStatus === "rejected") && (
+                      <button
+                        type="button"
+                        onClick={() => submitForReview(product)}
+                        disabled={reviewing === product._id}
+                        className="inline-flex items-center gap-1 rounded-lg border border-sky-500/30 bg-sky-50/50 dark:bg-sky-950/30 px-2 py-1.5 text-[10px] font-semibold text-sky-600 dark:text-sky-400 transition-colors hover:bg-sky-100 dark:hover:bg-sky-900/40 disabled:opacity-50 cursor-pointer"
+                        title="Send this listing to the store team for approval"
+                      >
+                        {reviewing === product._id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Send className="h-3 w-3" />
+                        )}
+                        Submit
+                      </button>
+                    )}
+
+                    {product.vendorProductStatus === "pending_review" && (
+                      <button
+                        type="button"
+                        onClick={() => withdraw(product)}
+                        disabled={reviewing === product._id}
+                        className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2 py-1.5 text-[10px] font-semibold text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)] disabled:opacity-50 cursor-pointer"
+                        title="Pull the submission back to drafts"
+                      >
+                        {reviewing === product._id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Undo2 className="h-3 w-3" />
+                        )}
+                        Withdraw
+                      </button>
+                    )}
+
                     {product.vendorProductStatus === "archived" ? (
                       <button
                         type="button"
                         onClick={() => unarchive(product)}
                         disabled={archiving === product._id}
                         className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/30 px-2 py-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-50 cursor-pointer"
-                        title="Unarchive and publish"
+                        title="Restore it as a draft you can submit again"
                       >
                         {archiving === product._id ? (
                           <Loader2 className="h-3 w-3 animate-spin" />

@@ -24,6 +24,8 @@ import {
   Link2,
   Loader2,
   Shield,
+  Save,
+  Send,
 } from "lucide-react";
 import { Category, SubCategory } from "@/types";
 import ImageUploader from "@/components/shared/ImageUploader";
@@ -144,6 +146,9 @@ export default function AddProductClient({
   const [galleryUrlInput, setGalleryUrlInput] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Which footer button was used. A vendor can keep the answers as a draft or
+  // file them for review; the admin's single button is unaffected.
+  const [intent, setIntent] = useState<"draft" | "submit">("draft");
 
   // ── Filtered subcategories for the selected category ───────────────────────
   const availableSubCategories = useMemo(() => {
@@ -344,10 +349,10 @@ export default function AddProductClient({
     };
 
     try {
-      // A vendor saves the same answers through the seller endpoint: the store,
-      // the status and the plan limit are resolved there from the session. The
-      // featured flag is not part of a listing a seller owns, so it is left out
-      // of this payload.
+      // A vendor saves the same answers through the seller endpoint: the store
+      // and the status are resolved there from the session, and a submission
+      // waits for the admin desk instead of going live. The featured flag is
+      // not part of a listing a seller owns, so it is left out of this payload.
       const result = isVendor
         ? await createVendorProduct(
             {
@@ -373,12 +378,18 @@ export default function AddProductClient({
               warrantyType: payload.warrantyType,
               warrantyTerms: payload.warrantyTerms,
             },
-            true
+            intent === "submit"
           )
         : await addProduct(payload);
 
       if (result?.success) {
-        toast.success("Product added successfully!");
+        toast.success(
+          isVendor
+            ? intent === "submit"
+              ? "Listing submitted — the store team will review it."
+              : "Draft saved. Submit it whenever you are ready."
+            : "Product added successfully!"
+        );
         router.push(isVendor ? "/dashboard/vendor/products" : "/dashboard/admin/products");
         router.refresh();
       } else {
@@ -427,7 +438,9 @@ export default function AddProductClient({
           </span>
         </h1>
         <p className="text-xs md:text-sm text-[var(--foreground-muted)] mt-1">
-          Create a product entry mapped to your standard Product interface type.
+          {isVendor
+            ? "Your listing stays a draft until you submit it, and goes live once the store team approves it."
+            : "Create a product entry mapped to your standard Product interface type."}
         </p>
       </div>
 
@@ -1181,15 +1194,43 @@ export default function AddProductClient({
               </Card.Content>
             </Card>
 
-            {/* ── Save button ── */}
-            <Button
-              type="submit"
-              isDisabled={isSubmitting || categories.length === 0}
-              className="w-full bg-primary hover:bg-primary-hover text-white font-bold text-xs py-6 rounded-2xl shadow-md shadow-primary/20 inline-flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Check className="w-4 h-4" />
-              {isSubmitting ? "Saving Product..." : "Save Product"}
-            </Button>
+            {/* ── Save buttons ── */}
+            {isVendor ? (
+              <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button
+                    type="submit"
+                    onClick={() => setIntent("draft")}
+                    isDisabled={isSubmitting || categories.length === 0}
+                    className="w-full border border-[var(--border-color)] bg-[var(--surface-elevated)] text-[var(--foreground)] font-bold text-xs py-6 rounded-2xl inline-flex items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Save className="w-4 h-4" />
+                    {isSubmitting && intent === "draft" ? "Saving Draft..." : "Save as draft"}
+                  </Button>
+                  <Button
+                    type="submit"
+                    onClick={() => setIntent("submit")}
+                    isDisabled={isSubmitting || categories.length === 0}
+                    className="w-full bg-primary hover:bg-primary-hover text-white font-bold text-xs py-6 rounded-2xl shadow-md shadow-primary/20 inline-flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-4 h-4" />
+                    {isSubmitting && intent === "submit" ? "Submitting..." : "Submit for review"}
+                  </Button>
+                </div>
+                <p className="text-[10px] text-[var(--foreground-muted)] text-center">
+                  A draft is yours alone. A submitted listing goes live once the store team approves it.
+                </p>
+              </div>
+            ) : (
+              <Button
+                type="submit"
+                isDisabled={isSubmitting || categories.length === 0}
+                className="w-full bg-primary hover:bg-primary-hover text-white font-bold text-xs py-6 rounded-2xl shadow-md shadow-primary/20 inline-flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Check className="w-4 h-4" />
+                {isSubmitting ? "Saving Product..." : "Save Product"}
+              </Button>
+            )}
           </div>
         </div>
       </form>

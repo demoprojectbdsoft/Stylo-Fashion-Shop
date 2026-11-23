@@ -36,12 +36,14 @@ import {
   RotateCcw,
   Shield,
   Info,
+  Loader2,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import ImageUploader from "@/components/shared/ImageUploader";
 import HeroUIDateTimePicker from "@/components/shared/HeroUIDateTimePicker";
 import { Product, Category, SubCategory } from "@/types";
-import { updateProduct, deleteProduct, archiveProduct, unarchiveProduct } from "@/lib/action/products";
+import { updateProduct, deleteProduct, archiveProduct, unarchiveProduct, reviewVendorProduct } from "@/lib/action/products";
+import { getVendorProductStatusStyle } from "@/lib/vendorProductStatus";
 import { WARRANTY_TYPE_OPTIONS } from "@/lib/warranty";
 import { hasOfferDiscount } from "@/lib/offer";
 import { hasBrandSpec } from "@/lib/productSpecs";
@@ -64,6 +66,26 @@ const SORT_OPTIONS = [
   { key: "price_desc", label: "Price: High to Low" },
   { key: "price_asc", label: "Price: Low to High" },
 ];
+
+/**
+ * The desk's listing-status filter.
+ *
+ * Platform stock carries no vendor status and is always live, so it only shows
+ * under "All". A seller's rows are named exactly as the review queue names
+ * them, which is what makes "Awaiting review" a workable queue.
+ */
+const LISTING_STATUS_OPTIONS = [
+  { id: "all", label: "All listings" },
+  { id: "pending_review", label: "Awaiting review" },
+  { id: "published", label: "Live" },
+  { id: "draft", label: "Drafts" },
+  { id: "rejected", label: "Rejected" },
+  { id: "archived", label: "Archived" },
+  { id: "out_of_stock", label: "Live, sold out" },
+];
+
+/** The statuses worth a pill in the row: live rows already say so in Stock. */
+const REVIEW_STATUSES = ["draft", "pending_review", "rejected", "archived"];
 
 function generateSlug(text: string): string {
   return text
@@ -114,6 +136,7 @@ export default function ProductsClient({
   const currentStock = searchParams.get("inStock") || "all";
   const currentSearch = searchParams.get("search") || "";
   const currentSort = searchParams.get("sort") || "newest";
+  const currentListing = searchParams.get("vendorStatus") || "all";
 
   const [searchInput, setSearchInput] = useState(currentSearch);
 
@@ -129,7 +152,8 @@ export default function ProductsClient({
           val === undefined ||
           val === "" ||
           (key === "category" && val.toLowerCase() === "all") ||
-          (key === "inStock" && val.toLowerCase() === "all")
+          (key === "inStock" && val.toLowerCase() === "all") ||
+          (key === "vendorStatus" && val.toLowerCase() === "all")
         ) {
           params.delete(key);
         } else {
@@ -508,6 +532,80 @@ export default function ProductsClient({
     }
   };
 
+  // ── Review desk ────────────────────────────────────────────────────────────
+  // A listing only reaches the shop through this decision, so both answers are
+  // recorded: an approval puts the row live, a rejection stores the reason the
+  // seller must fix before resubmitting.
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [rejectingProduct, setRejectingProduct] = useState<Product | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [isRejecting, setIsRejecting] = useState(false);
+
+  const handleApprove = async (p: Product) => {
+    const id = p.id || (p as any)._id;
+    if (!id || reviewingId) return;
+
+    setReviewingId(id);
+    try {
+      const res = await reviewVendorProduct(id, "approve");
+      if (res?.success === false) {
+        toast.error(res.message || "The listing could not be approved");
+        return;
+      }
+      toast.success("Listing approved and live in the shop");
+      setProducts((prev) =>
+        prev.map((prod) =>
+          (prod.id || (prod as any)._id) === id
+            ? { ...prod, vendorProductStatus: "published", vendorRejectionReason: "", isVisible: true }
+            : prod
+        )
+      );
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error approving listing");
+    } finally {
+      setReviewingId(null);
+    }
+  };
+
+  const handleOpenReject = (p: Product) => {
+    setRejectingProduct(p);
+    setRejectReason("");
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectingProduct) return;
+    const reason = rejectReason.trim();
+    if (reason.length < 5) {
+      toast.error("Tell the seller what to change (at least 5 characters)");
+      return;
+    }
+
+    const id = rejectingProduct.id || (rejectingProduct as any)._id;
+    setIsRejecting(true);
+    try {
+      const res = await reviewVendorProduct(id, "reject", reason);
+      if (res?.success === false) {
+        toast.error(res.message || "The listing could not be sent back");
+        return;
+      }
+      toast.success("Listing sent back to the seller");
+      setProducts((prev) =>
+        prev.map((prod) =>
+          (prod.id || (prod as any)._id) === id
+            ? { ...prod, vendorProductStatus: "rejected", vendorRejectionReason: reason, isVisible: false }
+            : prod
+        )
+      );
+      setRejectingProduct(null);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error rejecting listing");
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
   const { page, limit, total, totalPages } = pagination || {
     page: 1,
     limit: 10,
@@ -613,6 +711,39 @@ export default function ProductsClient({
               </div>
             )}
 
+            {/* Listing Status Filter — the review queue's own view */}
+            <div className="w-48">
+              <Select
+                aria-label="Filter by Listing Status"
+                selectedKey={currentListing}
+                onSelectionChange={(key) =>
+                  updateParams({
+                    vendorStatus: key && String(key) !== "all" ? String(key) : undefined,
+                  })
+                }
+              >
+                <Select.Trigger className="h-10 w-full px-3.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] dark:bg-[var(--surface)] text-xs font-semibold text-[var(--foreground-secondary)] flex items-center justify-between gap-1.5 cursor-pointer hover:border-primary transition-colors shadow-xs [&>span]:text-xs [&>span]:font-semibold">
+                  <Select.Value className="text-xs font-semibold truncate" />
+                  <Select.Indicator className="[&>svg]:w-3.5 [&>svg]:h-3.5 text-[var(--foreground-muted)] shrink-0" />
+                </Select.Trigger>
+                <Select.Popover className="w-52 p-1.5 bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl shadow-xl z-50 max-h-72 overflow-y-auto">
+                  <ListBox>
+                    {LISTING_STATUS_OPTIONS.map((opt) => (
+                      <ListBox.Item
+                        key={opt.id}
+                        id={opt.id}
+                        textValue={opt.label}
+                        className="text-xs font-medium px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-[var(--surface)] text-[var(--foreground)] cursor-pointer flex items-center justify-between"
+                      >
+                        {opt.label}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
+            </div>
+
             {/* Stock Filter */}
             <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-alt)] dark:bg-[var(--surface)] border border-[var(--border-color)]/60 dark:border-[var(--border-color)]">
               {(
@@ -694,7 +825,7 @@ export default function ProductsClient({
               </Select>
             </div>
 
-            {(currentSearch || currentCategory !== "all" || currentStock !== "all" || currentSort !== "newest") && (
+            {(currentSearch || currentCategory !== "all" || currentStock !== "all" || currentSort !== "newest" || currentListing !== "all") && (
               <Button
                 size="sm"
                 onPress={handleResetFilters}
@@ -760,6 +891,14 @@ export default function ProductsClient({
                     product.categoryId?.name ||
                     (product.categories && product.categories[0]) ||
                     "Uncategorized";
+                  // Only a seller's row that is waiting, hidden or sent back
+                  // gets a pill here; a live row already reads as live in Stock.
+                  const listingStatus = (product as any).vendorProductStatus as string | undefined;
+                  const listingStyle =
+                    listingStatus && REVIEW_STATUSES.includes(listingStatus)
+                      ? getVendorProductStatusStyle(listingStatus)
+                      : null;
+                  const ListingIcon = listingStyle?.icon;
 
                   return (
                     <tr
@@ -799,6 +938,19 @@ export default function ProductsClient({
                               {product.isFeatured && (
                                 <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40">
                                   <Sparkles className="w-2.5 h-2.5" /> Featured
+                                </span>
+                              )}
+                              {listingStyle && ListingIcon && (
+                                <span
+                                  className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded ${listingStyle.badge}`}
+                                  title={
+                                    listingStatus === "rejected" && product.vendorRejectionReason
+                                      ? `Sent back: ${product.vendorRejectionReason}`
+                                      : listingStyle.description
+                                  }
+                                >
+                                  <ListingIcon className="w-2.5 h-2.5" />
+                                  {listingStyle.label}
                                 </span>
                               )}
                             </div>
@@ -946,6 +1098,32 @@ export default function ProductsClient({
                           >
                             <Edit2 className="w-[18px] h-[18px]" />
                           </button>
+                          {listingStatus === "pending_review" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleApprove(product)}
+                                disabled={reviewingId === id}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer bg-transparent disabled:opacity-50"
+                                title="Approve and publish this listing"
+                              >
+                                {reviewingId === id ? (
+                                  <Loader2 className="w-[18px] h-[18px] animate-spin" />
+                                ) : (
+                                  <CheckCircle2 className="w-[18px] h-[18px]" />
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenReject(product)}
+                                disabled={reviewingId === id}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer bg-transparent disabled:opacity-50"
+                                title="Reject with a reason for the seller"
+                              >
+                                <XCircle className="w-[18px] h-[18px]" />
+                              </button>
+                            </>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleToggleArchive(product)}
@@ -1647,6 +1825,72 @@ export default function ProductsClient({
                   </Button>
                 </Modal.Footer>
               </form>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
+
+      {/* ════════════════════════════════════════════════════════
+          REJECT LISTING MODAL (review desk)
+      ════════════════════════════════════════════════════════ */}
+      <Modal
+        isOpen={Boolean(rejectingProduct)}
+        onOpenChange={(open) => {
+          if (!open && !isRejecting) setRejectingProduct(null);
+        }}
+      >
+        <Modal.Backdrop>
+          <Modal.Container size="sm">
+            <Modal.Dialog className="bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-3xl p-6 shadow-2xl space-y-4 text-[var(--foreground)]">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+                <XCircle className="w-6 h-6" />
+              </div>
+
+              <div className="text-center space-y-1">
+                <h3 className="text-base font-extrabold text-[var(--foreground)]">
+                  Send this listing back?
+                </h3>
+                <p className="text-xs text-[var(--foreground-muted)]">
+                  <span className="font-bold text-[var(--foreground)]">
+                    &ldquo;{rejectingProduct?.title}&rdquo;
+                  </span>{" "}
+                  stays off the shop, and the seller sees your reason before they fix it and
+                  resubmit.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[var(--foreground)]">
+                  Reason for rejection
+                </label>
+                <TextArea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="e.g. The main photo shows the wrong item — add a clear photo of the product itself."
+                  rows={3}
+                  className="w-full rounded-xl bg-[var(--surface-alt)] dark:bg-[var(--surface)] text-xs border border-[var(--border-color)] px-3 py-2 resize-none outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
+                />
+                <p className="text-[10px] text-[var(--foreground-muted)]">
+                  At least 5 characters. This is stored with the listing and notified to the seller.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <Button
+                  onPress={() => setRejectingProduct(null)}
+                  isDisabled={isRejecting}
+                  className="px-4 py-2 rounded-xl bg-[var(--surface-alt)] border border-[var(--border-color)] text-[var(--foreground)] font-bold text-xs cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onPress={handleConfirmReject}
+                  isDisabled={isRejecting}
+                  className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm cursor-pointer disabled:opacity-60"
+                >
+                  {isRejecting ? "Sending back..." : "Reject listing"}
+                </Button>
+              </div>
             </Modal.Dialog>
           </Modal.Container>
         </Modal.Backdrop>

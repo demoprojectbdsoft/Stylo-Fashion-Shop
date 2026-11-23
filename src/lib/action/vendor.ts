@@ -197,7 +197,11 @@ export const updateMyVendorProfile = async (data: VendorProfileUpdate) => {
   return serverMutation("/vendor-applications/mine", data, "PATCH");
 };
 
-/** Saves a new product as a draft, or publishes it in the same call. */
+/**
+ * Saves a new listing — always as a draft, or straight into the review queue
+ * when the seller submits it in the same call. Nothing here can publish: the
+ * shop only shows a row an admin has approved.
+ */
 export const createVendorProduct = async (
   data: Partial<VendorProductDraft> & {
     title: string;
@@ -205,13 +209,13 @@ export const createVendorProduct = async (
     price: number;
     image: string;
   },
-  publish: boolean
+  submit: boolean
 ) => {
   const user = await getUserSession();
   if (!isVendorRole(user)) {
     return { success: false as const, message: "Vendor access required." };
   }
-  return serverMutation("/vendor-products", { ...data, publish }, "POST");
+  return serverMutation("/vendor-products", { ...data, submit }, "POST");
 };
 
 /** Edits one of the vendor's own products; the id is checked against the token. */
@@ -242,6 +246,29 @@ export const unarchiveVendorProduct = async (productId: string) => {
     return { success: false as const, message: "Vendor access required." };
   }
   return serverMutation(`/vendor-products/${productId}/unarchive`, {}, "PATCH");
+};
+
+/**
+ * Files a draft — or a rejected listing the seller has fixed — for review.
+ *
+ * Only the status is sent: the API refuses the move for a listing that is
+ * already on sale, and the approval itself belongs to the admin desk.
+ */
+export const submitVendorProduct = async (productId: string) => {
+  const user = await getUserSession();
+  if (!isVendorRole(user)) {
+    return { success: false as const, message: "Vendor access required." };
+  }
+  return serverMutation(`/vendor-products/${productId}`, { status: "pending_review" }, "PATCH");
+};
+
+/** Pulls a submission back to drafts while it is still waiting for review. */
+export const withdrawVendorProduct = async (productId: string) => {
+  const user = await getUserSession();
+  if (!isVendorRole(user)) {
+    return { success: false as const, message: "Vendor access required." };
+  }
+  return serverMutation(`/vendor-products/${productId}`, { status: "draft" }, "PATCH");
 };
 
 /**
