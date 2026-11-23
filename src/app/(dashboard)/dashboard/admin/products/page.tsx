@@ -15,6 +15,8 @@ interface AdminProductsPageProps {
     limit?: string;
     /** The desk's listing-status filter, forwarded to the admin read. */
     vendorStatus?: string;
+    /** The second category picker, only offered by categories that have one. */
+    subCategory?: string;
   }>;
 }
 
