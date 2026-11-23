@@ -702,30 +702,35 @@ export default function ProductsClient({
               );
             })}
 
-            {/* Stock Filter — the same rows asked a second question, so it sits
-                on the status line and leaves the browsing row below clear */}
-            <div className="ml-1 flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-alt)] dark:bg-[var(--surface)] border border-[var(--border-color)]/60 dark:border-[var(--border-color)]">
-              {(
-                [
-                  { id: "all", label: "All Stock" },
-                  { id: "true", label: "In Stock" },
-                  { id: "false", label: "Out of Stock" },
-                ] as const
-              ).map((st) => (
+            {/* Stock narrowing the same rows, so it reads as the next group of
+                pills in the same strip — a hairline keeps the two questions
+                apart instead of boxing the second one off */}
+            <span aria-hidden className="mx-1.5 h-5 w-px shrink-0 bg-[var(--border-color)]" />
+
+            {(
+              [
+                { id: "all", label: "All stock" },
+                { id: "true", label: "In stock" },
+                { id: "false", label: "Out of stock" },
+              ] as const
+            ).map((st) => {
+              const active = currentStock === st.id;
+              return (
                 <button
                   key={st.id}
                   type="button"
+                  aria-pressed={active}
                   onClick={() => updateParams({ inStock: st.id === "all" ? undefined : st.id })}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
-                    currentStock === st.id
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                    active
                       ? "bg-primary text-white shadow-xs"
-                      : "text-[var(--foreground-secondary)] dark:text-[var(--foreground-muted)] hover:text-[var(--foreground)] dark:hover:text-[var(--foreground)]"
+                      : "text-[var(--foreground-secondary)] dark:text-[var(--foreground-muted)] hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)]"
                   }`}
                 >
                   {st.label}
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
           <div className="text-xs font-semibold text-[var(--foreground-muted)] shrink-0">
@@ -737,7 +742,7 @@ export default function ProductsClient({
             own and the category shares the next one with the sort; when the
             chosen category offers subcategories the two pickers fill that line
             and the sort drops below them. */}
-        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-[var(--border-color)]">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-3 pt-3 border-t border-[var(--border-color)]">
           <form
             onSubmit={handleSearchSubmit}
             className="relative flex w-full max-w-md min-w-0 items-center gap-2 xl:w-auto xl:flex-1"
@@ -761,13 +766,14 @@ export default function ProductsClient({
             </Button>
           </form>
 
-          {/* Category Filter */}
+          {/* Category Filter — a little air after the search once they share
+              the row */}
           {categories.length > 0 && (
             <div
               className={
                 filterableSubCategories.length > 0
-                  ? "w-[calc(50%-0.25rem)] shrink-0 xl:w-40"
-                  : "min-w-0 flex-1 sm:flex-none sm:w-40"
+                  ? "w-[calc(50%-0.25rem)] shrink-0 xl:ml-4 xl:w-40"
+                  : "min-w-0 flex-1 sm:flex-none sm:w-40 xl:ml-4"
               }
             >
               <AppSelect
