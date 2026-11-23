@@ -71,7 +71,9 @@ export default function ProductDetailsPage({
   hasPurchased = false,
   hasAlreadyReviewed = false,
   sellerStore = null,
-  featuredProducts = [],
+  relatedProducts = [],
+  relatedCategoryName = "",
+  relatedCategoryHref = "/shop",
   featuredVendors = [],
 }: {
   product?: Product | null;
@@ -82,7 +84,10 @@ export default function ProductDetailsPage({
   hasAlreadyReviewed?: boolean;
   /** The shop behind a seller's listing; null for the store's own stock. */
   sellerStore?: PublicStore | null;
-  featuredProducts?: Product[];
+  /** The rest of this listing's category, for the shelf under the page. */
+  relatedProducts?: Product[];
+  relatedCategoryName?: string;
+  relatedCategoryHref?: string;
   featuredVendors?: PublicStore[];
 }) {
   // ⚠️ All hooks must be called unconditionally before any early returns
@@ -834,7 +839,9 @@ export default function ProductDetailsPage({
                       {formattedOriginalPrice}
                     </span>
                   )}
-                  {discountPercent && discountPercent > 0 && showCountdown && (
+                  {/* `(discountPercent ?? 0) > 0` keeps a zero discount from
+                      printing itself beside the price. */}
+                  {showCountdown && (discountPercent ?? 0) > 0 && (
                     <span className="text-xs font-extrabold text-white bg-gradient-to-r from-red-500 to-rose-500 px-2 py-0.5 rounded-full shadow-sm">
                       -{discountPercent}%
                     </span>
@@ -1607,13 +1614,14 @@ export default function ProductDetailsPage({
           </Tabs>
         </Card>
 
-      {/* ── The rest of the marquee: featured listings and featured vendors ── */}
+      {/* ── Below the listing: the rest of its category, then featured shops ── */}
       <FeaturedProducts
-        products={featuredProducts}
-        eyebrow="Also on the front shelf"
-        title="More featured picks"
-        slogan="Other listings the store and its top sellers are pushing this week — the same paid shelf this page sits on, one scroll further."
-        linkLabel="Browse all featured"
+        products={relatedProducts}
+        eyebrow={relatedCategoryName ? relatedCategoryName : "Related"}
+        title={relatedCategoryName ? `More in ${relatedCategoryName}` : "Related products"}
+        slogan="The rest of this category, freshest first — the listings a shopper weighing this one usually compares it against."
+        href={relatedCategoryHref}
+        linkLabel="Browse the category"
       />
       <FeaturedVendors
         vendors={featuredVendors}

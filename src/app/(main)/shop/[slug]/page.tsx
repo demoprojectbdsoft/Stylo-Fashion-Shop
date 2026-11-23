@@ -14,7 +14,7 @@ export default async function ProductSlugPage({ params }: { params: Promise<{ sl
 
   if (!product) return <ProductNotFound slug={slug} />;
 
-  const [currentUser, reviewsRes, sellerStoreRes, featuredProductsRes, featuredVendorsRes] =
+  const [currentUser, reviewsRes, sellerStoreRes, relatedProductsRes, featuredVendorsRes] =
     await Promise.all([
       getUserSession(),
       getReviewsByProductId(product.id),
@@ -22,7 +22,11 @@ export default async function ProductSlugPage({ params }: { params: Promise<{ sl
       // its delivery record and a link to the vendor's own page. Platform stock
       // has no shop, so nothing is read and nothing is drawn.
       product.seller?.slug ? getPublicStoreBySlug(product.seller.slug) : Promise.resolve(null),
-      getProducts({ isFeatured: true, sort: "featured", limit: 10 }),
+      // The shelf under the page is this listing's own category, freshest first.
+      // A row filed under no category has no shelf to draw, so nothing is read.
+      product.categoryId?.slug
+        ? getProducts({ category: product.categoryId.slug, sort: "newest", limit: 15 })
+        : Promise.resolve(null),
       getPublicStores({ featured: true, sort: "latest", limit: 4 }),
     ]);
 
@@ -31,9 +35,13 @@ export default async function ProductSlugPage({ params }: { params: Promise<{ sl
   // The rails below the listing never repeat what the reader is already
   // looking at: the listing itself is dropped from the products, and the shop
   // that sells it is dropped from the vendors.
-  const featuredProducts: Product[] = (featuredProductsRes?.data?.products ?? []).filter(
+  const relatedProducts: Product[] = (relatedProductsRes?.data?.products ?? []).filter(
     (row: Product) => String(row.id ?? row._id) !== String(product.id)
   );
+  const relatedCategoryName = product.categoryId?.name || product.categories?.[0] || "";
+  const relatedCategoryHref = product.categoryId?.slug
+    ? `/shop?category=${product.categoryId.slug}`
+    : "/shop";
   const featuredVendors = (asStoreList(featuredVendorsRes)?.stores ?? []).filter(
     (store) => store.slug !== (product.seller?.slug || "")
   );
@@ -78,7 +86,9 @@ export default async function ProductSlugPage({ params }: { params: Promise<{ sl
       hasPurchased={hasPurchased}
       hasAlreadyReviewed={hasAlreadyReviewed}
       sellerStore={sellerStore}
-      featuredProducts={featuredProducts}
+      relatedProducts={relatedProducts}
+      relatedCategoryName={relatedCategoryName}
+      relatedCategoryHref={relatedCategoryHref}
       featuredVendors={featuredVendors}
     />
   );
