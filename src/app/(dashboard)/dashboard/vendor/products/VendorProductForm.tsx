@@ -432,7 +432,13 @@ export default function VendorProductForm({
           </Section>
 
           <Section title="Media" icon={ImagePlus}>
-            <ImageUploader label="Main image" value={image} onChange={setImage} required />
+            <ImageUploader
+              label="Main image"
+              value={image}
+              onChange={setImage}
+              required
+              hint="Recommended: 800 × 800 px (1:1 Square, JPG/PNG/WebP, max 2MB). Clean background ensures crisp storefront display."
+            />
 
             <div>
               <label className={labelClass}>Gallery ({gallery.length})</label>
@@ -463,6 +469,7 @@ export default function VendorProductForm({
                 onChange={(url) => {
                   if (url) setGallery((prev) => (prev.includes(url) ? prev : [...prev, url]));
                 }}
+                hint="Recommended: 800 × 800 px (1:1 Square, JPG/PNG/WebP). Show alternate angles and product details."
               />
             </div>
           </Section>

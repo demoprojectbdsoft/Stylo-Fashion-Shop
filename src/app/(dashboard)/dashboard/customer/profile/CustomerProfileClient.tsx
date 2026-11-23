@@ -382,6 +382,7 @@ export default function CustomerProfileClient({
                 value={imageUrl}
                 onChange={setImageUrl}
                 urlPlaceholder="https://images.unsplash.com/..."
+                hint="Recommended: 400 × 400 px (1:1 Square, JPG/PNG/WebP, max 2MB)."
               />
             </div>
 

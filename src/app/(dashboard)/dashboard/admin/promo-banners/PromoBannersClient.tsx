@@ -420,6 +420,11 @@ export default function PromoBannersClient({
                     value={draft.image}
                     onChange={(url) => setField("image", url)}
                     urlPlaceholder="https://example.com/banner.webp"
+                    hint={
+                      editorPlacement === "strip"
+                        ? "Recommended: 1920 × 200 px (~8:1 to 10:1 wide banner, JPG/PNG/WebP). Full-width strip banner."
+                        : "Recommended: 1200 × 600 px (2:1 aspect ratio, min 800 × 400 px, JPG/PNG/WebP). Promo grid tile."
+                    }
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -510,18 +510,24 @@ export default function AddProductClient({
                   value={mainImageUrl}
                   onChange={setMainImageUrl}
                   urlPlaceholder="https://example.com/product-main.webp"
+                  hint="Recommended: 800 × 800 px (1:1 Square, JPG/PNG/WebP, max 2MB). Clean background ensures optimal display in product cards and zoom view."
                 />
 
                 {/* Gallery */}
                 <div className="flex flex-col gap-3 pt-4 border-t border-[var(--border-color)]">
-                  <label className={labelClass}>
-                    Gallery Images
-                    {galleryImages.length > 0 && (
-                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                        {galleryImages.length}
-                      </span>
-                    )}
-                  </label>
+                  <div>
+                    <label className={labelClass}>
+                      Gallery Images
+                      {galleryImages.length > 0 && (
+                        <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                          {galleryImages.length}
+                        </span>
+                      )}
+                    </label>
+                    <p className="text-[10px] text-[var(--foreground-muted)] mt-0.5">
+                      Recommended: 800 × 800 px (1:1 Square, JPG/PNG/WebP, up to 5 images). Show alternate angles, details, and packaging.
+                    </p>
+                  </div>
 
                   <div className="flex gap-1 p-1 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] w-fit">
                     <button

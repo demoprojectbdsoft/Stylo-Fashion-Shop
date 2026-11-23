@@ -385,12 +385,18 @@ export default function StoreProfileClient({
             />
           </Field>
 
-          <ImageUploader label="Store logo" value={draft.logo} onChange={(url) => set("logo", url)} />
+          <ImageUploader
+            label="Store logo"
+            value={draft.logo}
+            onChange={(url) => set("logo", url)}
+            hint="Recommended: 400 × 400 px (1:1 Square, PNG/JPG/WebP). Displayed on vendor badges and storefront header."
+          />
           <ImageUploader
             label="Cover image"
             value={draft.coverImage}
             onChange={(url) => set("coverImage", url)}
             urlPlaceholder="https://example.com/store-cover.webp"
+            hint="Recommended: 1200 × 300 px to 1200 × 400 px (3:1 to 4:1 widescreen banner, JPG/WebP). Header banner for your store."
           />
         </section>
 

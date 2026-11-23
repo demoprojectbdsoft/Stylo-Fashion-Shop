@@ -2403,6 +2403,7 @@ export default function AdminSettingsClient({
                   value={navbarLogoLight}
                   onChange={setNavbarLogoLight}
                   urlPlaceholder="https://.../logo-light.png"
+                  hint="Recommended: 240 × 60 px (~4:1 aspect ratio, transparent PNG or SVG, max 1MB). Light navbar logo."
                 />
 
                 {/* Navbar Light Preview */}
@@ -2445,6 +2446,7 @@ export default function AdminSettingsClient({
                   value={navbarLogoDark}
                   onChange={setNavbarLogoDark}
                   urlPlaceholder="https://.../logo-dark.png"
+                  hint="Recommended: 240 × 60 px (~4:1 aspect ratio, transparent PNG or SVG, max 1MB). Dark navbar logo."
                 />
 
                 {/* Navbar Dark Preview */}
@@ -2492,6 +2494,7 @@ export default function AdminSettingsClient({
                   value={footerLogoLight}
                   onChange={setFooterLogoLight}
                   urlPlaceholder="https://.../footer-light.png"
+                  hint="Recommended: 240 × 60 px (~4:1 aspect ratio, transparent PNG or SVG, max 1MB). Light footer logo."
                 />
 
                 {/* Footer Light Preview */}
@@ -2534,6 +2537,7 @@ export default function AdminSettingsClient({
                   value={footerLogoDark}
                   onChange={setFooterLogoDark}
                   urlPlaceholder="https://.../footer-dark.png"
+                  hint="Recommended: 240 × 60 px (~4:1 aspect ratio, transparent PNG or SVG, max 1MB). Dark footer logo."
                 />
 
                 {/* Footer Dark Preview */}
@@ -2623,6 +2627,7 @@ export default function AdminSettingsClient({
               value={faviconUrl}
               onChange={setFaviconUrl}
               urlPlaceholder="https://.../favicon.png"
+              hint="Recommended: 512 × 512 px (1:1 Square, PNG or SVG format, min 32 × 32 px). Used for browser tabs and app bookmark."
             />
             {faviconUrl && (
               <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-[var(--surface-alt)] dark:bg-[var(--surface-alt)]/40 border border-[var(--border-color)]/60">
@@ -2688,6 +2693,7 @@ export default function AdminSettingsClient({
                     value={brand.logo}
                     onChange={(url) => updateBrandLogo(idx, { logo: url })}
                     urlPlaceholder="https://.../brand-logo.png"
+                    hint="Recommended: 400 × 400 px (1:1 Square, transparent PNG or clean WebP)."
                   />
 
                   <Input

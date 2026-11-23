@@ -1377,6 +1377,7 @@ export default function ProductsClient({
                         label="Thumbnail (Primary)"
                         value={editForm.image}
                         onChange={(url) => setEditForm((prev) => ({ ...prev, image: url }))}
+                        hint="Recommended: 800 × 800 px (1:1 Square, JPG/PNG/WebP, max 2MB)."
                       />
                     </div>
 
@@ -1390,6 +1391,7 @@ export default function ProductsClient({
                             additionalImages: url ? [url] : [],
                           }))
                         }
+                        hint="Recommended: 800 × 800 px (1:1 Square, JPG/PNG/WebP). Clean product preview."
                       />
                     </div>
                   </div>

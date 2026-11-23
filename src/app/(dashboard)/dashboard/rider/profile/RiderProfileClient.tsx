@@ -581,6 +581,7 @@ export default function RiderProfileClient({
               value={personal.photoUrl}
               onChange={(url) => patchPersonal({ photoUrl: url })}
               urlPlaceholder="https://"
+              hint="Recommended: 400 × 400 px (1:1 Square, JPG/PNG). Clear face photo visible to customers and dispatchers."
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

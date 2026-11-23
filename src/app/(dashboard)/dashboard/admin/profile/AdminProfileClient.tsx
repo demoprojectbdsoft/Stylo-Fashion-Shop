@@ -206,6 +206,7 @@ export default function AdminProfileClient({
                 value={avatarUrl}
                 onChange={setAvatarUrl}
                 urlPlaceholder="https://images.unsplash.com/..."
+                hint="Recommended: 400 × 400 px (1:1 Square, JPG/PNG/WebP, max 2MB)."
               />
             </div>
 

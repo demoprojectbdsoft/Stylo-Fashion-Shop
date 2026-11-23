@@ -752,6 +752,7 @@ export default function CategoriesClient({
                   <ImageUploader
                     label="Thumbnail Image"
                     name="image"
+                    hint="Recommended: 400 × 400 px (1:1 Square, transparent PNG or clean WebP). Icon or category illustration."
                     value={
                       editTargetType === "category"
                         ? typeof editingCategory?.image === "string"

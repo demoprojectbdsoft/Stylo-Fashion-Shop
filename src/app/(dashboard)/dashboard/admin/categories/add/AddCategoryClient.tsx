@@ -264,6 +264,7 @@ export default function AddCategoryClient({
                 <ImageUploader
                   label="Category Thumbnail"
                   name="image"
+                  hint="Recommended: 400 × 400 px (1:1 Square, transparent PNG or clean WebP). Category icon or illustration."
                   value={
                     typeof categoryData.image === "string"
                       ? categoryData.image
@@ -438,6 +439,7 @@ export default function AddCategoryClient({
                 <ImageUploader
                   label="Subcategory Thumbnail"
                   name="image"
+                  hint="Recommended: 400 × 400 px (1:1 Square, transparent PNG or clean WebP). Subcategory icon or illustration."
                   value={
                     typeof subCategoryData.image === "string"
                       ? subCategoryData.image
