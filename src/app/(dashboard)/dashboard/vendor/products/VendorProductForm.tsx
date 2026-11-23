@@ -291,7 +291,7 @@ export default function VendorProductForm({
           </h1>
           <p className="text-[11px] text-[var(--foreground-muted)]">
             {mode === "create"
-              ? "Save it as a draft to finish later, or publish it now."
+              ? "Fill in the product details and publish it to your store."
               : `Editing ${product?.slug || "this product"}`}
           </p>
         </div>

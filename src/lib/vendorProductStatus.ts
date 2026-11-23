@@ -7,7 +7,7 @@
  */
 
 import type { LucideIcon } from "lucide-react";
-import { Archive, CheckCircle2, Clock, FileEdit, PackageX, XCircle } from "lucide-react";
+import { Archive, CheckCircle2, Clock, PackageX, XCircle } from "lucide-react";
 
 export interface VendorProductStatusStyle {
   label: string;
@@ -18,14 +18,6 @@ export interface VendorProductStatusStyle {
 }
 
 const STYLES: Record<string, VendorProductStatusStyle> = {
-  draft: {
-    label: "Draft",
-    description: "Only you can see this product.",
-    badge:
-      "bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-500/15 dark:text-slate-200 dark:border-slate-500/30",
-    dot: "bg-slate-400 dark:bg-slate-300",
-    icon: FileEdit,
-  },
   pending_review: {
     label: "Pending review",
     description: "The store team is checking this product.",
@@ -69,7 +61,7 @@ const STYLES: Record<string, VendorProductStatusStyle> = {
 };
 
 export function getVendorProductStatusStyle(status?: string | null): VendorProductStatusStyle {
-  return STYLES[(status || "draft").trim().toLowerCase()] ?? STYLES.draft;
+  return STYLES[(status || "published").trim().toLowerCase()] ?? STYLES.published;
 }
 
 export function formatTaka(amount?: number | null): string {
