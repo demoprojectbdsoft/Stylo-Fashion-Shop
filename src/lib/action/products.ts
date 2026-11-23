@@ -16,3 +16,11 @@ export const deleteProduct = async (id: string) => {
   return serverMutation(`/products/${id}`, {}, "DELETE");
 };
 
+export const archiveProduct = async (id: string) => {
+  return serverMutation(`/products/${id}/archive`, {}, "PATCH");
+};
+
+export const unarchiveProduct = async (id: string) => {
+  return serverMutation(`/products/${id}/unarchive`, {}, "PATCH");
+};
+

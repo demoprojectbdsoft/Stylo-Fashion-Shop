@@ -22,6 +22,8 @@ import {
   Eye,
   Edit2,
   Trash2,
+  Archive,
+  ArchiveRestore,
   Sparkles,
   DollarSign,
   Layers,
@@ -39,7 +41,7 @@ import { toast } from "react-toastify";
 import ImageUploader from "@/components/shared/ImageUploader";
 import HeroUIDateTimePicker from "@/components/shared/HeroUIDateTimePicker";
 import { Product, Category, SubCategory } from "@/types";
-import { updateProduct, deleteProduct } from "@/lib/action/products";
+import { updateProduct, deleteProduct, archiveProduct, unarchiveProduct } from "@/lib/action/products";
 import { WARRANTY_TYPE_OPTIONS } from "@/lib/warranty";
 import { hasOfferDiscount } from "@/lib/offer";
 import { hasBrandSpec } from "@/lib/productSpecs";
@@ -466,6 +468,43 @@ export default function ProductsClient({
       toast.error(err instanceof Error ? err.message : "Error deleting product");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const [archivingId, setArchivingId] = useState<string | null>(null);
+
+  const handleToggleArchive = async (p: Product) => {
+    const id = p.id || (p as any)._id;
+    if (!id || archivingId) return;
+
+    const isArchived = (p as any).vendorProductStatus === "archived";
+    setArchivingId(id);
+
+    try {
+      const res = isArchived ? await unarchiveProduct(id) : await archiveProduct(id);
+      if (res?.success !== false) {
+        toast.success(isArchived ? "Product unarchived and active!" : "Product archived!");
+        setProducts((prev) =>
+          prev.map((prod) => {
+            const prodId = prod.id || (prod as any)._id;
+            if (prodId === id) {
+              return {
+                ...prod,
+                vendorProductStatus: isArchived ? "published" : "archived",
+                isVisible: isArchived,
+              };
+            }
+            return prod;
+          })
+        );
+        router.refresh();
+      } else {
+        toast.error(res?.message || (isArchived ? "Failed to unarchive product" : "Failed to archive product"));
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error updating archive status");
+    } finally {
+      setArchivingId(null);
     }
   };
 
@@ -906,6 +945,27 @@ export default function ProductsClient({
                             title="Quick Edit"
                           >
                             <Edit2 className="w-[18px] h-[18px]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleArchive(product)}
+                            disabled={archivingId === (product.id || (product as any)._id)}
+                            className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors cursor-pointer bg-transparent ${
+                              (product as any).vendorProductStatus === "archived"
+                                ? "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                                : "text-[var(--foreground-muted)] hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50"
+                            }`}
+                            title={
+                              (product as any).vendorProductStatus === "archived"
+                                ? "Unarchive Product"
+                                : "Archive Product"
+                            }
+                          >
+                            {(product as any).vendorProductStatus === "archived" ? (
+                              <ArchiveRestore className="w-[18px] h-[18px]" />
+                            ) : (
+                              <Archive className="w-[18px] h-[18px]" />
+                            )}
                           </button>
                           <button
                             type="button"
@@ -1612,7 +1672,7 @@ export default function ProductsClient({
                   <span className="font-bold text-[var(--foreground)]">
                     &ldquo;{deletingProduct?.title}&rdquo;
                   </span>
-                  ? This action cannot be undone.
+                  ? This action cannot be undone and the product owner will receive a notification.
                 </p>
               </div>
 
