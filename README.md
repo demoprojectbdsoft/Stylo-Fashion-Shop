@@ -93,6 +93,7 @@ Sparq is a **production-ready e-commerce platform** for electronics with complet
 ### 👨‍💼 For Admins
 
 - **Complete Control**: Products, categories, orders, users
+- **Hero Banners**: Product, category, vendor or custom hero banners — upload artwork (desktop + mobile, GIFs included), schedule, order and preview them without touching code
 - **CMS Branding**: Logos, colors, fonts, content - no redeploy
 - **User Management**: Role assignment, per-role suspension
 - **Vendor Control**: Approve applications, grant promotions
