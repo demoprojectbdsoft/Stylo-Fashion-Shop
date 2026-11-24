@@ -348,15 +348,15 @@ export default function SalesAnalyticsClient({
           <div className="p-3 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20">
             <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Total Revenue</p>
             <p className="text-lg font-black text-[var(--foreground)] mt-0.5">
-              ${kpis.totalProfit != null
-                ? (profitChartData?.reduce((s, d) => s + d.revenue, 0) ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+              {kpis.totalProfit != null
+                ? formatPrice(profitChartData?.reduce((s, d) => s + d.revenue, 0) ?? 0)
                 : "0.00"}
             </p>
           </div>
           <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/40">
             <p className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Total Cost</p>
             <p className="text-lg font-black text-[var(--foreground)] mt-0.5">
-              ${(profitChartData?.reduce((s, d) => s + d.cost, 0) ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatPrice(profitChartData?.reduce((s, d) => s + d.cost, 0) ?? 0)}
             </p>
           </div>
           {/*
@@ -369,12 +369,11 @@ export default function SalesAnalyticsClient({
               Rider Fees Paid
             </p>
             <p className="text-lg font-black text-[var(--foreground)] mt-0.5">
-              {currencySymbol}
-              {kpis.riderFeesPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatPrice(kpis.riderFeesPaid)}
             </p>
             <p className="text-[10px] text-[var(--foreground-muted)] mt-0.5">
               {kpis.riderFeesPaid > 0
-                ? `${currencySymbol}${kpis.grossProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} before it was taken off`
+                ? `${formatPrice(kpis.grossProfit)} before it was taken off`
                 : "No delivered job has paid a rider yet"}
             </p>
           </div>
@@ -387,7 +386,7 @@ export default function SalesAnalyticsClient({
               {kpis.totalProfit >= 0 ? "Net Profit" : "Net Loss"}
             </p>
             <p className="text-lg font-black text-[var(--foreground)] mt-0.5">
-              ${kpis.totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatPrice(kpis.totalProfit)}
               <span className="ml-1.5 text-xs font-semibold text-[var(--foreground-muted)]">({kpis.profitMargin}%)</span>
             </p>
           </div>
@@ -438,7 +437,7 @@ export default function SalesAnalyticsClient({
                   boxShadow: "0 20px 40px -10px rgba(0,0,0,0.4)",
                 }}
                 formatter={(value: unknown, name: unknown) => [
-                  `${currencySymbol}${Number(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                  formatPrice(Number(value ?? 0)),
                   String(name) === "revenue"
                     ? "💰 Sell Price (Revenue)"
                     : String(name) === "cost"
@@ -1154,13 +1153,13 @@ export default function SalesAnalyticsClient({
 
                           {/* Revenue */}
                           <td className="py-3.5 text-right font-bold text-[var(--foreground)] font-mono">
-                            {currencySymbol}{Number(item.revenue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {formatPrice(Number(item.revenue))}
                           </td>
 
                           {/* Cost */}
                           <td className="py-3.5 text-right text-[var(--foreground-muted)] font-mono">
                             {item.cost > 0
-                              ? `${currencySymbol}${Number(item.cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              ? formatPrice(Number(item.cost))
                               : <span className="text-[var(--foreground-muted)]">—</span>
                             }
                           </td>
@@ -1175,7 +1174,7 @@ export default function SalesAnalyticsClient({
                                     : "text-rose-600 dark:text-rose-400"
                                 }`}
                               >
-                                {isProfit ? "+" : "-"}{currencySymbol}{Math.abs(item.profit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {isProfit ? "+" : "-"}{formatPrice(Math.abs(item.profit))}
                               </span>
                               {profitMarginPct !== null && (
                                 <span
