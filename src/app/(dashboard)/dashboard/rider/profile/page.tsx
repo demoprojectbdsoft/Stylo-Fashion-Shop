@@ -4,6 +4,7 @@ import { getRequiredRole } from "@/lib/core/session";
 import { getUserById } from "@/lib/api/user";
 import { asRiderApplication, getMyRiderApplication } from "@/lib/api/rider";
 import type { RiderApplication } from "@/types/rider";
+import { formatMonthYear } from "@/lib/dateTime";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +26,7 @@ interface RiderRecord {
 }
 
 function memberSince(value?: string | Date | null): string {
-  if (!value) return "Recently";
-  const date = new Date(value);
-  if (isNaN(date.getTime())) return "Recently";
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  return formatMonthYear(value) || "Recently";
 }
 
 /**

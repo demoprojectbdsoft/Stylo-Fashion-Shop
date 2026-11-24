@@ -40,6 +40,18 @@ export function formatOrderDate(value?: string | Date | null): string {
   return date ? dateOnly.format(date) : "";
 }
 
+const monthYear = new Intl.DateTimeFormat("en-US", {
+  timeZone: STORE_TIME_ZONE,
+  month: "long",
+  year: "numeric",
+});
+
+/** "October 2026" — for "member since" lines. */
+export function formatMonthYear(value?: string | Date | null): string {
+  const date = toDate(value);
+  return date ? monthYear.format(date) : "";
+}
+
 /** "Oct 30, 2:45 PM" — for timeline steps. */
 export function formatOrderMoment(value?: string | Date | null): string {
   const date = toDate(value);

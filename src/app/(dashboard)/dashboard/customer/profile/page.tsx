@@ -4,6 +4,7 @@ import { getUserSession } from "@/lib/core/session";
 import { getUserById } from "@/lib/api/user";
 import { getSavedAddresses } from "@/lib/api/address";
 import { SavedAddress } from "@/types";
+import { formatMonthYear } from "@/lib/dateTime";
 
 export interface RealCustomerProfile {
   id: string;
@@ -55,10 +56,7 @@ async function getProfileData(): Promise<RealCustomerProfile> {
     }
 
     const merged = dbUserData || sessionUser;
-    const createdAtDate = merged.createdAt ? new Date(merged.createdAt) : new Date();
-    const formattedDate = !isNaN(createdAtDate.getTime())
-      ? createdAtDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })
-      : "Recently";
+    const formattedDate = formatMonthYear(merged.createdAt || new Date()) || "Recently";
 
     return {
       id: merged._id || merged.id || sessionUser.id || "",
