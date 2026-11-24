@@ -10,26 +10,10 @@ import {
 import AppSelect from "./AppSelect";
 
 /**
- * The month/year jump every calendar in the app shares.
- *
- * A header holding only ‹ › moves one month per click, which is fine for a
- * deal ending next week and useless for a date of birth in 1998 — roughly 340
- * clicks away. React Aria ships CalendarMonthPicker and CalendarYearPicker as
- * render-prop primitives: they read the state of the `<Calendar>` they sit
- * inside, hand back the option list, and re-page the calendar when a choice is
- * made. Wrapping them in AppSelect keeps the dropdowns on the same HeroUI v3
- * control the rest of the form fields use.
- *
- * The year list is 100 entries wide and centred on the focused year, clamped by
- * the calendar's own min/max, so a far-past date is normally a single pick —
- * and picking near an edge recentres the window, so nothing is two picks away.
- *
- * Both pickers answer with a key rather than a date: months are 1-based, years
- * are the position inside the visible window. An empty key means "nothing
- * chosen", which would index past the end of their list, so it is ignored.
- *
- * It has to render inside a `<Calendar>`: the react-aria one AppDatePicker
- * uses, or HeroUI's Calendar, which renders react-aria's underneath.
+ * The shared month/year jump for the app's calendars — the ‹ › arrows alone make
+ * a birth year hundreds of clicks away. It wraps react-aria's month and year
+ * pickers in AppSelect, keeps the dropdown on the same control as the forms, and
+ * must render inside a `<Calendar>`.
  */
 
 const NAV_CLASS =

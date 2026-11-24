@@ -9,29 +9,10 @@ import { setActiveRole } from "@/lib/action/user";
 import { useDashboardRole } from "@/hooks/useDashboardRole";
 
 /**
- * The shell's own housekeeping, mounted once by the dashboard layout.
- *
- * Two jobs, both caused by the same thing: the URL is now the answer to "which
- * dashboard is this", while the account still carries an `activeRole` hint that
- * other readers (the buying rules, the notification feed, the legacy role
- * string) consult.
- *
- * 1. Say out loud which dashboard the reader is in. One toast per workspace,
- *    replaced rather than stacked, so moving between pages inside a dashboard
- *    never spams them. This is the answer to "am I in my shop or in my buyer
- *    account?" — the sidebar chip, the header chip and the toast all say the
- *    same word because all three read the same path. Only a workspace the
- *    account actually holds ever gets named: announcing the admin desk to
- *    somebody the server is about to refuse would tell them where they had
- *    reached, even though nothing of that desk had loaded yet.
- *
- * 2. Bring the session hint back in line with the page. The switcher used to
- *    write the hint first and only then navigate, so every refusal (a role an
- *    admin revoked, a parked dashboard, a network failure) became an error toast
- *    and the reader stayed put — unable to reach a dashboard they genuinely
- *    hold. Now navigation never waits for the write: this component makes the
- *    write afterwards, and if it fails, nothing breaks. The page they are on is
- *    already correct.
+ * The dashboard shell's housekeeping, mounted once by the layout. It names the
+ * workspace the reader is in (one toast per workspace, and only for one the
+ * account actually holds) and then brings the session's `activeRole` hint back
+ * in line with the page — after navigation, so a failed write breaks nothing.
  */
 export default function DashboardWorkspaceSync() {
   const router = useRouter();

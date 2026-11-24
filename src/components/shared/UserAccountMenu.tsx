@@ -35,32 +35,11 @@ import {
 } from "@/lib/core/roles";
 
 /**
- * The profile menu, shared by the storefront header, the dashboard shell and
- * the storefront's mobile drawers - but the three are not the same job.
- *
- * `variant="storefront"` (the public site) also carries the Profile /
- * Dashboard / Orders / Settings links, because there is no sidebar out there
- * and this menu is the only door into a workspace.
- *
- * `variant="dashboard"` drops those links on purpose. Inside a dashboard the
- * sidebar already lists every screen, and each role's profile, orders and
- * settings are different screens under that role's own workspace - so the
- * honest way to reach them is to switch into that dashboard. The menu here
- * keeps just three things: who you are, which workspace to open, and how to
- * sign out.
- *
- * `layout` is how the same rows are hung: `dropdown` is the header popover
- * under the avatar, `panel` lays them out flat inside a drawer, where a
- * popover anchored to nothing would have nowhere to sit. Small screens used to
- * have no switcher at all because only the desktop row mounted this menu, so
- * the drawers now carry the same rows instead of a second, simpler account
- * card that could drift from them.
- *
- * The flat panel is the phone form, and it drops the shortcut rows: a phone
- * already carries a fixed bottom bar with Profile, Settings and Dashboard, so
- * listing them again inside the drawer is the same door twice in one screen.
- * Identity, the workspace switcher and signing out stay, because nothing else
- * on a small screen offers those.
+ * The profile menu, shared by the storefront header, the dashboard shell and the
+ * mobile drawers. `variant="storefront"` carries the workspace links (no sidebar
+ * out there); `variant="dashboard"` keeps only identity, the switcher and sign
+ * out, since the sidebar already lists every screen. `layout` is `dropdown` (the
+ * header popover) or `panel` (flat, inside a drawer).
  */
 export type UserAccountMenuVariant = "storefront" | "dashboard";
 export type UserAccountMenuLayout = "dropdown" | "panel";
