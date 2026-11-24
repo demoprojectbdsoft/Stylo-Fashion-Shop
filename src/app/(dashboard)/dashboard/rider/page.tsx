@@ -3,7 +3,7 @@ import RiderOverviewClient from "./RiderOverviewClient";
 import { getRequiredRole } from "@/lib/core/session";
 import { getRiderStats } from "@/lib/api/deliveries";
 import { getSiteSettings } from "@/lib/api/siteSettings";
-import { getCurrencySymbol } from "@/lib/currency";
+import { getCurrencySymbol, formatAmount } from "@/lib/currency";
 import { riderStatCards } from "@/lib/rider";
 import type { RiderStatsResult } from "@/types/delivery";
 
@@ -74,11 +74,7 @@ export default async function RiderOverviewPage({ searchParams }: RiderOverviewP
   const currency =
     settingsRes.status === "fulfilled" ? settingsRes.value?.data?.currency : undefined;
   const currencySymbol = getCurrencySymbol(currency);
-  const money = (value: number) =>
-    `${currencySymbol}${value.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+  const money = (value: number) => formatAmount(value, currencySymbol);
 
   return (
     <RiderOverviewClient

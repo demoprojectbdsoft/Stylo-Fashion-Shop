@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { AlertTriangle, CreditCard, HandCoins, ShoppingBag, Store } from "lucide-react";
 import type { VendorDeskReport } from "@/types/vendorDesk";
+import { formatAmount } from "@/lib/currency";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 
 /**
@@ -35,10 +36,7 @@ interface VendorDeskClientProps {
 const MONTH_CHOICES = [3, 6, 12];
 
 function money(value: number, symbol: string) {
-  return `${symbol}${Number(value || 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return formatAmount(value, symbol);
 }
 
 function Tile({

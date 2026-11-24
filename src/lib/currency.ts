@@ -1,4 +1,4 @@
-// ── Centralized Currency & Price Formatting Utilities ──────────────────────────
+// Currency helpers used everywhere prices are shown.
 
 export const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: "$",
@@ -12,32 +12,32 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   CNY: "¥",
 };
 
-/**
- * Returns the localized symbol for a given ISO currency code.
- * Falls back to "$" if undefined, or the raw string if unrecognized.
- */
+/** The symbol for an ISO code, "$" when unknown. */
 export function getCurrencySymbol(currency?: string): string {
   if (!currency) return "$";
   const upper = currency.toUpperCase().trim();
   return CURRENCY_SYMBOLS[upper] || upper;
 }
 
-/**
- * Formats a monetary amount with the appropriate currency symbol.
- * E.g., formatPrice(24.99, "BDT") => "৳24.99"
- *       formatPrice(1200, "EUR") => "€1,200.00"
- */
+/** Formats an amount with a symbol, e.g. formatAmount(1200, "৳") => "৳1,200.00". */
+export function formatAmount(
+  amount: number | string | undefined | null,
+  symbol: string,
+  opts?: { showDecimals?: boolean }
+): string {
+  const num = typeof amount === "number" ? amount : Number(amount) || 0;
+  const decimals = opts?.showDecimals === false ? 0 : 2;
+  return `${symbol}${num.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
+}
+
+/** Formats an amount for a currency code, e.g. formatPrice(1200, "BDT") => "৳1,200.00". */
 export function formatPrice(
   amount: number | string | undefined | null,
   currency: string = "USD",
   opts?: { showDecimals?: boolean }
 ): string {
-  const num = typeof amount === "number" ? amount : Number(amount) || 0;
-  const symbol = getCurrencySymbol(currency);
-  const decimals = opts?.showDecimals === false ? 0 : 2;
-
-  return `${symbol}${num.toLocaleString("en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  })}`;
+  return formatAmount(amount, getCurrencySymbol(currency), opts);
 }
