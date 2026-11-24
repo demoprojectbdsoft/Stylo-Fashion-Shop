@@ -69,8 +69,9 @@ Sparq is a **production-ready e-commerce platform** for electronics with complet
 - **Order Tracking**: Real-time status with delivery map
 - **Reviews**: Star ratings + photos
 - **Warranties**: Coverage shown on each product page
+- **Currency**: Prices show in the store's currency; the day's rates convert them for display
 - **Saved Addresses**: Up to 5 addresses with default
-- **Data Export**: Download your data as JSON
+- **Data Export**: Download your data as JSON — including your shop or rider file if you have one
 
 ### 🏪 For Vendors (Multi-Vendor)
 
@@ -198,6 +199,27 @@ TIERS:
   💎 Platinum: 4,000 - 9,999 points
   💎 Diamond:  10,000+ points
 ```
+
+### Currency & Display
+
+The shop prices everything in **one** currency — the admin's choice in Settings
+— and stores prices in it. The backend pulls the day's exchange rates once a day,
+and the storefront uses them to **convert a price for display** when a different
+currency is chosen: `convertCurrency(amount, base, display, rates)` then
+`formatPrice(amount, currency)`.
+
+The helpers live in `src/lib/currency.ts`:
+
+```
+formatPrice(amount, currency)   // symbol + the currency's own decimals (¥1,238, ৳1,240.00)
+formatAmount(amount, symbol)    // the same, when you already hold a bare symbol
+currencyDecimals(currency)      // JPY 0, USD 2, KWD 3
+roundToCurrency(amount, currency)
+convertCurrency(amount, from, to, rates)
+```
+
+No rates, or an unknown currency pair, leaves the number unchanged — so nothing
+breaks before the first fetch.
 
 ### Warranty (product info only)
 
