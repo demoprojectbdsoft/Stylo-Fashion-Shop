@@ -20,6 +20,7 @@ import {
   CustomerOrder,
   CustomerTransaction,
 } from "@/types/customerDashboard";
+import { formatAmount } from "@/lib/currency";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -622,7 +623,7 @@ export function aggregateAdminDashboard(
     const custEmail = ord.userId?.email || "customer@example.com";
     const firstItem = ord.items?.[0]?.title || "Product";
     const moreItems = (ord.items?.length || 1) > 1 ? ` +${ord.items!.length - 1} more` : "";
-    const amtStr = `${currencySymbol}${Number(ord.totalAmount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const amtStr = formatAmount(Number(ord.totalAmount ?? 0), currencySymbol);
 
     let st: RecentOrder["status"] = "Processing";
     const rawSt = (ord.orderStatus || "").toLowerCase();
@@ -721,7 +722,7 @@ export function aggregateAdminDashboard(
   const stats: StatCardItem[] = [
     {
       title: "Total Revenue",
-      value: `${currencySymbol}${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      value: formatAmount(totalRevenue, currencySymbol),
       // The figure is billable orders only, so the subtitle counts the same set
       // instead of all rows the page happened to read.
       change:
@@ -737,13 +738,13 @@ export function aggregateAdminDashboard(
       title: "Net Profit",
       // A loss has to read as a loss. Clamping the figure to zero showed "$0.00"
       // on a month that lost money, which is the one thing this card exists for.
-      value: `${totalProfit < 0 ? "-" : ""}${currencySymbol}${Math.abs(totalProfit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      value: `${totalProfit < 0 ? "-" : ""}${formatAmount(Math.abs(totalProfit), currencySymbol)}`,
       change:
         feesPaid > 0
-          ? `After ${currencySymbol}${feesPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} paid to riders`
+          ? `After ${formatAmount(feesPaid, currencySymbol)} paid to riders`
           : totalProfit >= 0
           ? `${profitMargin}% profit margin`
-          : `Loss: ${currencySymbol}${Math.abs(totalProfit).toFixed(2)}`,
+          : `Loss: ${formatAmount(Math.abs(totalProfit), currencySymbol)}`,
       isPositive: totalProfit >= 0,
       iconName: "TrendingUp",
     },
@@ -993,8 +994,8 @@ export function aggregateCustomerDashboard(
     },
     {
       title: "Total Spent",
-      value: `${currencySymbol}${totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      change: totalSaved > 0 ? `Saved ${currencySymbol}${totalSaved.toFixed(2)} with deals` : "No promotions applied",
+      value: formatAmount(totalSpent, currencySymbol),
+      change: totalSaved > 0 ? `Saved ${formatAmount(totalSaved, currencySymbol)} with deals` : "No promotions applied",
       isPositive: true,
       iconName: "DollarSign",
     },
