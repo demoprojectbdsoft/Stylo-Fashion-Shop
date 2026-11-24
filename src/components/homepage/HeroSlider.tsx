@@ -1,130 +1,44 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ShoppingCart, Sparkles } from "lucide-react";
-import { SlideItem } from "@/types";
-import { useSiteSettings } from "@/context/SiteSettingsContext";
-import { hasOfferDiscount } from "@/lib/offer";
-import { padCountdown } from "@/lib/countdown";
-import { useCountdown } from "@/hooks/useCountdown";
+import { ArrowRight, ChevronLeft, ChevronRight, Megaphone } from "lucide-react";
+import type { Banner } from "@/types/banner";
 
-// ─── Types ─────────────────────────────────────────────────────────────────
-export interface SlideData {
-  id: string;
-  tabTitle: string;
-  subtitle: string;
-  tagline: string;
-  productName: string;
-  price: string;
-  originalPrice?: string;
-  image: string;
-  href: string;
-  targetDate: Date;
-  /** False when the slide has no real discount, so no countdown is shown. */
-  hasDiscount: boolean;
-}
-
-// Fallback image used when slide image fails to load
+// Fallback used when a banner's image fails to load, so the hero never shows a
+// broken frame.
 const FALLBACK_IMAGE =
   "https://i.ibb.co.com/Q3Tpt7Df/industries-consumer-electronics-removebg-preview.png";
 
-// ─── Countdown Box ───────────────────────────────────────────────────────────
-// The box is sized by its content instead of a fixed width, so a 100+ hour
-// deal keeps "HOURS" on one line and a three-digit number never pushes the
-// label into a broken "HOUR / S" wrap.
-function CountdownBox({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="flex min-w-[52px] shrink-0 flex-col items-center justify-center rounded-md border-2 border-primary bg-[var(--surface)] px-1.5 py-1.5 text-[var(--foreground)] shadow-xs">
-      <span className="block text-lg font-bold leading-none tabular-nums text-[var(--foreground)]">
-        {padCountdown(value)}
-      </span>
-      <span className="mt-0.5 block whitespace-nowrap text-[9px] font-semibold uppercase leading-none text-[var(--foreground-muted)]">
-        {label}
-      </span>
-    </div>
-  );
-}
-
 interface HeroSliderProps {
-  initialSlides?: SlideItem[] | any[];
+  initialBanners?: Banner[];
 }
 
-// ─── Main Slider ─────────────────────────────────────────────────────────────
-export default function HeroSlider({ initialSlides = [] }: HeroSliderProps) {
-  const { formatPrice, currencySymbol } = useSiteSettings();
-
-  const slides: SlideData[] = useMemo(() => {
-    if (!Array.isArray(initialSlides) || initialSlides.length === 0) {
-      return [];
-    }
-    return initialSlides.map((s, idx) => {
-      const target = s.targetDate ? new Date(s.targetDate) : new Date(Date.now() + 86400000);
-      const validTarget = isNaN(target.getTime()) ? new Date(Date.now() + 86400000) : target;
-      const priceStr =
-        typeof s.price === "number"
-          ? formatPrice(s.price)
-          : s.price || `${currencySymbol}0.00`;
-      const origPriceStr =
-        typeof s.originalPrice === "number"
-          ? formatPrice(s.originalPrice)
-          : s.originalPrice;
-
-      const displayName = s.productName || s.title || s.tabTitle || `OFFER ${idx + 1}`;
-
-      // A slide whose prices match has no offer running, so it shows neither a
-      // struck-through old price nor a countdown.
-      const hasDiscount = hasOfferDiscount(s.price, s.originalPrice);
-
-      return {
-        id: s.id || s._id || `slide-${idx}`,
-        tabTitle: displayName,
-        subtitle: s.subtitle || "FEATURED DEAL",
-        tagline: s.tagline || "SPECIAL OFFER FOR LIMITED TIME",
-        productName: s.productName || s.title || "Featured Product",
-        price: priceStr,
-        originalPrice: origPriceStr,
-        image: s.image || FALLBACK_IMAGE,
-        href: s.href || "/shop",
-        targetDate: validTarget,
-        hasDiscount,
-      };
-    });
-  }, [initialSlides]);
-
-  const [currentSlide, setCurrentSlide] = useState(0);
+/** Renders the admin's banners. Only eligible ones ever reach here. */
+export default function HeroSlider({ initialBanners = [] }: HeroSliderProps) {
+  const banners = Array.isArray(initialBanners) ? initialBanners.filter((b) => b.href) : [];
+  const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Auto-advance every 5 s, reset on manual tab click, pause on hover
   useEffect(() => {
-    if (isPaused || slides.length <= 1) return;
-    const id = setInterval(() => {
-      setCurrentSlide((p) => (p + 1) % slides.length);
-    }, 5000);
+    if (isPaused || banners.length <= 1) return;
+    const id = setInterval(() => setCurrent((p) => (p + 1) % banners.length), 5000);
     return () => clearInterval(id);
-  }, [currentSlide, isPaused, slides.length]);
+  }, [isPaused, banners.length]);
 
-  // Hooks run on every render, so the active slide and its timer are resolved
-  // before the empty state can return early.
-  const activeIndex = currentSlide < slides.length ? currentSlide : 0;
-  const slide = slides[activeIndex];
-  const countdown = useCountdown(slide?.targetDate);
-  // The hero shows a single hours box, so a multi-day deal counts its days
-  // into hours instead of resetting to 23 every evening.
-  const totalHours = countdown.days * 24 + countdown.hours;
+  // Keep the index valid if the list shrank between renders.
+  const index = current < banners.length ? current : 0;
+  const banner = banners[index];
 
-  // If no slides exist in the database
-  if (slides.length === 0) {
+  if (banners.length === 0) {
     return (
       <div className="w-full">
-        <div className="relative bg-[var(--surface-elevated)] rounded-2xl overflow-hidden border border-[var(--border-color)] p-8 md:p-12 flex flex-col items-center justify-center text-center min-h-[360px] space-y-4">
+        <div className="relative bg-[var(--surface-elevated)] rounded-2xl overflow-hidden border border-[var(--border-color)] p-8 md:p-12 flex flex-col items-center justify-center text-center min-h-[320px] space-y-4">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shadow-xs">
-            <Sparkles className="w-6 h-6" />
+            <Megaphone className="w-6 h-6" />
           </div>
           <div className="max-w-md space-y-1.5">
-            <h3 className="text-xl font-extrabold text-[var(--foreground)]">
-              Discover Exclusive Deals
-            </h3>
+            <h3 className="text-xl font-extrabold text-[var(--foreground)]">Discover Exclusive Deals</h3>
             <p className="text-xs text-[var(--foreground-muted)]">
               Browse our complete catalog of products, new arrivals, and top accessories.
             </p>
@@ -141,135 +55,95 @@ export default function HeroSlider({ initialSlides = [] }: HeroSliderProps) {
     );
   }
 
+  const go = (dir: number) => setCurrent((p) => (p + dir + banners.length) % banners.length);
+
   return (
     <div className="w-full">
       <div
-        className="relative bg-[var(--surface-elevated)] rounded-xl overflow-hidden border border-[var(--border-color)] shadow-xs transition-colors duration-200"
+        className="relative rounded-2xl overflow-hidden border border-[var(--border-color)] shadow-xs bg-[var(--surface-elevated)]"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        {/* Main content grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 items-center min-h-[380px] p-6 md:p-10 gap-6">
-
-          {/* Left – headline & tagline */}
-          <div
-            key={`left-${activeIndex}`}
-            className="slide-anim-left md:col-span-4 space-y-3 text-center md:text-left"
-          >
-            <h3 className="text-3xl md:text-4xl lg:text-5xl font-light text-[var(--foreground)] tracking-tight leading-none uppercase">
-              {slide.subtitle?.split(" ")[0]} <br />
-              <span className="font-bold">{slide.subtitle?.split(" ").slice(1).join(" ")}</span>
-            </h3>
-            <p className="text-xs font-semibold tracking-wider text-[var(--foreground-muted)] uppercase">
-              {slide.tagline}
-            </p>
-            <div className="pt-2">
-              <Link
-                href={slide.href}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-gradient text-[var(--on-grad-text)] text-xs font-bold shadow-brand hover:opacity-95 transition-all transform active:scale-95 group"
-              >
-                <span>Shop Now</span>
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Center – product image */}
-          <div className="md:col-span-5 flex justify-center items-center h-64 md:h-80">
+        {/* Each banner is absolutely stacked so the cross-fade is a pure opacity change. */}
+        <div className="relative h-56 sm:h-72 md:h-[420px]">
+          {banners.map((b, i) => (
             <Link
-              key={`img-${activeIndex}`}
-              href={slide.href}
-              className="slide-anim-image w-full h-full max-w-[320px] flex items-center justify-center cursor-pointer group"
+              key={b.id}
+              href={b.href}
+              aria-hidden={i !== index}
+              className={`absolute inset-0 block transition-opacity duration-700 ${
+                i === index ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+              }`}
             >
-              <img
-                src={slide.image}
-                alt={slide.productName}
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  if (e.currentTarget.src !== FALLBACK_IMAGE) {
-                    e.currentTarget.src = FALLBACK_IMAGE;
-                  }
-                }}
-                className="object-contain max-h-full transition-transform duration-300 group-hover:scale-105 drop-shadow-md dark:drop-shadow-[0_4px_12px_rgba(255,255,255,0.08)]"
-              />
-            </Link>
-          </div>
+              <picture>
+                {b.mobileImage && <source media="(max-width: 640px)" srcSet={b.mobileImage} />}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={b.desktopImage || FALLBACK_IMAGE}
+                  alt={b.title}
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    if (e.currentTarget.src !== FALLBACK_IMAGE) e.currentTarget.src = FALLBACK_IMAGE;
+                  }}
+                  className="w-full h-full object-cover"
+                />
+              </picture>
 
-          {/* Right – product name, price, countdown */}
-          <div
-            key={`right-${activeIndex}`}
-            className="slide-anim-right md:col-span-3 space-y-4 text-center md:text-left"
-          >
-            <Link href={slide.href} className="block group">
-              <h4 className="text-base font-bold text-primary group-hover:underline leading-tight">
-                {slide.productName}
-              </h4>
-            </Link>
-
-            <div className="flex items-baseline justify-center md:justify-start gap-2">
-              <span className="text-3xl font-normal text-red-500 dark:text-red-400">{slide.price}</span>
-              {slide.originalPrice && slide.hasDiscount && !countdown.ended && (
-                <span className="text-sm text-[var(--foreground-muted)] line-through">{slide.originalPrice}</span>
-              )}
-            </div>
-
-            {slide.hasDiscount && !countdown.ended && (
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 pt-1">
-                <CountdownBox value={totalHours} label="HOURS" />
-                <CountdownBox value={countdown.minutes} label="MINS" />
-                <CountdownBox value={countdown.seconds} label="SECS" />
+              {/* Text overlay */}
+              <div className="absolute inset-0 flex flex-col justify-center gap-2 p-6 sm:p-10 md:p-14">
+                <div className="max-w-lg bg-gradient-to-r from-black/60 via-black/35 to-transparent rounded-2xl p-5 md:p-7">
+                  <h3 className="text-2xl md:text-4xl font-extrabold leading-tight text-white drop-shadow">
+                    {b.title}
+                  </h3>
+                  {b.subtitle && (
+                    <p className="mt-1.5 text-xs md:text-sm text-white/90">{b.subtitle}</p>
+                  )}
+                  <span className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-white text-xs font-bold shadow-md shadow-primary/25">
+                    {b.ctaText || "Shop Now"}
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </div>
               </div>
-            )}
-
-            <div className="pt-1">
-              <Link
-                href={slide.href}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--foreground)] hover:text-primary transition-colors"
-              >
-                <ShoppingCart className="w-3.5 h-3.5 text-primary" />
-                <span>View Product Details</span>
-              </Link>
-            </div>
-          </div>
-
+            </Link>
+          ))}
         </div>
 
-        {/* Tab bar */}
-        {slides.length > 1 && (
-          <div
-            className="grid border-t border-[var(--border-color)] bg-[var(--surface)]/90 backdrop-blur-xs"
-            style={{
-              gridTemplateColumns: `repeat(${Math.min(slides.length, 5)}, minmax(0, 1fr))`,
-            }}
-          >
-            {slides.map((s, i) => (
-              <button
-                key={s.id || i}
-                onClick={() => setCurrentSlide(i)}
-                className={`relative px-3 py-4 text-center transition-all duration-200 cursor-pointer select-none ${
-                  activeIndex === i
-                    ? "bg-[var(--surface-alt)] font-bold text-[var(--foreground)]"
-                    : "hover:bg-[var(--surface-alt)]/60 text-[var(--foreground-muted)] font-medium"
-                }`}
-              >
-                {activeIndex === i && (
-                  <div className="absolute top-0 left-0 w-full">
-                    <div className="h-[3px] w-full bg-brand-gradient" />
-                    <div className="absolute top-[3px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[var(--brand-flat)]" />
-                  </div>
-                )}
-                <span
-                  title={s.productName || s.tabTitle}
-                  className="text-[11px] font-bold leading-tight block uppercase tracking-tight pt-1 truncate px-1"
-                >
-                  {s.tabTitle}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Controls */}
+        {banners.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => go(-1)}
+              aria-label="Previous banner"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/35 hover:bg-black/55 text-white backdrop-blur-xs transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => go(1)}
+              aria-label="Next banner"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/35 hover:bg-black/55 text-white backdrop-blur-xs transition-colors cursor-pointer"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
 
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+              {banners.map((b, i) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => setCurrent(i)}
+                  aria-label={`Go to banner ${i + 1}`}
+                  className={`h-2 rounded-full transition-all cursor-pointer ${
+                    i === index ? "w-6 bg-white" : "w-2 bg-white/50 hover:bg-white/80"
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

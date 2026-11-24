@@ -12,7 +12,7 @@ import PromoStrip from "@/components/homepage/PromoStrip";
 import Brand from "@/components/homepage/Brand";
 import { getProducts } from "@/lib/api/products";
 import { asStoreList, getPublicStores } from "@/lib/api/stores";
-import { getSlides } from "@/lib/api/slides";
+import { getBanners } from "@/lib/api/banners";
 import { getPromos } from "@/lib/api/promos";
 
 // The two promo blocks are not defined here any more: their words, images and
@@ -23,14 +23,10 @@ import { getPromos } from "@/lib/api/promos";
 // ─── Per-section async server components ─────────────────────────────────────
 
 async function HeroSliderSection() {
-  const slidesRes = await getSlides("isActive=true");
-  const slides = Array.isArray(slidesRes?.data)
-    ? slidesRes.data
-    : Array.isArray(slidesRes)
-    ? slidesRes
-    : [];
+  const res = await getBanners();
+  const banners = Array.isArray(res?.data) ? res.data : [];
 
-  return <HeroSlider initialSlides={slides} />;
+  return <HeroSlider initialBanners={banners} />;
 }
 
 async function NewArrivalsSection() {

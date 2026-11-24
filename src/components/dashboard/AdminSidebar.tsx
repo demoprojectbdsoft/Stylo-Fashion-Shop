@@ -60,7 +60,7 @@ const NAV_GROUPS = [
     items: [
       { name: "Products", href: "/dashboard/admin/products", icon: Package },
       { name: "Categories", href: "/dashboard/admin/categories", icon: FolderTree },
-      { name: "Home Slider", href: "/dashboard/admin/home-slider", icon: SlidersHorizontal },
+      { name: "Hero Banners", href: "/dashboard/admin/hero-banners", icon: SlidersHorizontal },
       { name: "Promo Banners", href: "/dashboard/admin/promo-banners", icon: Megaphone },
       { name: "Promotions", href: "/dashboard/admin/promotions", icon: Sparkles },
       // The price list vendors buy from; it sits with the store's own catalogue
