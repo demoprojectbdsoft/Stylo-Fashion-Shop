@@ -456,6 +456,12 @@ sparq/
 - ⚠️ **`INTERNAL_API_KEY` must match backend** exactly
 - ⚠️ **Rebuild after changing `NEXT_PUBLIC_*`** variables
 - ⚠️ **Emails sent by backend** - configure SMTP there
+- ⚠️ **Restrict `next/image` hosts** - `next.config.ts` currently allows any
+  `https` host, so the image optimizer can fetch an arbitrary URL. Narrow
+  `images.remotePatterns` to your own CDN/hosts before going live.
+- ⚠️ **Keep the document URL the API returns** - application documents are read
+  through a signed link, so store `payload.data.url` from `/api/documents`
+  as-is instead of rebuilding it.
 
 ---
 
