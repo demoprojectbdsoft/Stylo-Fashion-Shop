@@ -317,7 +317,14 @@ export default async function CustomerDashboardPage() {
           })
         : "Recent",
       amount: tx.amount ?? 0,
-      status: tx.status === "success" ? "Completed" : tx.status === "pending" ? "Pending" : "Failed",
+      status:
+        tx.status === "success"
+          ? "Completed"
+          : tx.status === "pending"
+            ? "Pending"
+            : tx.status === "refunded"
+              ? "Refunded"
+              : "Failed",
       paymentMethod: mapPaymentMethod(tx.method),
       cardLast4: tx.reference?.slice(-4) || "••••",
       type: "Payment",

@@ -39,8 +39,10 @@ export default async function CustomerTransactionsPage() {
           t.status === "success"
             ? "Completed"
             : t.status === "failed"
-            ? "Failed"
-            : "Pending";
+              ? "Failed"
+              : t.status === "refunded"
+                ? "Refunded"
+                : "Pending";
 
         return {
           id: t._id || t.id,

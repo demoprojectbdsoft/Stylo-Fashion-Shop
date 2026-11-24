@@ -75,7 +75,7 @@ export interface Order {
   /** Reference/transaction ID — returned by backend's getOrderById via the transaction record */
   transactionId?: string;
   /** Payment status from the linked Transaction document */
-  paymentStatus?: "pending" | "success" | "failed";
+  paymentStatus?: "pending" | "success" | "failed" | "refunded";
   totalAmount: number;
   subtotal?: number;
   shippingFee?: number;
