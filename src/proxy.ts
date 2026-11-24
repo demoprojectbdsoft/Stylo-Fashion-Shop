@@ -93,7 +93,7 @@ function isExempt(pathname: string): boolean {
   if (
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/_static/") ||
-    /\.(png|jpe?g|webp|avif|gif|svg|ico|css|js|map|woff2?|ttf|eot)$/i.test(pathname) ||
+    /\.(png|jpe?g|webp|avif|gif|svg|ico|css|map|woff2?|ttf|eot)$/i.test(pathname) ||
     ["/favicon.ico", "/icon.svg", "/robots.txt", "/sitemap.xml", "/manifest.webmanifest"].includes(pathname)
   )
     return true;
