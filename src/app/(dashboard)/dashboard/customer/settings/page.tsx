@@ -6,7 +6,6 @@ import CustomerSettingsClient, {
 // ── All Settings Dummy/Default Data Kept In Page.tsx ──
 const INITIAL_SETTINGS_DATA: CustomerSettingsData = {
   preferences: {
-    currency: "USD",
     language: "en",
   },
   notifications: {

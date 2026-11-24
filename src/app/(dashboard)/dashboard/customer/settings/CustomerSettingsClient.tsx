@@ -37,20 +37,6 @@ import { exportMyAccountData } from "@/lib/action/account";
 import { downloadJson } from "@/lib/downloadFile";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 
-// ── Supported Currencies ────────────────────────────────────────────────────────
-const CURRENCIES = [
-  { value: "USD", label: "USD ($) – US Dollar", symbol: "$" },
-  { value: "EUR", label: "EUR (€) – Euro", symbol: "€" },
-  { value: "GBP", label: "GBP (£) – British Pound", symbol: "£" },
-  { value: "BDT", label: "BDT (৳) – Bangladeshi Taka", symbol: "৳" },
-  { value: "AUD", label: "AUD (A$) – Australian Dollar", symbol: "A$" },
-  { value: "CAD", label: "CAD (C$) – Canadian Dollar", symbol: "C$" },
-  { value: "JPY", label: "JPY (¥) – Japanese Yen", symbol: "¥" },
-  { value: "INR", label: "INR (₹) – Indian Rupee", symbol: "₹" },
-  { value: "SGD", label: "SGD (S$) – Singapore Dollar", symbol: "S$" },
-  { value: "AED", label: "AED (د.إ) – UAE Dirham", symbol: "د.إ" },
-];
-
 // ── Supported Languages ─────────────────────────────────────────────────────────
 const LANGUAGES = [
   { value: "en", label: "English (US)" },
@@ -82,7 +68,6 @@ export interface ActiveSession {
 
 export interface CustomerSettingsData {
   preferences: {
-    currency: string;
     language: string;
   };
   notifications: {
@@ -178,13 +163,10 @@ export default function CustomerSettingsClient({
   initialSettings,
 }: CustomerSettingsClientProps) {
   const [activeTab, setActiveTab] = useState("preferences");
-  const { settings: siteSettings, updateSettings } = useSiteSettings();
+  const { settings: siteSettings } = useSiteSettings();
   const siteName = siteSettings.siteName || "Sparq";
 
-  // Preferences State — currency defaults to site-wide currency from backend
-  const [currency, setCurrency] = useState(
-    initialSettings?.preferences.currency || siteSettings.currency || "USD"
-  );
+  // Preferences State — language only; the store's currency is the admin's.
   const [language, setLanguage] = useState(
     initialSettings?.preferences.language || "en"
   );
@@ -244,10 +226,7 @@ export default function CustomerSettingsClient({
 
   const handlePreferencesSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (currency) {
-      updateSettings({ currency });
-    }
-    toast.success(`Preferences updated successfully! Currency set to ${currency}.`);
+    toast.success("Preferences updated successfully!");
   };
 
   const handleNotificationsSave = (e: React.FormEvent) => {
@@ -381,9 +360,6 @@ export default function CustomerSettingsClient({
     }
   };
 
-  // Current site currency label for info badge
-  const siteCurrencyLabel = CURRENCIES.find((c) => c.value === siteSettings.currency)?.label || siteSettings.currency;
-
   return (
     <div className="space-y-8">
       {/* ── Page Header ── */}
@@ -442,30 +418,12 @@ export default function CustomerSettingsClient({
                   Preferences &amp; Localization
                 </h3>
                 <p className="text-xs text-[var(--foreground-muted)]">
-                  Configure default currency, regional language, and shopping display options.
+                  Choose your regional language and shopping display options.
                 </p>
               </div>
 
-              {/* Site Currency Notice */}
-              <div className="p-3.5 rounded-xl border border-[var(--accent)]/60 dark:border-[var(--accent)]/40 bg-[var(--accent)]/10 dark:bg-[var(--accent)]/5 flex items-start gap-2.5 text-xs text-[var(--accent)] dark:text-[var(--accent)]">
-                <Globe className="w-4 h-4 shrink-0 mt-0.5 text-[var(--accent)]" />
-                <span>
-                  The store&apos;s default currency is currently set to{" "}
-                  <strong>{siteCurrencyLabel}</strong> by the admin. Your preference below overrides your display only.
-                </span>
-              </div>
-
               <form onSubmit={handlePreferencesSave} className="space-y-4 text-xs">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Currency HeroUI Select */}
-                  <CustomerSelect
-                    label="Display Currency"
-                    value={currency}
-                    onChange={setCurrency}
-                    placeholder="Select currency"
-                    options={CURRENCIES}
-                  />
-
+                <div className="grid grid-cols-1 gap-4">
                   {/* Language HeroUI Select */}
                   <CustomerSelect
                     label="Language"
