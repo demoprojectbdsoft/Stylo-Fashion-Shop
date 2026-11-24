@@ -1,4 +1,5 @@
-// Currency helpers used everywhere prices are shown.
+// Currency helpers. Prices are stored in the store's own currency; a different
+// display currency is converted with the day's rates first.
 
 export const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: "$",
@@ -19,34 +20,6 @@ export function getCurrencySymbol(currency?: string): string {
   return CURRENCY_SYMBOLS[upper] || upper;
 }
 
-/** Formats an amount with a symbol, e.g. formatAmount(1200, "৳") => "৳1,200.00". */
-export function formatAmount(
-  amount: number | string | undefined | null,
-  symbol: string,
-  opts?: { showDecimals?: boolean }
-): string {
-  const num = typeof amount === "number" ? amount : Number(amount) || 0;
-  const decimals = opts?.showDecimals === false ? 0 : 2;
-  return `${symbol}${num.toLocaleString("en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  })}`;
-}
-
-/** Formats an amount for a currency code, with that currency's own decimals. */
-export function formatPrice(
-  amount: number | string | undefined | null,
-  currency: string = "USD",
-  opts?: { showDecimals?: boolean }
-): string {
-  const num = typeof amount === "number" ? amount : Number(amount) || 0;
-  const decimals = opts?.showDecimals === false ? 0 : currencyDecimals(currency);
-  return `${getCurrencySymbol(currency)}${num.toLocaleString("en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  })}`;
-}
-
 /** The decimal places a currency really uses: JPY 0, USD 2, KWD 3. */
 export function currencyDecimals(currency: string = "USD"): number {
   try {
@@ -59,27 +32,34 @@ export function currencyDecimals(currency: string = "USD"): number {
   }
 }
 
+/** Formats an amount with a symbol, e.g. formatAmount(1200, "৳") => "৳1,200.00". */
+export function formatAmount(
+  amount: number | string | undefined | null,
+  symbol: string,
+  opts?: { showDecimals?: boolean; decimals?: number }
+): string {
+  const num = typeof amount === "number" ? amount : Number(amount) || 0;
+  const decimals = opts?.decimals ?? (opts?.showDecimals === false ? 0 : 2);
+  return `${symbol}${num.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
+}
+
+/** Formats an amount for a currency code, with that currency's own decimals. */
+export function formatPrice(
+  amount: number | string | undefined | null,
+  currency: string = "USD",
+  opts?: { showDecimals?: boolean }
+): string {
+  const decimals = opts?.showDecimals === false ? 0 : currencyDecimals(currency);
+  return formatAmount(amount, getCurrencySymbol(currency), { decimals });
+}
+
 /** Rounds an amount to the currency's smallest unit, e.g. ¥1,237.6 => ¥1,238. */
 export function roundToCurrency(amount: number, currency: string = "USD"): number {
   const factor = 10 ** currencyDecimals(currency);
   return Math.round(amount * factor) / factor;
-}
-
-/** Prints with the currency's own symbol and decimals, e.g. ¥1,238 or $1,200.00. */
-export function formatCurrency(
-  amount: number | string | undefined | null,
-  currency: string = "USD"
-): string {
-  const num = typeof amount === "number" ? amount : Number(amount) || 0;
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-      currencyDisplay: "narrowSymbol",
-    }).format(num);
-  } catch {
-    return formatPrice(num, currency);
-  }
 }
 
 /** Converts between currencies using rates on one base, e.g. { USD: 1, BDT: 124 }. */
