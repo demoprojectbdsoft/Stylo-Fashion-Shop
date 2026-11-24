@@ -1,10 +1,5 @@
-// ── Date display in the store's timezone ─────────────────────────────────────
-// A server component runs in the server's timezone (UTC on Vercel) while the
-// browser runs in the customer's. Formatting the same date in both places made
-// orders look a day early or late, so every date in the app is now formatted
-// for the store's own timezone.
-//
-// Change STORE_TIME_ZONE to move the whole app to another timezone.
+// Dates are shown in the store's timezone, so server and browser agree.
+// Change STORE_TIME_ZONE to move the whole app.
 
 export const STORE_TIME_ZONE = "Asia/Dhaka";
 
