@@ -17,6 +17,7 @@ import { asStore, getPublicStoreBySlug } from "@/lib/api/stores";
 import { getProducts } from "@/lib/api/products";
 import VendorBanner from "@/components/vendor/VendorBanner";
 import VendorShelf from "./VendorShelf";
+import { formatMonthYear } from "@/lib/dateTime";
 
 export const dynamic = "force-dynamic";
 
@@ -109,9 +110,7 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
     .filter(Boolean)
     .join(", ");
 
-  const joined = store.createdAt
-    ? new Date(store.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
-    : "";
+  const joined = formatMonthYear(store.createdAt);
 
   return (
     <section className="w-full max-w-7xl mx-auto px-4 py-8 space-y-6">

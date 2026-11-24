@@ -3,6 +3,7 @@ import CustomerWishlistClient from "./CustomerWishlistClient";
 import { getWishlistByUserId } from "@/lib/api/wishlist";
 import { getCategories } from "@/lib/api/categories";
 import { getUserSession } from "@/lib/core/session";
+import { formatOrderDate } from "@/lib/dateTime";
 
 export default async function CustomerWishlistPage() {
   const user = await getUserSession();
@@ -33,13 +34,7 @@ export default async function CustomerWishlistPage() {
         inStock: p.inStock ?? false,
         rating: p.rating ?? 0,
         category: p.category?.name || p.category || "Electronics",
-        addedAt: item.createdAt
-          ? new Date(item.createdAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })
-          : "",
+        addedAt: formatOrderDate(item.createdAt),
       };
     });
 
