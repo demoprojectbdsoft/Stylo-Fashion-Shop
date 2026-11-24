@@ -3,6 +3,7 @@ import CustomerTransactionsClient from "./CustomerTransactionsClient";
 import { CustomerTransaction } from "@/types/customerDashboard";
 import { getUserSession } from "@/lib/core/session";
 import { getTransactionsByUserId } from "@/lib/api/transactions";
+import { formatOrderDate } from "@/lib/dateTime";
 
 export const dynamic = "force-dynamic";
 
@@ -27,13 +28,7 @@ export default async function CustomerTransactionsPage() {
         const shortOrderId = orderIdStr
           ? `#ORD-${orderIdStr.slice(-6).toUpperCase()}`
           : "#ORD";
-        const dateStr = t.createdAt
-          ? new Date(t.createdAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })
-          : "Recent";
+        const dateStr = formatOrderDate(t.createdAt) || "Recent";
 
         const statusMapped =
           t.status === "success"

@@ -43,6 +43,7 @@ import { authClient } from "@/lib/auth-client";
 import SuspendedAccountModal from "@/components/shared/SuspendedAccountModal";
 import ImageGalleryModal from "@/components/shared/ImageGalleryModal";
 import UserAvatar from "@/components/shared/UserAvatar";
+import { formatOrderDate } from "@/lib/dateTime";
 import { Product, ProductReview, User } from "@/types";
 import type { PublicStore } from "@/types/stores";
 import FeaturedVendors from "@/components/vendor/FeaturedVendors";
@@ -1522,7 +1523,7 @@ export default function ProductDetailsPage({
                                   </div>
                                 </div>
                                 <span className="text-[11px] text-slate-400 font-medium">
-                                  {rev.date ? new Date(rev.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : ""}
+                                  {formatOrderDate(rev.date)}
                                 </span>
                               </div>
 

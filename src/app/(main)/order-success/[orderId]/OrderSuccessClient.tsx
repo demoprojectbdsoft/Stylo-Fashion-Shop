@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 import { getOrderById } from "@/lib/api/orders";
 import { OrderSuccessClientProps, Order, OrderItem, Product } from "@/types";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
+import { formatOrderDate, formatOrderDateTime } from "@/lib/dateTime";
 
 /**
  * Resilient image renderer for order receipt items.
@@ -239,22 +240,12 @@ export default function OrderSuccessClient({
   const paymentBadge = paymentMethodLabel(order?.paymentMethod);
 
   const orderDate = order?.createdAt ? new Date(order.createdAt) : new Date();
-  const formattedDate = orderDate.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formattedDate = formatOrderDateTime(orderDate);
 
   // Estimated delivery date (3 days from order date)
   const deliveryDate = new Date(orderDate);
   deliveryDate.setDate(deliveryDate.getDate() + 3);
-  const formattedDeliveryDate = deliveryDate.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const formattedDeliveryDate = formatOrderDate(deliveryDate);
 
   const getItemImage = (item: OrderItem): string => {
     if (item.image && typeof item.image === "string" && item.image.trim() !== "") {
