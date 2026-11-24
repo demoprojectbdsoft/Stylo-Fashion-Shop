@@ -26,6 +26,8 @@ Full-stack marketplace with multi-vendor support, loyalty system, and comprehens
 8. [Development](#development)
 9. [Deployment](#deployment)
 10. [Demo Accounts](#demo-accounts)
+11. [Implementation Status](#implementation-status)
+12. [Documentation](#documentation)
 
 ---
 
@@ -45,7 +47,7 @@ Sparq is a **production-ready e-commerce platform** for electronics with complet
 │  • Track Orders        • Fulfillment     • Site Settings   │
 │  • Reviews             • Analytics       • Reports         │
 │  • Loyalty Points      • Coupons         • Users           │
-│  • Warranties          • Promotions      • Support         │
+│  • Coverage            • Promotions      • Support         │
 │                                                             │
 │  🛵 RIDERS             🧪 DEMO ADMIN                        │
 │  • Deliveries          • Sandbox Mode                      │
@@ -66,7 +68,7 @@ Sparq is a **production-ready e-commerce platform** for electronics with complet
 - **Loyalty Rewards**: Earn & redeem points (1 point = $1 spent)
 - **Order Tracking**: Real-time status with delivery map
 - **Reviews**: Star ratings + photos
-- **Warranties**: File claims with photo evidence
+- **Warranties**: Coverage shown on each product page
 - **Saved Addresses**: Up to 5 addresses with default
 - **Data Export**: Download your data as JSON
 
@@ -93,15 +95,16 @@ Sparq is a **production-ready e-commerce platform** for electronics with complet
 - **CMS Branding**: Logos, colors, fonts, content - no redeploy
 - **User Management**: Role assignment, per-role suspension
 - **Vendor Control**: Approve applications, grant promotions
-- **Support Tools**: Warranties, reviews, contact messages
+- **Support Tools**: Product review desk, reviews, contact messages
 - **Reports & Analytics**: CSV + PDF exports with charts
 - **Maintenance Mode**: Close site for customers, keep admin access
 
 ### 🧪 Demo Admin (Sandbox)
 
-- **Safe Exploration**: Edit products, categories, reviews freely
-- **Protected Data**: Cannot change users, orders, site settings
-- **Auto Restore**: All changes reverted daily at midnight
+- **Same reach as a real admin**: every dashboard, every write
+- **Every write is logged** and reverted by the nightly sweep
+- **Auto Restore**: once a day at 00:00 (Asia/Dhaka), not a rolling timer
+- **Never breaks real data**: a demo-created row another row depends on is kept, not deleted
 
 ---
 
@@ -133,7 +136,7 @@ Browser                    Frontend (Next.js)              Backend (Express)    
 1. **User logs in** → Frontend (better-auth)
 2. **JWT generated** → Stored in browser
 3. **API request** → JWT sent with every request
-4. **Backend verifies** → Via JWKS endpoint (no shared secret)
+4. **Backend verifies** → JWT via JWKS, or the session token as a fallback
 5. **Authorization** → Role checked on every endpoint
 6. **Fresh roles** → Always read from DB, never cached in token
 
@@ -144,15 +147,17 @@ Place Order                                              Delivered
     │                                                         │
     ├─ Validate stock                                        ├─ Mark payment success
     ├─ Redeem points (atomic)                                ├─ Credit loyalty points
-    ├─ Calculate totals (server-side)                        ├─ Update sell counts
-    ├─ Create order + transaction                            └─ Issue warranties
-    ├─ Decrement stock
+    ├─ Calculate totals (server-side)                        └─ Update sell counts
+    ├─ Create order + payment
+    ├─ Decrement stock (guarded)
     ├─ Clear cart
     └─ Split into vendor groups (if multi-vendor)
 
 Status Flow:  confirmed → processing → shipped → delivered
                    │            │         │
                    └────────────┴─────────┴──────► cancelled
+                       (cancelling refunds a paid order, restores stock,
+                        returns points and the coupon's use)
 ```
 
 ### Multi-Vendor Order Splitting
@@ -194,17 +199,12 @@ TIERS:
   💎 Diamond:  10,000+ points
 ```
 
-### Warranty System
+### Warranty (product info only)
 
-**5 Types:**
-- **Manufacturer**: Brand handles repairs
-- **Seller**: Platform handles repairs  
-- **Extended**: Extra coverage (can extend up to 3 times)
-- **Other**: Custom terms
-- **None**: No coverage
-
-**Lifecycle:**  
-`Issued on Delivery` → `Active` → `Claim Filed` → `Under Review` → `Resolved/Rejected`
+Each product carries a coverage code — **Manufacturer**, **Seller**,
+**Extended**, **Other** or **None** — plus a period in months and a terms line,
+shown on the product page. There is **no claim workflow** in this build; one
+shared list lives in `src/lib/warranty.ts`.
 
 ### Discount Coupons (Two-Level System)
 
@@ -396,9 +396,10 @@ sparq/
 │   │   │   ├── checkout/             # Checkout flow
 │   │   │   └── ...                   # Other public pages
 │   │   ├── api/auth/[...all]/        # better-auth endpoints
-│   │   ├── maintenance/              # Maintenance page
-│   │   └── proxy.ts                  # Middleware (maintenance gate)
+│   │   ├── api/documents/            # Document upload → backend
+│   │   └── maintenance/              # Maintenance page
 │   │
+│   ├── proxy.ts                      # Middleware (maintenance gate)
 │   ├── components/
 │   │   ├── dashboard/                # Dashboard components
 │   │   ├── homepage/                 # Homepage sections
@@ -414,6 +415,9 @@ sparq/
 │   │   ├── compare.ts                # Product comparison
 │   │   ├── csvExport.ts              # CSV reports
 │   │   ├── dashboardPdf.ts           # PDF reports with charts
+│   │   ├── files.ts                  # Document uploads
+│   │   ├── walletPayment.ts          # Demo wallet helpers
+│   │   ├── warranty.ts               # Warranty type list
 │   │   └── ...                       # Other utilities
 │   │
 │   ├── types/                        # TypeScript definitions
@@ -542,7 +546,8 @@ After deployment, update:
 - Full shopping experience
 
 **Admin**
-- Create via MongoDB: `db.users.updateOne({email: "..."}, {$set: {role: "admin"}})`
+- Create via MongoDB:
+  `db.user.updateOne({ email: "..." }, { $set: { role: "admin", activeRole: "admin", roles: ["admin"] } })`
 - Access all dashboards
 
 **Demo Admin**
@@ -555,8 +560,10 @@ After deployment, update:
 
 ### Test Payments
 
-**Cash on Delivery**: Works immediately  
-**Mobile Wallets**: Enter any transaction ID (demo mode)
+**Cash on Delivery**: settles at the door (starts `pending`)
+**Mobile Wallets**: simulated — the site has no gateway. Type any 8–20 character
+reference; it is stored with `isDemo` and cannot be reused on a second order.
+Cancelling a paid order marks its payment **refunded**.
 
 ---
 
@@ -583,14 +590,19 @@ After deployment, update:
 | Subscription Plans | ✅ Complete |
 | Order Splitting | ✅ Complete |
 | Commission System | ✅ Complete |
+| Subscription Renewals | ✅ Extend, never reset |
+| Vendor & Rider Applications | ✅ Submit, review, approve |
 | **Delivery** ||
 | Rider Dashboard | ✅ Complete |
 | Delivery Assignment | ✅ Complete |
-| GPS Tracking | ✅ Complete |
+| GPS Tracking + Door Code | ✅ Complete |
 | **Marketing** ||
 | Discount Coupons | ✅ Complete |
 | Featured Promotions | ✅ Complete |
 | Activity Notifications | ✅ Complete |
+| **Money & Documents** ||
+| Wallet Demo Payments | ✅ Simulated, refunded on cancel |
+| Signed Document Links | ✅ Complete |
 
 ### 📋 Future Enhancements (On Demand)
 
