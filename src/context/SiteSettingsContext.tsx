@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { SiteSettingsData } from "@/types";
-import { getCurrencySymbol, formatPrice as formatPriceUtil, CURRENCY_SYMBOLS } from "@/lib/currency";
+import { getCurrencySymbol, formatPrice as formatPriceUtil, convertCurrency, CURRENCY_SYMBOLS } from "@/lib/currency";
 export { getCurrencySymbol, CURRENCY_SYMBOLS };
 
 export const DEFAULT_SITE_SETTINGS: SiteSettingsData = {
@@ -83,6 +83,8 @@ interface SiteSettingsContextType {
   updateSettings: (newSettings: Partial<SiteSettingsData>) => void;
   currencySymbol: string;
   formatPrice: (amount: number | string | undefined | null, opts?: { showDecimals?: boolean }) => string;
+  /** Converts a base-currency amount into the display currency. */
+  convert: (amount: number) => number;
 }
 
 const SiteSettingsContext = createContext<SiteSettingsContextType>({
@@ -90,6 +92,7 @@ const SiteSettingsContext = createContext<SiteSettingsContextType>({
   updateSettings: () => {},
   currencySymbol: "$",
   formatPrice: (amt, opts) => formatPriceUtil(amt, "USD", opts),
+  convert: (amount) => amount,
 });
 
 export function SiteSettingsProvider({
@@ -243,11 +246,25 @@ export function SiteSettingsProvider({
     document.body.style.fontFamily = `'${primary}', sans-serif`;
   }, [settings.typography?.primaryFont, settings.typography?.headingFont]);
 
+  // The store's own currency (the server value); the customer's saved choice can
+  // override it for display. Prices are stored in the base, so a different
+  // display currency is converted with the day's rates.
+  const baseCurrency = useMemo(
+    () => initialSettings?.currency || DEFAULT_SITE_SETTINGS.currency,
+    [initialSettings?.currency]
+  );
+  const rates = settings.currencyRates?.rates || {};
+
+  const convert = useCallback(
+    (amount: number) => convertCurrency(amount, baseCurrency, settings.currency, rates),
+    [baseCurrency, settings.currency, rates]
+  );
+
   const currencySymbol = useMemo(() => getCurrencySymbol(settings.currency), [settings.currency]);
   const formatPrice = useCallback(
     (amount: number | string | undefined | null, opts?: { showDecimals?: boolean }) =>
-      formatPriceUtil(amount, settings.currency, opts),
-    [settings.currency]
+      formatPriceUtil(convert(Number(amount) || 0), settings.currency, opts),
+    [convert, settings.currency]
   );
 
   return (
@@ -257,6 +274,7 @@ export function SiteSettingsProvider({
         updateSettings,
         currencySymbol,
         formatPrice,
+        convert,
       }}
     >
       {children}
@@ -273,6 +291,7 @@ export function useSiteSettings() {
       currencySymbol: "$",
       formatPrice: (amt: number | string | undefined | null, opts?: { showDecimals?: boolean }) =>
         formatPriceUtil(amt, "USD", opts),
+      convert: (amount: number) => amount,
     };
   }
   return context;

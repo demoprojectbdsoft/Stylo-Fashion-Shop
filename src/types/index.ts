@@ -330,6 +330,8 @@ export interface SiteSettingsData {
   /** Logos that scroll across the homepage. Empty hides the whole band. */
   brandLogos?: SiteBrandLogo[];
   currency: string;
+  /** The day's exchange rates against `base`, filled by the server. */
+  currencyRates?: { base?: string; rates?: Record<string, number>; updatedAt?: string | null };
   timezone: string;
   maintenanceMode: boolean;
   shopBrowseMode?: "pagination" | "scroll";

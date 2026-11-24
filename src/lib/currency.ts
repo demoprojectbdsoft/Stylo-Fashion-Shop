@@ -33,13 +33,18 @@ export function formatAmount(
   })}`;
 }
 
-/** Formats an amount for a currency code, e.g. formatPrice(1200, "BDT") => "৳1,200.00". */
+/** Formats an amount for a currency code, with that currency's own decimals. */
 export function formatPrice(
   amount: number | string | undefined | null,
   currency: string = "USD",
   opts?: { showDecimals?: boolean }
 ): string {
-  return formatAmount(amount, getCurrencySymbol(currency), opts);
+  const num = typeof amount === "number" ? amount : Number(amount) || 0;
+  const decimals = opts?.showDecimals === false ? 0 : currencyDecimals(currency);
+  return `${getCurrencySymbol(currency)}${num.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
 }
 
 /** The decimal places a currency really uses: JPY 0, USD 2, KWD 3. */
