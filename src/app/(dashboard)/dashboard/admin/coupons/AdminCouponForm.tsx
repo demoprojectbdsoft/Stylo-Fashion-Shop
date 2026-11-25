@@ -399,7 +399,7 @@ export default function AdminCouponForm({
         <p className={hintClass}>
           {chosenCategories.size === 0
             ? "None picked, so no category is covered by name."
-            : `${chosenCategories.size} picked. A line qualifies through either list, so a category here can cover more than the products named below.`}
+            : `${chosenCategories.size} picked — each one covers every product in that category, now and as new products are added. A line qualifies through either list.`}
         </p>
 
         {categories.length === 0 ? (
