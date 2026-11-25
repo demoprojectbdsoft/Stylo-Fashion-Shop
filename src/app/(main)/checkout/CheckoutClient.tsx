@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -214,8 +214,6 @@ export default function CheckoutClient({
   const [coupon, setCoupon] = useState<CouponQuote | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [isCheckingCoupon, setIsCheckingCoupon] = useState<boolean>(false);
-  // One quiet re-price per incoming code, not one per keystroke of the render.
-  const pricedIncomingCode = useRef<string | null>(null);
 
   // ── Order Placement State ──────────────────────────────────────────────────
   const [isPlacingOrder, setIsPlacingOrder] = useState<boolean>(false);
@@ -342,9 +340,10 @@ export default function CheckoutClient({
   // goes at full price - the shopper is never quietly charged the old discount.
   useEffect(() => {
     const code = initialCouponCode?.trim().toUpperCase();
-    if (!code || items.length === 0) return;
-    if (pricedIncomingCode.current === code) return;
-    pricedIncomingCode.current = code;
+    if (!code || items.length === 0) {
+      setIsCheckingCoupon(false);
+      return;
+    }
 
     let cancelled = false;
     const priceIncomingCode = async () => {
@@ -380,6 +379,8 @@ export default function CheckoutClient({
     priceIncomingCode();
     return () => {
       cancelled = true;
+      // Never leave the spinner on: a cancelled check must not disable checkout.
+      setIsCheckingCoupon(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCouponCode, items.length]);
