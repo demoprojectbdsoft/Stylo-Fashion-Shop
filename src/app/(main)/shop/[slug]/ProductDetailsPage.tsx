@@ -205,7 +205,7 @@ export default function ProductDetailsPage({
 
     // Every open of a listing is one view in the seller's traffic report. The
     // helper remembers the visit for the session, so a reload is not a second one.
-    trackProductEngagement(product.id, "view");
+    trackProductEngagement(product.id, "view", user?.id);
 
     // Load wishlist status
     const loadWishlist = () => {
@@ -337,7 +337,7 @@ export default function ProductDetailsPage({
 
     try {
       // Pressing buy is the click a seller's report counts.
-      trackProductEngagement(product.id, "click");
+      trackProductEngagement(product.id, "click", user?.id);
       const res = await addToCart(product.id, quantity);
       if (res?.success !== false) {
         setIsInCart(true);

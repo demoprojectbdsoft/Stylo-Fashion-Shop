@@ -14,7 +14,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
 
 export type EngagementType = "view" | "click";
 
-export function trackProductEngagement(productId: string, type: EngagementType): void {
+export function trackProductEngagement(
+  productId: string,
+  type: EngagementType,
+  viewerId?: string
+): void {
   if (!productId || typeof window === "undefined" || !API_URL) return;
 
   if (type === "view") {
@@ -28,7 +32,9 @@ export function trackProductEngagement(productId: string, type: EngagementType):
   }
 
   const url = `${API_URL}/engagement/products/${productId}`;
-  const body = JSON.stringify({ type });
+  // A beacon cannot set an Authorization header, so the signed-in id travels in
+  // the body — the API uses it only to skip a seller's view of their own listing.
+  const body = JSON.stringify({ type, viewerId });
 
   try {
     if (typeof navigator !== "undefined" && navigator.sendBeacon) {
