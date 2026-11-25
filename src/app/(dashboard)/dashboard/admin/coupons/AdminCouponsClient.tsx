@@ -9,7 +9,6 @@ import {
   Loader2,
   Pencil,
   Plus,
-  RotateCcw,
   Search,
   Ticket,
   Trash2,
@@ -89,10 +88,6 @@ export default function AdminCouponsClient({
   const router = useRouter();
   const [search, setSearch] = useState(filters.search);
   const [busyId, setBusyId] = useState<string | null>(null);
-  // A seller's row is being blocked: the id whose reason box is open, and the
-  // reason itself. Ours never uses it — a store code is edited, not blocked.
-  const [blockingId, setBlockingId] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
 
   /**
    * Every filter, the open editor and the picker's search live in the URL, so the
@@ -169,21 +164,12 @@ export default function AdminCouponsClient({
     }
   };
 
-  /**
-   * The one write this desk has over somebody else's row.
-   *
-   * A seller owns their code, so nothing here edits its price, its window or
-   * its reach: the desk can take it off the checkout, put a stopped one back,
-   * or remove it. The reason is written onto the row, which is what the
-   * seller's own coupons desk reads instead of leaving them to guess.
-   */
-  const moderate = async (coupon: Coupon, action: "block" | "unblock" | "delete") => {
+  /** The one write this desk has over a seller's row: remove the code. */
+  const moderate = async (coupon: Coupon) => {
     if (busyId) return;
-
     if (
-      action === "delete" &&
       !window.confirm(
-        `Remove ${coupon.code}? A code that has already saved shoppers money is only blocked, and the orders that used it stay.`
+        `Delete ${coupon.code}? The code is removed from the store; orders that already used it keep their own record.`
       )
     ) {
       return;
@@ -191,17 +177,12 @@ export default function AdminCouponsClient({
 
     setBusyId(coupon._id);
     try {
-      const res = await moderateSellerCoupon(coupon._id, action, action === "block" ? reason : undefined);
+      const res = await moderateSellerCoupon(coupon._id);
       if (res?.success === false) {
-        toast.error(res.message || "The code could not be changed");
+        toast.error(res.message || "The code could not be removed");
         return;
       }
-      toast.success(
-        res?.message ||
-          (action === "unblock" ? "Code is live again" : action === "block" ? "Code blocked" : "Code removed")
-      );
-      setBlockingId(null);
-      setReason("");
+      toast.success(res?.message || "Coupon deleted");
       router.refresh();
     } catch (err) {
       toast.error((err as Error).message || "An error occurred");
@@ -390,7 +371,7 @@ export default function AdminCouponsClient({
                         <span className="text-[var(--foreground-muted)]">
                           {coupon.sellerName || "A seller"}
                           {coupon.storeSlug ? ` · /${coupon.storeSlug}` : ""} — their own
-                          desk writes this code; this one can stop it
+                          desk writes this code; this one can remove it
                         </span>
                       )}
                     </p>
@@ -441,79 +422,23 @@ export default function AdminCouponsClient({
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      {coupon.isActive ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setBlockingId(blockingId === coupon._id ? null : coupon._id);
-                            setReason("");
-                          }}
-                          disabled={busyId === coupon._id}
-                          className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2 py-1.5 text-[10px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-50 cursor-pointer"
-                        >
-                          <Ban className="h-3.5 w-3.5" />
-                          Block
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => moderate(coupon, "unblock")}
-                          disabled={busyId === coupon._id}
-                          className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2 py-1.5 text-[10px] font-semibold text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)] disabled:opacity-50 cursor-pointer"
-                        >
-                          {busyId === coupon._id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <RotateCcw className="h-3.5 w-3.5" />
-                          )}
-                          Put back
-                        </button>
-                      )}
-
                       <button
                         type="button"
-                        onClick={() => moderate(coupon, "delete")}
+                        onClick={() => moderate(coupon)}
                         disabled={busyId === coupon._id}
-                        title="Remove this code"
+                        title="Delete this code"
                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-color)] text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-rose-600 disabled:opacity-50 cursor-pointer"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {busyId === coupon._id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
                       </button>
                     </div>
                   )}
 
-                  {/* Why the code is going quiet — the seller reads this on their desk. */}
-                  {blockingId === coupon._id && (
-                    <div className="flex w-full flex-wrap items-center gap-2 rounded-xl bg-[var(--surface-alt)] px-3 py-2">
-                      <input
-                        value={reason}
-                        onChange={(event) => setReason(event.target.value)}
-                        maxLength={200}
-                        placeholder="Why is this code coming off? The seller will read this."
-                        className="h-8 min-w-0 flex-1 rounded-lg border border-[var(--border-color)] bg-[var(--surface)] px-2 text-[11px] text-[var(--foreground)] placeholder:text-[var(--foreground-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--brand-flat)]/35"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => moderate(coupon, "block")}
-                        disabled={busyId === coupon._id}
-                        className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors hover:bg-rose-700 disabled:opacity-50 cursor-pointer"
-                      >
-                        {busyId === coupon._id && <Loader2 className="h-3 w-3 animate-spin" />}
-                        Block code
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBlockingId(null);
-                          setReason("");
-                        }}
-                        className="rounded-lg border border-[var(--border-color)] px-2.5 py-1.5 text-[10px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface)] cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </li>
+                  </li>
               );
             })}
           </ul>

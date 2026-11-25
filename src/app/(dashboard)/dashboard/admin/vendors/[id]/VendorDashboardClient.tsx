@@ -11,7 +11,6 @@ import {
   ExternalLink,
   Loader2,
   Package,
-  RotateCcw,
   Sparkles,
   Star,
   Store,
@@ -109,30 +108,19 @@ export default function VendorDashboardClient({ detail, currency }: VendorDashbo
   const router = useRouter();
   const { vendor, account, store, subscription, products, promotions, coupons, orders } = detail;
 
-  // The coupon row being written, and the reason the desk is about to give.
   const [busyCoupon, setBusyCoupon] = useState<string | null>(null);
-  const [blocking, setBlocking] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
 
   const money = (value: number) => formatPrice(value, currency);
   const compact = (value: number) => formatPrice(value, currency, { showDecimals: false });
   const live = subscription.live;
   const rate = Math.max(0, Math.min(100, Math.round(vendor.successRate)));
 
-  /**
-   * Taking a seller's code off the checkout, putting it back, or removing it.
-   *
-   * A code that already saved somebody money is only stopped by the API, never
-   * erased — the orders that quote it outlive it — so the toast repeats what
-   * actually happened rather than what was asked for.
-   */
-  const moderate = async (coupon: Coupon, action: "block" | "unblock" | "delete") => {
+  /** The one write this desk has over a seller's code: remove it. */
+  const moderate = async (coupon: Coupon) => {
     if (busyCoupon) return;
-
     if (
-      action === "delete" &&
       !window.confirm(
-        `Remove ${coupon.code}? A code that has already saved shoppers money is only stopped, and the orders that used it stay.`
+        `Delete ${coupon.code}? The code is removed from the shop; orders that already used it keep their own record.`
       )
     ) {
       return;
@@ -140,22 +128,12 @@ export default function VendorDashboardClient({ detail, currency }: VendorDashbo
 
     setBusyCoupon(coupon._id);
     try {
-      const res = await moderateSellerCoupon(
-        coupon._id,
-        action,
-        action === "block" ? reason : undefined
-      );
+      const res = await moderateSellerCoupon(coupon._id);
       if (res?.success === false) {
-        toast.error(res.message || "The code could not be changed");
+        toast.error(res.message || "The code could not be removed");
         return;
       }
-
-      toast.success(
-        res?.message ||
-          (action === "unblock" ? "Code is live again" : action === "block" ? "Code blocked" : "Code removed")
-      );
-      setBlocking(null);
-      setReason("");
+      toast.success(res?.message || "Coupon deleted");
       router.refresh();
     } catch (err) {
       toast.error((err as Error).message || "An error occurred");
@@ -738,7 +716,6 @@ export default function VendorDashboardClient({ detail, currency }: VendorDashbo
             {coupons.map((coupon) => {
               const style = getCouponStateStyle(coupon.state);
               const writing = busyCoupon === coupon._id;
-              const blockingHere = blocking === coupon._id;
 
               return (
                 <li key={coupon._id} className="px-4 py-3">
@@ -779,79 +756,19 @@ export default function VendorDashboardClient({ detail, currency }: VendorDashbo
                     </div>
 
                     <div className="flex items-center gap-1">
-                      {coupon.isActive ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setBlocking(blockingHere ? null : coupon._id);
-                            setReason("");
-                          }}
-                          disabled={writing}
-                          className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2 py-1.5 text-[10px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-50 cursor-pointer"
-                        >
-                          <Ban className="h-3.5 w-3.5" />
-                          Block
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => moderate(coupon, "unblock")}
-                          disabled={writing}
-                          className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] px-2 py-1.5 text-[10px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-50 cursor-pointer"
-                        >
-                          {writing ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <RotateCcw className="h-3.5 w-3.5" />
-                          )}
-                          Put back
-                        </button>
-                      )}
-
                       <button
                         type="button"
-                        onClick={() => moderate(coupon, "delete")}
+                        onClick={() => moderate(coupon)}
                         disabled={writing}
-                        title="Remove this code"
+                        title="Delete this code"
                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-color)] text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-rose-600 disabled:opacity-50 cursor-pointer"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {writing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
 
-                  {/* Why the code is going quiet — the seller reads this on their desk. */}
-                  {blockingHere && (
-                    <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl bg-[var(--surface-alt)] px-3 py-2">
-                      <input
-                        value={reason}
-                        onChange={(event) => setReason(event.target.value)}
-                        maxLength={200}
-                        placeholder="Why is this code coming off? The seller will read this."
-                        className="h-8 min-w-0 flex-1 rounded-lg border border-[var(--border-color)] bg-[var(--surface)] px-2 text-[11px] text-[var(--foreground)] placeholder:text-[var(--foreground-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--brand-flat)]/35"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => moderate(coupon, "block")}
-                        disabled={writing}
-                        className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors hover:bg-rose-700 disabled:opacity-50 cursor-pointer"
-                      >
-                        {writing && <Loader2 className="h-3 w-3 animate-spin" />}
-                        Block code
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBlocking(null);
-                          setReason("");
-                        }}
-                        className="rounded-lg border border-[var(--border-color)] px-2.5 py-1.5 text-[10px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface)] cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </li>
+                  </li>
               );
             })}
           </ul>
