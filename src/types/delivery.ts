@@ -263,6 +263,19 @@ export interface DeliveryPickupPoint {
    * an order the platform itself ships, where the fields above are the answer.
    */
   warehouses?: DeliveryPickupWarehouse[];
+  /** The lines grouped by the owner, each with the warehouse to collect from. */
+  groups?: Array<{
+    ownerName: string;
+    warehouse: {
+      label?: string;
+      address?: string;
+      city?: string;
+      area?: string;
+      postalCode?: string;
+      phone?: string;
+    };
+    items: Array<{ title: string; quantity: number; price?: number; image?: string }>;
+  }>;
 }
 
 /**

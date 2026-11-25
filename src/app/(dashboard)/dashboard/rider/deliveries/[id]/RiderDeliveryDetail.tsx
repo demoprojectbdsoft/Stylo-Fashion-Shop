@@ -76,6 +76,7 @@ export default function RiderDeliveryDetail({ delivery }: RiderDeliveryDetailPro
   const order = delivery.order ?? null;
   const pickup = delivery.pickup ?? null;
   const shops = pickup?.warehouses ?? [];
+  const groups = pickup?.groups ?? [];
   const expired =
     delivery.status === "assigned" && delivery.expiresAt
       ? new Date(delivery.expiresAt).getTime() < Date.now()
@@ -154,55 +155,93 @@ export default function RiderDeliveryDetail({ delivery }: RiderDeliveryDetailPro
         </p>
       </Card>
 
-      {/* Pickup route */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Store className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-bold text-[var(--foreground)]">Collect from</h2>
-          <span className="text-[10px] font-semibold text-[var(--foreground-muted)]">
-            {shops.length + (pickup ? 1 : 0)} stop
-            {shops.length + (pickup ? 1 : 0) === 1 ? "" : "s"}
-          </span>
-        </div>
+      {/* Collect by seller — each owner's lines with the warehouse to pick from */}
+      {groups.length > 0 ? (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Store className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-bold text-[var(--foreground)]">Collect by seller</h2>
+            <span className="text-[10px] font-semibold text-[var(--foreground-muted)]">
+              {groups.length} owner{groups.length === 1 ? "" : "s"}
+            </span>
+          </div>
 
-        <div className="space-y-2.5">
-          {shops.map((shop, index) => (
-            <div key={`${shop.name}-${index}`} className="flex items-start gap-3">
-              <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
-                {index + 1}
-              </span>
-              <div className="flex-1">
-                <PickupCard warehouse={shop} fallback={pickup ?? undefined} />
+          {groups.map((group, index) => (
+            <Card
+              key={`${group.ownerName}-${index}`}
+              className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl shadow-xs overflow-hidden"
+            >
+              <div className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-[var(--border-color)]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
+                  {index + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-bold text-[var(--foreground)]">{group.ownerName}</p>
+                  <p className="text-[10px] text-[var(--foreground-muted)]">
+                    {group.items.length} item{group.items.length === 1 ? "" : "s"} to collect here
+                  </p>
+                </div>
               </div>
-            </div>
+
+              <div className="px-4 sm:px-5 py-3">
+                <div className="flex items-start gap-3">
+                  <span className="shrink-0 rounded-xl bg-primary/10 p-2 text-primary">
+                    <Warehouse className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-[var(--foreground)]">
+                      {group.warehouse.label || `${group.ownerName} warehouse`}
+                    </p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--foreground-muted)]">
+                      {[group.warehouse.address, group.warehouse.area, group.warehouse.city, group.warehouse.postalCode]
+                        .filter(Boolean)
+                        .join(", ") || "No pickup address set — ask the store before you leave."}
+                    </p>
+                    {group.warehouse.phone && (
+                      <a
+                        href={`tel:${group.warehouse.phone}`}
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
+                      >
+                        <Phone className="w-3 h-3" />
+                        {group.warehouse.phone}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <ul className="divide-y divide-[var(--border-color)]">
+                {group.items.map((item, itemIndex) => (
+                  <li
+                    key={`${item.title}-${itemIndex}`}
+                    className="flex items-center gap-3 px-4 sm:px-5 py-2.5"
+                  >
+                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-[var(--surface-alt)]">
+                      {item.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-[var(--foreground-muted)]">
+                          <Package className="w-4 h-4" />
+                        </span>
+                      )}
+                    </div>
+                    <span className="min-w-0 flex-1 truncate text-xs font-semibold text-[var(--foreground)]">
+                      {item.title}
+                    </span>
+                    <span className="text-[11px] text-[var(--foreground-muted)]">×{item.quantity}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
           ))}
 
-          {pickup && (
-            <div className="flex items-start gap-3">
-              <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--surface-alt)] text-[10px] font-bold text-[var(--foreground)]">
-                {shops.length + 1}
-              </span>
-              <div className="flex-1">
-                <PickupCard
-                  fallback={{ ...pickup, name: "Store warehouse (admin desk)" }}
-                />
-                <p className="mt-1 pl-1 text-[10px] text-[var(--foreground-muted)]">
-                  For any item the store itself sold rather than a shop.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {shops.length > 1 && (
-          <p className="mt-2 text-[10px] text-[var(--foreground-muted)]">
-            This parcel is sold by {shops.length} shops — collect from each before the door.
+          <p className="text-[10px] text-[var(--foreground-muted)]">
+            Collect every seller&apos;s items before heading to the customer.
           </p>
-        )}
-      </div>
-
-      {/* Items */}
-      <Card className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl shadow-xs overflow-hidden">
+        </div>
+      ) : (
+        <Card className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl shadow-xs overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-3 border-b border-[var(--border-color)]">
           <Package className="w-4 h-4 text-primary" />
           <h2 className="text-sm font-bold text-[var(--foreground)]">What you are carrying</h2>
@@ -231,6 +270,7 @@ export default function RiderDeliveryDetail({ delivery }: RiderDeliveryDetailPro
           )}
         </ul>
       </Card>
+      )}
 
       {/* Money */}
       {order && (

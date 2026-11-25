@@ -13,6 +13,7 @@ import {
   Ticket,
 } from "lucide-react";
 import UserAvatar from "@/components/shared/UserAvatar";
+import { Select, ListBox } from "@heroui/react";
 import { formatPrice } from "@/lib/currency";
 import type {
   VendorBoardListResult,
@@ -341,30 +342,48 @@ export default function VendorsBoardClient({ result, filters, currency }: Vendor
               );
             })}
 
-            <select
-              value={filters.plan}
-              onChange={(event) => go({ plan: event.target.value, page: 1 })}
-              className="h-8 rounded-lg border border-[var(--border-color)] bg-[var(--surface)] px-2 text-[11px] font-semibold text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-flat)]/35"
+            <Select
+              selectedKey={filters.plan}
+              onSelectionChange={(key) => go({ plan: String(key), page: 1 })}
+              aria-label="Filter by plan"
             >
-              <option value="all">Every plan</option>
-              {result.plans.map((plan) => (
-                <option key={plan.id} value={plan.id}>
-                  {plan.name}
-                </option>
-              ))}
-            </select>
+              <Select.Trigger className="h-8 rounded-lg border border-[var(--border-color)] bg-[var(--surface)] px-2 text-[11px] font-semibold text-[var(--foreground)]">
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  <ListBox.Item id="all" textValue="Every plan">
+                    Every plan
+                  </ListBox.Item>
+                  {result.plans.map((plan) => (
+                    <ListBox.Item key={plan.id} id={plan.id} textValue={plan.name}>
+                      {plan.name}
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
 
-            <select
-              value={filters.sort}
-              onChange={(event) => go({ sort: event.target.value, page: 1 })}
-              className="h-8 rounded-lg border border-[var(--border-color)] bg-[var(--surface)] px-2 text-[11px] font-semibold text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-flat)]/35"
+            <Select
+              selectedKey={filters.sort}
+              onSelectionChange={(key) => go({ sort: String(key), page: 1 })}
+              aria-label="Sort vendors"
             >
-              {VENDOR_BOARD_SORTS.map((sort) => (
-                <option key={sort.key} value={sort.key}>
-                  Sort: {sort.label}
-                </option>
-              ))}
-            </select>
+              <Select.Trigger className="h-8 rounded-lg border border-[var(--border-color)] bg-[var(--surface)] px-2 text-[11px] font-semibold text-[var(--foreground)]">
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {VENDOR_BOARD_SORTS.map((sort) => (
+                    <ListBox.Item key={sort.key} id={sort.key} textValue={`Sort: ${sort.label}`}>
+                      Sort: {sort.label}
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
           </div>
 
           <form
