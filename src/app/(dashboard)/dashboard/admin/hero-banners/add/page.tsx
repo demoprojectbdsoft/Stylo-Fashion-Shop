@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function AddHeroBannerPage() {
   const [bannersRes, productsRes, categoriesRes, storesRes] = await Promise.all([
     getAdminBanners(),
-    getProducts({ limit: 200 }, { admin: true }),
+    getProducts({ limit: 1000 }, { admin: true }),
     getCategories(),
     getAllStores({ limit: 100 }),
   ]);

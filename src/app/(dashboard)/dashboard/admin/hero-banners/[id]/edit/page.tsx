@@ -17,7 +17,7 @@ export default async function EditHeroBannerPage({ params }: EditHeroBannerPageP
 
   const [bannersRes, productsRes, categoriesRes, storesRes] = await Promise.all([
     getAdminBanners(),
-    getProducts({ limit: 200 }, { admin: true }),
+    getProducts({ limit: 1000 }, { admin: true }),
     getCategories(),
     getAllStores({ limit: 100 }),
   ]);
