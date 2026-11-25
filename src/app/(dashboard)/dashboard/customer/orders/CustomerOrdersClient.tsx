@@ -687,6 +687,16 @@ export default function CustomerOrdersClient({ initialOrders = [], initialSearch
                       </span>
                     </div>
                   )}
+                  {order.rejectionReason && (
+                    <div className="sm:col-span-2">
+                      <span className="text-[10px] uppercase font-bold block text-rose-500">
+                        Seller&apos;s reason
+                      </span>
+                      <span className="font-semibold text-rose-600 dark:text-rose-400">
+                        {order.rejectionReason}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2.5">

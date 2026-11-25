@@ -75,6 +75,8 @@ export interface CustomerOrder {
   customerResponse?: "received" | "not_received" | "cancelled" | null;
   customerResponseNote?: string;
   customerResponseAt?: string | Date | null;
+  /** Why a seller rejected their part — shown when the order was cancelled. */
+  rejectionReason?: string;
   /**
    * The payment state, when the API actually returns one. The order list carries
    * the order row, not its transaction, so this stays unset instead of claiming

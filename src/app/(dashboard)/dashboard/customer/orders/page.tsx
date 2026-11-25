@@ -226,6 +226,7 @@ export default async function CustomerOrdersPage({ searchParams }: CustomerOrder
           customerResponse: order.customerResponse || null,
           customerResponseNote: order.customerResponseNote || "",
           customerResponseAt: order.customerResponseAt || null,
+          rejectionReason: (order as { rejectionReason?: string }).rejectionReason || "",
           paymentStatus: mapPaymentStatus(order.paymentStatus),
           paymentMethod: mapPaymentMethod(order.paymentMethod),
           total: order.totalAmount ?? 0,
