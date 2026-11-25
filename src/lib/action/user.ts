@@ -11,6 +11,17 @@ export const deleteUser = async (id: string) => {
 };
 
 /**
+ * The account's own bell and email switches, applied to every dashboard the
+ * account can open. Off means no line (or no mail) anywhere.
+ */
+export const updateNotificationPreferences = async (data: {
+  notifications?: boolean;
+  email?: boolean;
+}) => {
+  return serverMutation("/users/me/preferences", data, "PATCH");
+};
+
+/**
  * Points the account at a different dashboard.
  *
  * The store API refuses anything the caller does not already hold in their

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Card, Button, Input } from "@heroui/react";
+import { Card, Button, Input, Switch } from "@heroui/react";
 import {
   User,
   Mail,
@@ -15,10 +15,11 @@ import {
   BadgeCheck,
   Activity,
   Warehouse,
+  Bell,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { authClient } from "@/lib/auth-client";
-import { updateUser } from "@/lib/action/user";
+import { updateUser, updateNotificationPreferences } from "@/lib/action/user";
 import ImageUploader from "@/components/shared/ImageUploader";
 import { useDemoAdmin } from "@/hooks/useDemoAdmin";
 
@@ -51,6 +52,8 @@ export interface AdminProfileData {
   bio: string;
   joinedDate: string;
   warehouse: AdminWarehouse;
+  notificationsEnabled?: boolean;
+  emailNotificationsEnabled?: boolean;
 }
 
 interface AdminProfileClientProps {
@@ -64,6 +67,19 @@ export default function AdminProfileClient({
   const [profile, setProfile] = useState<AdminProfileData>(initialProfile);
   const [avatarUrl, setAvatarUrl] = useState<string>(initialProfile.avatar || "");
   const [isSaving, setIsSaving] = useState(false);
+
+  // The account's own bell and email switches, saved the moment they change.
+  const [notifInApp, setNotifInApp] = useState(initialProfile.notificationsEnabled !== false);
+  const [notifEmail, setNotifEmail] = useState(initialProfile.emailNotificationsEnabled !== false);
+
+  const savePreference = async (next: { notifications?: boolean; email?: boolean }) => {
+    const res = await updateNotificationPreferences(next);
+    if (res?.success === false) {
+      toast.error(res.message || "Could not save the notification settings");
+      return;
+    }
+    toast.success("Notification settings saved");
+  };
 
   const setWarehouse = <K extends keyof AdminWarehouse>(key: K, value: string) =>
     setProfile((prev) => ({ ...prev, warehouse: { ...prev.warehouse, [key]: value } }));
@@ -369,6 +385,56 @@ export default function AdminProfileClient({
                     className="w-full h-10 rounded-xl border border-[var(--border-color)] bg-[var(--surface)] focus:border-primary text-xs"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Notifications — the account's own bell and email switches */}
+            <div className="space-y-3 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] p-3.5">
+              <div className="flex items-start gap-2">
+                <Bell className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-[var(--foreground)]">Notifications</p>
+                  <p className="text-[11px] text-[var(--foreground-muted)]">
+                    The bell switch covers every dashboard your account can open. The email switch
+                    covers the mail sent to {profile.email || "your address"}.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 rounded-lg bg-[var(--surface)] px-3 py-2">
+                <span className="text-xs font-semibold text-[var(--foreground)]">In-app notifications</span>
+                <Switch
+                  isSelected={notifInApp}
+                  onChange={(value) => {
+                    setNotifInApp(value);
+                    void savePreference({ notifications: value });
+                  }}
+                  aria-label="In-app notifications"
+                >
+                  <Switch.Content>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                  </Switch.Content>
+                </Switch>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 rounded-lg bg-[var(--surface)] px-3 py-2">
+                <span className="text-xs font-semibold text-[var(--foreground)]">Email notifications</span>
+                <Switch
+                  isSelected={notifEmail}
+                  onChange={(value) => {
+                    setNotifEmail(value);
+                    void savePreference({ email: value });
+                  }}
+                  aria-label="Email notifications"
+                >
+                  <Switch.Content>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                  </Switch.Content>
+                </Switch>
               </div>
             </div>
 

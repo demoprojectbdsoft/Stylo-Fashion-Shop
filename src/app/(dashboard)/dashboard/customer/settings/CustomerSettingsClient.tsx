@@ -34,6 +34,7 @@ import {
 import { toast } from "react-toastify";
 import { authClient } from "@/lib/auth-client";
 import { exportMyAccountData } from "@/lib/action/account";
+import { updateNotificationPreferences } from "@/lib/action/user";
 import { downloadJson } from "@/lib/downloadFile";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 
@@ -71,11 +72,8 @@ export interface CustomerSettingsData {
     language: string;
   };
   notifications: {
-    notifOrdersEmail: boolean;
-    notifOrdersSms: boolean;
-    notifPromosEmail: boolean;
-    notifPromosSms: boolean;
-    notifNewsletter: boolean;
+    inApp: boolean;
+    email: boolean;
   };
   security: {
     twoFactor: boolean;
@@ -171,21 +169,12 @@ export default function CustomerSettingsClient({
     initialSettings?.preferences.language || "en"
   );
 
-  // Notifications State
-  const [notifOrdersEmail, setNotifOrdersEmail] = useState(
-    initialSettings?.notifications.notifOrdersEmail ?? true
+  // Notifications State — one bell switch and one email switch, both account-wide.
+  const [notifInApp, setNotifInApp] = useState(
+    initialSettings?.notifications.inApp ?? true
   );
-  const [notifOrdersSms, setNotifOrdersSms] = useState(
-    initialSettings?.notifications.notifOrdersSms ?? true
-  );
-  const [notifPromosEmail, setNotifPromosEmail] = useState(
-    initialSettings?.notifications.notifPromosEmail ?? false
-  );
-  const [notifPromosSms, setNotifPromosSms] = useState(
-    initialSettings?.notifications.notifPromosSms ?? false
-  );
-  const [notifNewsletter, setNotifNewsletter] = useState(
-    initialSettings?.notifications.notifNewsletter ?? true
+  const [notifEmail, setNotifEmail] = useState(
+    initialSettings?.notifications.email ?? true
   );
 
   // Security State
@@ -229,9 +218,21 @@ export default function CustomerSettingsClient({
     toast.success("Preferences updated successfully!");
   };
 
-  const handleNotificationsSave = (e: React.FormEvent) => {
+  const handleNotificationsSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Notification settings saved!");
+    try {
+      const res = await updateNotificationPreferences({
+        notifications: notifInApp,
+        email: notifEmail,
+      });
+      if (res?.success === false) {
+        toast.error(res.message || "Could not save the notification settings");
+        return;
+      }
+      toast.success("Notification settings saved!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save the settings");
+    }
   };
 
   // ── Real better-auth changePassword ────────────────────────────────────────────
@@ -460,88 +461,37 @@ export default function CustomerSettingsClient({
 
               <form onSubmit={handleNotificationsSave} className="space-y-4 text-xs">
                 {/* Order Updates */}
-                <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] flex items-center justify-between">
+                <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] flex items-center justify-between gap-4">
                   <div>
-                    <p className="font-bold text-[var(--foreground)]">
-                      Order Confirmations &amp; Shipping Updates
-                    </p>
+                    <p className="font-bold text-[var(--foreground)]">In-app notifications</p>
                     <p className="text-[var(--foreground-muted)] mt-0.5">
-                      Receive tracking links and delivery status changes.
+                      The bell on your customer, rider and seller dashboards. Off means none of them show a notification.
                     </p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifOrdersEmail}
-                        onChange={(e) => setNotifOrdersEmail(e.target.checked)}
-                        className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
-                      />
-                      <span className="text-[var(--foreground)]">Email</span>
-                    </label>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifOrdersSms}
-                        onChange={(e) => setNotifOrdersSms(e.target.checked)}
-                        className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
-                      />
-                      <span className="text-[var(--foreground)]">SMS</span>
-                    </label>
-                  </div>
+                  <Switch isSelected={notifInApp} onChange={setNotifInApp} aria-label="In-app notifications">
+                    <Switch.Content>
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                    </Switch.Content>
+                  </Switch>
                 </div>
 
-                {/* Promotional Deals */}
-                <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] flex items-center justify-between">
+                {/* Email */}
+                <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] flex items-center justify-between gap-4">
                   <div>
-                    <p className="font-bold text-[var(--foreground)]">
-                      Discounts, Flash Sales &amp; Promo Codes
-                    </p>
+                    <p className="font-bold text-[var(--foreground)]">Email notifications</p>
                     <p className="text-[var(--foreground-muted)] mt-0.5">
-                      Receive coupon alerts and seasonal sales.
+                      Account, order and activity emails sent to your address. Off means no email at all.
                     </p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifPromosEmail}
-                        onChange={(e) => setNotifPromosEmail(e.target.checked)}
-                        className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
-                      />
-                      <span className="text-[var(--foreground)]">Email</span>
-                    </label>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifPromosSms}
-                        onChange={(e) => setNotifPromosSms(e.target.checked)}
-                        className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
-                      />
-                      <span className="text-[var(--foreground)]">SMS</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Newsletter & Security */}
-                <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-[var(--foreground)]">
-                      {siteName} Weekly Tech Digest &amp; Security Alerts
-                    </p>
-                    <p className="text-[var(--foreground-muted)] mt-0.5">
-                      Curated hardware reviews and important account safety notifications.
-                    </p>
-                  </div>
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={notifNewsletter}
-                      onChange={(e) => setNotifNewsletter(e.target.checked)}
-                      className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
-                    />
-                    <span className="text-[var(--foreground)]">Enabled</span>
-                  </label>
+                  <Switch isSelected={notifEmail} onChange={setNotifEmail} aria-label="Email notifications">
+                    <Switch.Content>
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                    </Switch.Content>
+                  </Switch>
                 </div>
 
                 <div className="pt-2 flex justify-end">
