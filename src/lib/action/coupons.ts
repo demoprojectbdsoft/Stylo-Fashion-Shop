@@ -76,15 +76,20 @@ export const deleteStoreCoupon = async (id: string) => {
 };
 
 /**
- * The store team's one write on somebody else's code: delete it.
+ * The store team's control over somebody else's code: stop it, or put it back.
  *
- * A seller owns their codes, so the desk does not stop or edit one — it can only
- * remove a code it judges misleading. The seller is notified.
+ * A seller owns their codes, so this is not an edit and never a delete — the
+ * seller alone removes one. The reason is written onto the row, which is what
+ * the seller's own coupons desk reads to explain why the code went quiet.
  */
-export const moderateSellerCoupon = async (id: string) => {
+export const moderateSellerCoupon = async (
+  id: string,
+  action: "block" | "unblock",
+  reason?: string
+) => {
   const user = await getUserSession();
   if (!isAdminRole(user)) {
     return { success: false as const, message: "Admin access required." };
   }
-  return serverMutation(`/coupons/${id}/moderate`, { action: "delete" }, "PATCH");
+  return serverMutation(`/coupons/${id}/moderate`, { action, reason: reason || "" }, "PATCH");
 };
