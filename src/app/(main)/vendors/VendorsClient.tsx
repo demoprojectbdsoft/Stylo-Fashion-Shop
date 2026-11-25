@@ -511,7 +511,7 @@ export default function VendorsClient({ vendors, pagination, categories }: Vendo
           </div>
 
           {/* ── Vendor grid ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {mode === "pagination" && isPending
               ? Array.from({ length: limit }).map((_, idx) => (
                   <VendorCardSkeleton key={`skel-${idx}`} />
@@ -596,7 +596,7 @@ export default function VendorsClient({ vendors, pagination, categories }: Vendo
               {/* Skeletons while fetching next batch */}
               {isLoadingMore && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-4">
                     {Array.from({ length: Math.min(4, limit || 4) }).map((_, idx) => (
                       <VendorCardSkeleton key={`scroll-skel-${idx}`} />
                     ))}
