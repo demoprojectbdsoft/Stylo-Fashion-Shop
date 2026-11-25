@@ -216,6 +216,8 @@ export default function CustomerOrdersClient({ initialOrders = [], initialSearch
       const matchesSearch =
         !query ||
         order.orderNumber.toLowerCase().includes(query) ||
+        // A notification deep-links with the order's id, not its short number.
+        order.id.toLowerCase().includes(query) ||
         order.items.some((item) => item.name.toLowerCase().includes(query));
       return matchesTab && matchesSearch;
     })
