@@ -108,6 +108,23 @@ export default function AdminCouponForm({
     return categories.filter((category) => category.name.toLowerCase().includes(q));
   }, [categories, categoryTerm]);
 
+  // Whether every category the filter shows is already ticked.
+  const allFilteredChosen =
+    filteredCategories.length > 0 &&
+    filteredCategories.every((category) => chosenCategories.has(category._id));
+
+  // One click marks every category the filter is showing — and clicking again
+  // takes them all off, so a whole group is covered (or cleared) at once.
+  const markAllCategories = () => {
+    const ids = filteredCategories.map((category) => category._id);
+    set(
+      "categoryIds",
+      allFilteredChosen
+        ? draft.categoryIds.filter((id) => !ids.includes(id))
+        : Array.from(new Set([...draft.categoryIds, ...ids]))
+    );
+  };
+
   const toggle = (key: "productIds" | "categoryIds", id: string) => {
     const current = draft[key];
     set(
@@ -392,14 +409,24 @@ export default function AdminCouponForm({
           </p>
         ) : (
           <>
-            <div className="relative mt-2">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--foreground-muted)]" />
-              <input
-                value={categoryTerm}
-                onChange={(event) => setCategoryTerm(event.target.value)}
-                placeholder="Filter categories"
-                className={`${inputClass} pl-9`}
-              />
+            <div className="mt-2 flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--foreground-muted)]" />
+                <input
+                  value={categoryTerm}
+                  onChange={(event) => setCategoryTerm(event.target.value)}
+                  placeholder="Filter categories"
+                  className={`${inputClass} pl-9`}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={markAllCategories}
+                disabled={filteredCategories.length === 0}
+                className="whitespace-nowrap rounded-xl border border-[var(--border-color)] px-3 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {allFilteredChosen ? "Unselect all" : `Select all (${filteredCategories.length})`}
+              </button>
             </div>
 
             <div className="mt-2 max-h-40 space-y-0.5 overflow-y-auto rounded-xl border border-[var(--border-color)] bg-[var(--surface)] p-2">
