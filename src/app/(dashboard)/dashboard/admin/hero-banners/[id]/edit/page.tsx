@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getAdminBanners } from "@/lib/api/banners";
 import { getProducts } from "@/lib/api/products";
 import { getCategories } from "@/lib/api/categories";
-import { getPublicStores } from "@/lib/api/stores";
+import { asStoreList, getAllStores } from "@/lib/api/vendorStore";
 import HeroBannerForm from "../../HeroBannerForm";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export default async function EditHeroBannerPage({ params }: EditHeroBannerPageP
     getAdminBanners(),
     getProducts({ limit: 200 }, { admin: true }),
     getCategories(),
-    getPublicStores({ limit: 200 }),
+    getAllStores({ limit: 100 }),
   ]);
 
   const banners = Array.isArray(bannersRes?.data) ? bannersRes.data : [];
@@ -31,7 +31,7 @@ export default async function EditHeroBannerPage({ params }: EditHeroBannerPageP
 
   const products = productsRes?.data?.products ?? [];
   const categories = Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
-  const stores = storesRes?.data?.stores ?? [];
+  const stores = asStoreList(storesRes)?.stores ?? [];
 
   return (
     <HeroBannerForm
