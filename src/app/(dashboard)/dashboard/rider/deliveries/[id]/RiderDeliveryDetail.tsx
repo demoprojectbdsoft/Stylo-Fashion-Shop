@@ -154,21 +154,46 @@ export default function RiderDeliveryDetail({ delivery }: RiderDeliveryDetailPro
         </p>
       </Card>
 
-      {/* Pickup */}
+      {/* Pickup route */}
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Store className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-bold text-[var(--foreground)]">Pick up from</h2>
+          <h2 className="text-sm font-bold text-[var(--foreground)]">Collect from</h2>
+          <span className="text-[10px] font-semibold text-[var(--foreground-muted)]">
+            {shops.length + (pickup ? 1 : 0)} stop
+            {shops.length + (pickup ? 1 : 0) === 1 ? "" : "s"}
+          </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {shops.length > 0 ? (
-            shops.map((shop, index) => (
-              <PickupCard key={`${shop.name}-${index}`} warehouse={shop} fallback={pickup ?? undefined} />
-            ))
-          ) : (
-            <PickupCard fallback={pickup ?? undefined} />
+
+        <div className="space-y-2.5">
+          {shops.map((shop, index) => (
+            <div key={`${shop.name}-${index}`} className="flex items-start gap-3">
+              <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                {index + 1}
+              </span>
+              <div className="flex-1">
+                <PickupCard warehouse={shop} fallback={pickup ?? undefined} />
+              </div>
+            </div>
+          ))}
+
+          {pickup && (
+            <div className="flex items-start gap-3">
+              <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--surface-alt)] text-[10px] font-bold text-[var(--foreground)]">
+                {shops.length + 1}
+              </span>
+              <div className="flex-1">
+                <PickupCard
+                  fallback={{ ...pickup, name: "Store warehouse (admin desk)" }}
+                />
+                <p className="mt-1 pl-1 text-[10px] text-[var(--foreground-muted)]">
+                  For any item the store itself sold rather than a shop.
+                </p>
+              </div>
+            </div>
           )}
         </div>
+
         {shops.length > 1 && (
           <p className="mt-2 text-[10px] text-[var(--foreground-muted)]">
             This parcel is sold by {shops.length} shops — collect from each before the door.

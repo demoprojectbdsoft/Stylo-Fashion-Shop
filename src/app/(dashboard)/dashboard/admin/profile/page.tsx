@@ -79,6 +79,10 @@ async function getAdminProfileData(): Promise<AdminProfileData> {
         postalCode: merged.warehouse?.postalCode || "",
         phone: merged.warehouse?.phone || "",
       },
+      // Read the stored switches back, so a disabled bell or email does not look
+      // enabled again after a reload.
+      notificationsEnabled: merged.notificationsEnabled !== false,
+      emailNotificationsEnabled: merged.emailNotificationsEnabled !== false,
     };
   } catch (error) {
     console.error("Failed to fetch admin profile:", error);
