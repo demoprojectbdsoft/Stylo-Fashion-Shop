@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Eye,
   Inbox,
   MapPin,
   PackageCheck,
@@ -372,7 +373,14 @@ export default function DeliveryListClient({
                       </td>
 
                       <td className="px-5 py-4">
-                        <div className="flex items-center justify-end">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/dashboard/rider/deliveries/${delivery._id}`}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline whitespace-nowrap"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            View
+                          </Link>
                           <DeliveryActions
                             delivery={delivery}
                             expired={expired}
