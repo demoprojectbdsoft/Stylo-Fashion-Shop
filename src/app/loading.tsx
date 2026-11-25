@@ -29,26 +29,20 @@ export default function Loading() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [dotCount, setDotCount] = useState(1);
 
   useEffect(() => {
     setMounted(true);
 
-    // Animate progress bar 0 → 85% quickly, then stall waiting for real load
+    // Ease toward 90% quickly, then hold for the real load.
     const timer = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 85) { clearInterval(timer); return prev; }
-        const jump = prev < 40 ? 8 : prev < 70 ? 4 : 1;
-        return Math.min(prev + jump, 85);
+        if (prev >= 90) { clearInterval(timer); return prev; }
+        const jump = prev < 40 ? 7 : prev < 70 ? 3 : 0.8;
+        return Math.min(prev + jump, 90);
       });
-    }, 80);
+    }, 90);
 
-    // Animate dots
-    const dotTimer = setInterval(() => {
-      setDotCount((prev) => (prev >= 3 ? 1 : prev + 1));
-    }, 500);
-
-    return () => { clearInterval(timer); clearInterval(dotTimer); };
+    return () => clearInterval(timer);
   }, []);
 
   const siteName = settings.siteName || "Sparq";
@@ -63,24 +57,38 @@ export default function Loading() {
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-[var(--background)] flex flex-col items-center justify-center select-none">
 
-      {/* ── Diagonal Grid Pattern Background ── */}
+      {/* ── Soft brand wash behind the mark ── */}
       <div
-        className="absolute inset-0 opacity-[0.04] dark:opacity-[0.06] pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: `linear-gradient(var(--foreground) 1px, transparent 1px), linear-gradient(90deg, var(--foreground) 1px, transparent 1px)`,
-          backgroundSize: "40px 40px",
+          background:
+            "radial-gradient(55% 48% at 50% 34%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 72%)",
         }}
       />
 
-      {/* ── Soft Corner Glow ── */}
-      <div className="absolute -top-48 -left-48 w-96 h-96 bg-primary/15 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute -bottom-48 -right-48 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+      {/* ── Faint dot texture, fading out toward the edges ── */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.05] dark:opacity-[0.08]"
+        style={{
+          backgroundImage: "radial-gradient(circle at 1px 1px, var(--foreground) 1px, transparent 0)",
+          backgroundSize: "22px 22px",
+          WebkitMaskImage: "radial-gradient(circle at 50% 44%, #000 0%, transparent 66%)",
+          maskImage: "radial-gradient(circle at 50% 44%, #000 0%, transparent 66%)",
+        }}
+      />
 
-      {/* ── Main Content ── */}
-      <div className="relative z-10 flex flex-col items-center gap-10 w-full max-w-xs px-6">
+      {/* ── Corner glows ── */}
+      <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/15 blur-[120px] pointer-events-none" />
+      <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
 
-        {/* ── Logo Block — Letter Mark + Ring ── */}
+      {/* ── Main content ── */}
+      <div className="relative z-10 flex flex-col items-center gap-7 w-full max-w-sm px-6">
+
+        {/* ── Letter mark inside a rotating ring ── */}
         <div className="relative flex items-center justify-center">
+          {/* Halo breathing behind the mark */}
+          <div className="absolute h-32 w-32 rounded-full bg-primary/10 blur-2xl animate-pulse" />
+
           {/* Outer rotating segmented ring */}
           <svg
             className="absolute w-28 h-28 animate-[spin_3s_linear_infinite]"
@@ -124,61 +132,32 @@ export default function Loading() {
           </div>
         </div>
 
-        {/* ── Text Block ── */}
+        {/* ── Site name and the page being opened ── */}
         <div className="flex flex-col items-center gap-3 text-center">
-          {/* Site name */}
           <h1 className="text-3xl font-black tracking-tight text-[var(--foreground)]">
             {siteName}
           </h1>
 
-          {/* Page context pill */}
-          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--surface-elevated)] border border-[var(--border-color)] shadow-xs">
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--surface-elevated)] border border-[var(--border-color)] shadow-xs backdrop-blur-sm">
             <span className="text-sm leading-none">{emoji}</span>
             <span className="text-xs font-semibold text-[var(--foreground-muted)] tracking-wide">
               {pageLabel}
             </span>
           </div>
-
-          {/* Loading dots text */}
-          <p className="text-[11px] font-medium text-[var(--foreground-muted)] tracking-widest uppercase">
-            Loading{".".repeat(dotCount)}
-          </p>
         </div>
 
-        {/* ── Progress Track ── */}
-        <div className="w-full space-y-2">
-          <div className="w-full h-[3px] bg-[var(--surface-alt)] rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-300 ease-out"
-              style={{
-                width: `${progress}%`,
-                background: "linear-gradient(90deg, var(--primary), var(--primary-hover, var(--primary)))",
-                boxShadow: "0 0 8px var(--primary)",
-              }}
-            />
-          </div>
-          <div className="flex items-center justify-between text-[10px] text-[var(--foreground-muted)] font-medium">
-            <span>Fetching data</span>
-            <span>{progress}%</span>
-          </div>
+        {/* ── Slim progress track ── */}
+        <div className="w-full h-[3px] bg-[var(--surface-alt)] rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-300 ease-out"
+            style={{
+              width: `${progress}%`,
+              background: "linear-gradient(90deg, var(--primary), var(--primary-hover, var(--primary)))",
+              boxShadow: "0 0 8px var(--primary)",
+            }}
+          />
         </div>
 
-      </div>
-
-      {/* ── Bottom Tagline ── */}
-      <div className="absolute bottom-8 flex flex-col items-center gap-1.5">
-        <div className="flex items-center gap-1.5">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce"
-              style={{ animationDelay: `${i * 0.15}s`, animationDuration: "1s" }}
-            />
-          ))}
-        </div>
-        <p className="text-[10px] text-[var(--foreground-muted)] font-medium tracking-widest uppercase">
-          {settings.siteTagline || "Premium Store Experience"}
-        </p>
       </div>
 
     </div>
