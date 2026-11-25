@@ -562,21 +562,7 @@ export default function OrdersClient({
                               {order.vendor.status === "mixed" && "◐ Partly accepted"}
                             </span>
                           )}
-                          {order.customerResponse ? (
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                order.customerResponse === "received"
-                                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/40"
-                                  : order.customerResponse === "not_received"
-                                  ? "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/40"
-                                  : "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200/50 dark:border-rose-800/40"
-                              }`}
-                            >
-                              {order.customerResponse === "received" && "✓ Received"}
-                              {order.customerResponse === "not_received" && "⚠ Not Received"}
-                              {order.customerResponse === "cancelled" && "✕ Cancelled"}
-                            </span>
-                          ) : (
+                          {
                             /*
                               Nothing is awaited from the customer any more, so an
                               unreported order says who is carrying it instead —
@@ -590,7 +576,7 @@ export default function OrdersClient({
                                   : "With a rider"}
                               </span>
                             )
-                          )}
+                          }
                         </div>
                       </td>
 
@@ -764,27 +750,10 @@ export default function OrdersClient({
                       const claimOffered =
                         (selectedOrder.delivery?.status || "").toLowerCase() ===
                         "assigned";
-                      // The customer asked for this to be called off. Honouring it
-                      // stands the rider down, so it stays the store's decision.
-                      const cancelRequested =
-                        selectedOrder.customerResponse === "cancelled";
-                      // The customer says the parcel never reached them, which
-                      // rules out closing the order as delivered from here. The
-                      // rider can still deliver it with the code at the door.
-                      const customerDisagrees =
-                        selectedOrder.customerResponse === "not_received" ||
-                        cancelRequested;
-                      /*
-                        The customer says it arrived. That answer now settles the
-                        sale on the server, so an order carrying it is delivered
-                        and the rider has been paid: cancelling it from here would
-                        undo money that has already moved.
-                      */
-                      const customerConfirmed =
-                        selectedOrder.customerResponse === "received";
-
-                      const canDeliver = !riderHolds && !customerDisagrees;
-                      const canCancel = (!riderHolds || cancelRequested) && !customerConfirmed;
+                      // While a rider holds the order, the store cannot close or
+                      // cancel it from here; the rider's own job has to end first.
+                      const canDeliver = !riderHolds;
+                      const canCancel = !riderHolds;
 
                       // The current stage plus the stages it may move to.
                       const visibleOptions = STATUS_OPTIONS.filter(
@@ -798,9 +767,7 @@ export default function OrdersClient({
                       const lockReason = (id: string) => {
                         if (id === currentStatus) return "(Current)";
                         if (id === "delivered" && riderHolds) return "(Rider carries it)";
-                        if (id === "delivered" && customerDisagrees) return "(Customer disagreed)";
                         if (id === "cancelled" && riderHolds) return "(Rider assigned)";
-                        if (id === "cancelled" && customerConfirmed) return "(Customer confirmed)";
                         return null;
                       };
 
@@ -810,14 +777,11 @@ export default function OrdersClient({
                         so a panel never tells somebody to stand down a rider who
                         was never on the job.
                       */
-                      const riderNote =
-                        riderHolds && cancelRequested
-                          ? "The customer asked to cancel. Cancelling it here refunds them and stands the rider down."
-                          : claimOffered
-                            ? "The offer is with the rider until they answer or it lapses. Cancel the delivery from the deliveries page to take the order back."
-                            : riderHolds
-                              ? "The rider closes this order with the customer's delivery code, so Delivered stays with them. The store cannot cancel the order over a rider who holds the job — close it on the deliveries page first."
-                              : "Nobody is carrying it yet. Assign a rider, and only they can close it with the customer's code at the door.";
+                      const riderNote = claimOffered
+                        ? "The offer is with the rider until they answer or it lapses. Cancel the delivery from the deliveries page to take the order back."
+                        : riderHolds
+                          ? "The rider closes this order with the customer's delivery code, so Delivered stays with them. The store cannot cancel the order over a rider who holds the job — close it on the deliveries page first."
+                          : "Nobody is carrying it yet. Assign a rider, and only they can close it with the customer's code at the door.";
 
                       return (
                         <div className="space-y-3">
@@ -932,70 +896,7 @@ export default function OrdersClient({
                             </div>
                           )}
 
-                          {selectedOrder.customerResponse && (
-                            <div
-                              className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs ${
-                                selectedOrder.customerResponse === "received"
-                                  ? "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 text-emerald-900 dark:text-emerald-200"
-                                  : selectedOrder.customerResponse === "not_received"
-                                  ? "bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 text-amber-900 dark:text-amber-200"
-                                  : "bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/50 text-rose-900 dark:text-rose-200"
-                              }`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div
-                                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                                    selectedOrder.customerResponse === "received"
-                                      ? "bg-emerald-500 text-white"
-                                      : selectedOrder.customerResponse === "not_received"
-                                      ? "bg-amber-500 text-white"
-                                      : "bg-rose-500 text-white"
-                                  }`}
-                                >
-                                  {selectedOrder.customerResponse === "received" && (
-                                    <CheckCircle2 className="w-4 h-4" />
-                                  )}
-                                  {selectedOrder.customerResponse === "not_received" && (
-                                    <AlertTriangle className="w-4 h-4" />
-                                  )}
-                                  {selectedOrder.customerResponse === "cancelled" && (
-                                    <XCircle className="w-4 h-4" />
-                                  )}
-                                </div>
-                                <div className="space-y-1">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span className="font-extrabold text-xs">
-                                      Customer Response:{" "}
-                                      {selectedOrder.customerResponse === "received"
-                                        ? "Order Received"
-                                        : selectedOrder.customerResponse === "not_received"
-                                        ? "Order Not Received"
-                                        : "Order Cancelled / Rejected"}
-                                    </span>
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[var(--surface-elevated)]/70 dark:bg-[var(--surface)]/70 border border-current">
-                                      {selectedOrder.customerResponse === "received"
-                                        ? "Delivered · rider paid"
-                                        : selectedOrder.customerResponse === "not_received"
-                                          ? "Delivered is blocked"
-                                          : "Cancellation requested"}
-                                    </span>
-                                  </div>
-                                  {selectedOrder.customerResponseNote && (
-                                    <p className="text-[11px] text-[var(--foreground)] italic">
-                                      "{selectedOrder.customerResponseNote}"
-                                    </p>
-                                  )}
-                                  {selectedOrder.customerResponseAt && (
-                                    <p className="text-[10px] text-[var(--foreground-muted)]">
-                                      Submitted:{" "}
-                                      {formatOrderDateTime(selectedOrder.customerResponseAt)}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                                                  </div>
                       );
                     })()}
 
