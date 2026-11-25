@@ -81,6 +81,22 @@ export default async function VendorCouponsPage({ searchParams }: VendorCouponsP
     );
   }
 
+  // Only the categories this seller actually sells in — a code can only ever
+  // discount their own products, so a foreign category is never offered.
+  const vendorCategories = Array.from(
+    new Map(
+      (catalogue?.products ?? [])
+        .map((product) => {
+          const category = product.categoryId;
+          if (!category || typeof category === "string") return null;
+          const id = String(category._id ?? category.id ?? "");
+          const name = category.name || "";
+          return id && name ? ([id, { _id: id, name }] as const) : null;
+        })
+        .filter((entry): entry is readonly [string, { _id: string; name: string }] => entry !== null)
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <VendorCouponsClient
       coupons={result.coupons}
@@ -99,6 +115,7 @@ export default async function VendorCouponsPage({ searchParams }: VendorCouponsP
         vendorProductStatus: product.vendorProductStatus,
         price: product.price,
       }))}
+      categories={vendorCategories}
       currency={settingsRes?.data?.currency || "BDT"}
     />
   );

@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Ticket, X } from "lucide-react";
+import { Loader2, Search, Ticket, X } from "lucide-react";
 import { toast } from "react-toastify";
 import type { Coupon, CouponDraft } from "@/types";
 import {
@@ -32,10 +32,17 @@ export interface CouponProductOption {
   price: number;
 }
 
+export interface CouponCategoryOption {
+  _id: string;
+  name: string;
+}
+
 interface VendorCouponFormProps {
   /** Null means a brand new code. */
   coupon: Coupon | null;
   products: CouponProductOption[];
+  /** Only the categories this seller actually sells in. */
+  categories: CouponCategoryOption[];
   currency: string;
   onDone: () => void;
 }
@@ -48,6 +55,7 @@ const labelClass =
 export default function VendorCouponForm({
   coupon,
   products,
+  categories,
   currency,
   onDone,
 }: VendorCouponFormProps) {
@@ -55,6 +63,7 @@ export default function VendorCouponForm({
   const [draft, setDraft] = useState<CouponDraft>(
     coupon ? couponDraftFrom(coupon) : blankCouponDraft()
   );
+  const [categoryTerm, setCategoryTerm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -80,6 +89,38 @@ export default function VendorCouponForm({
     set("productIds", next);
   };
 
+  const chosenCategories = new Set(draft.categoryIds);
+
+  const toggleCategory = (id: string) => {
+    set(
+      "categoryIds",
+      chosenCategories.has(id)
+        ? draft.categoryIds.filter((current) => current !== id)
+        : [...draft.categoryIds, id]
+    );
+  };
+
+  // Filter this seller's own categories, then tick as many as the code covers.
+  const filteredCategories = useMemo(() => {
+    const q = categoryTerm.trim().toLowerCase();
+    if (!q) return categories;
+    return categories.filter((category) => category.name.toLowerCase().includes(q));
+  }, [categories, categoryTerm]);
+
+  const allFilteredChosen =
+    filteredCategories.length > 0 &&
+    filteredCategories.every((category) => chosenCategories.has(category._id));
+
+  const markAllCategories = () => {
+    const ids = filteredCategories.map((category) => category._id);
+    set(
+      "categoryIds",
+      allFilteredChosen
+        ? draft.categoryIds.filter((id) => !ids.includes(id))
+        : Array.from(new Set([...draft.categoryIds, ...ids]))
+    );
+  };
+
   const numberField = (key: keyof CouponDraft, fallback: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const raw = Number(event.target.value);
     set(key, Number.isFinite(raw) ? raw : fallback);
@@ -96,9 +137,7 @@ export default function VendorCouponForm({
     setError(null);
     setSaving(true);
 
-    // A seller narrows a code by product only; whole-category codes are the
-    // store team's tool, so this field stays empty here.
-    const payload: CouponDraft = { ...couponPayload(draft), categoryIds: [] };
+    const payload: CouponDraft = couponPayload(draft);
 
     try {
       const res = coupon
@@ -347,6 +386,91 @@ export default function VendorCouponForm({
               : "0 means no limit per account."}
           </p>
         </div>
+      </div>
+
+      {/* Category narrowing: filter this seller's own categories, then tick. */}
+      <div>
+        <span className={labelClass}>Which categories</span>
+        <p className="mb-2 text-[10px] text-[var(--foreground-muted)]">
+          {chosenCategories.size === 0
+            ? "None picked, so no category is covered by name."
+            : `${chosenCategories.size} picked — each covers every product in that category, now and as new products are added.`}
+        </p>
+
+        {categories.length === 0 ? (
+          <p className="rounded-xl bg-[var(--surface-alt)] px-3 py-2 text-[10px] text-[var(--foreground-muted)]">
+            You have no categories yet — put a product in a category first.
+          </p>
+        ) : (
+          <>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--foreground-muted)]" />
+                <input
+                  value={categoryTerm}
+                  onChange={(event) => setCategoryTerm(event.target.value)}
+                  placeholder="Filter categories"
+                  className={`${inputClass} pl-9`}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={markAllCategories}
+                disabled={filteredCategories.length === 0}
+                className="whitespace-nowrap rounded-xl border border-[var(--border-color)] px-3 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {allFilteredChosen ? "Unselect all" : `Select all (${filteredCategories.length})`}
+              </button>
+            </div>
+
+            <div className="mt-2 max-h-40 space-y-0.5 overflow-y-auto rounded-xl border border-[var(--border-color)] bg-[var(--surface)] p-2">
+              {filteredCategories.length === 0 ? (
+                <p className="px-1.5 py-2 text-[10px] text-[var(--foreground-muted)]">
+                  No category matches &ldquo;{categoryTerm}&rdquo;.
+                </p>
+              ) : (
+                filteredCategories.map((category) => (
+                  <label
+                    key={category._id}
+                    className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-[11px] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={chosenCategories.has(category._id)}
+                      onChange={() => toggleCategory(category._id)}
+                      className="h-3.5 w-3.5 accent-[var(--brand-flat)]"
+                    />
+                    <span className="min-w-0 flex-1 truncate">{category.name}</span>
+                  </label>
+                ))
+              )}
+            </div>
+
+            {chosenCategories.size > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {draft.categoryIds.map((id) => {
+                  const name = categories.find((category) => category._id === id)?.name || `...${id.slice(-6)}`;
+                  return (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--surface-alt)] px-2 py-1 text-[10px] text-[var(--foreground)]"
+                    >
+                      {name}
+                      <button
+                        type="button"
+                        onClick={() => toggleCategory(id)}
+                        className="text-[var(--foreground-muted)] hover:text-rose-600 cursor-pointer"
+                        aria-label={`Take ${name} off the code`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       <div>

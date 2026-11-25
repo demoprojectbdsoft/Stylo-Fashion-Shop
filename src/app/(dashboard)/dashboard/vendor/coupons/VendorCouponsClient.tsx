@@ -28,7 +28,7 @@ import {
   getCouponStateStyle,
 } from "@/lib/couponWords";
 import { deleteVendorCoupon, setVendorCouponActive } from "@/lib/action/vendorCoupons";
-import VendorCouponForm, { type CouponProductOption } from "./VendorCouponForm";
+import VendorCouponForm, { type CouponCategoryOption, type CouponProductOption } from "./VendorCouponForm";
 
 /**
  * The seller's coupon desk.
@@ -45,6 +45,7 @@ interface VendorCouponsClientProps {
   filters: { status: string; search: string };
   allowance: { planName: string; limit: number; used: number; isLive: boolean };
   products: CouponProductOption[];
+  categories: CouponCategoryOption[];
   currency: string;
 }
 
@@ -63,6 +64,7 @@ export default function VendorCouponsClient({
   filters,
   allowance,
   products,
+  categories,
   currency,
 }: VendorCouponsClientProps) {
   const router = useRouter();
@@ -217,6 +219,7 @@ export default function VendorCouponsClient({
           key={editing?._id || "new"}
           coupon={editing}
           products={products}
+          categories={categories}
           currency={currency}
           onDone={closeForm}
         />
