@@ -355,6 +355,8 @@ export default function StoreProfileClient({
       </section>
 
       <div className="grid items-start gap-4 xl:grid-cols-2">
+        {/* ── Left: the shop's public face — the details buyers read ── */}
+        <div className="space-y-4">
         <section className="space-y-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-4 shadow-2xs">
           <h2 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--foreground-muted)]">
             <Store className="h-3.5 w-3.5 text-[var(--brand-flat)]" />
@@ -406,7 +408,6 @@ export default function StoreProfileClient({
           />
         </section>
 
-        <div className="space-y-4">
           <section className="space-y-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-4 shadow-2xs">
             <h2 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--foreground-muted)]">
               <User className="h-3.5 w-3.5 text-[var(--brand-flat)]" />
@@ -500,7 +501,10 @@ export default function StoreProfileClient({
               />
             </Field>
           </section>
+        </div>
 
+        {/* ── Right: the addresses, links and papers on record ── */}
+        <div className="space-y-4">
           <section className="space-y-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-4 shadow-2xs">
             <h2 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--foreground-muted)]">
               <MapPin className="h-3.5 w-3.5 text-[var(--brand-flat)]" />
