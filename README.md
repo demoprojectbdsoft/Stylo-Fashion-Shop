@@ -1,6 +1,6 @@
 ﻿<div align="center">
 
-# âš¡ Sparq
+# Sparq
 
 **Modern Electronics E-Commerce Platform**
 
