@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import ImageUploader from "@/components/shared/ImageUploader";
+import HeroUIDateTimePicker from "@/components/shared/HeroUIDateTimePicker";
 import { addBanner, updateBanner } from "@/lib/action/banners";
 import { normalizeImageUrl } from "@/lib/imageUrl";
 import type { Banner, BannerType } from "@/types/banner";
@@ -61,14 +62,6 @@ const TYPE_OPTIONS: { value: BannerType; label: string; icon: typeof Package }[]
 
 const idOf = (row: { id?: string; _id?: string }) => String(row.id || row._id || "");
 
-function toLocalInput(iso?: string | null) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  const off = d.getTimezoneOffset() * 60000;
-  return new Date(d.getTime() - off).toISOString().slice(0, 16);
-}
-
 export default function HeroBannerForm({
   mode,
   initialBanner,
@@ -94,8 +87,8 @@ export default function HeroBannerForm({
     vendorId: initialBanner?.target?.vendorId || "",
     customUrl: initialBanner?.target?.customUrl || "",
     order: initialBanner?.order ?? defaultOrder,
-    startDate: toLocalInput(initialBanner?.startDate),
-    endDate: toLocalInput(initialBanner?.endDate),
+    startDate: initialBanner?.startDate || "",
+    endDate: initialBanner?.endDate || "",
     isActive: initialBanner?.isActive ?? false,
   });
 
@@ -440,31 +433,20 @@ export default function HeroBannerForm({
           </div>
 
           {/* Schedule */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-[var(--foreground)]">Start Date</label>
-              <input
-                type="datetime-local"
-                value={form.startDate}
-                onChange={(e) => set({ startDate: e.target.value })}
-                className="w-full bg-[var(--surface-alt)] border border-[var(--border-color)] rounded-xl text-xs px-3 h-10 text-[var(--foreground)]"
-              />
-              <span className="text-[10px] text-[var(--foreground-muted)]">
-                Leave empty to start immediately.
-              </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-[var(--foreground)]">End Date</label>
-              <input
-                type="datetime-local"
-                value={form.endDate}
-                onChange={(e) => set({ endDate: e.target.value })}
-                className="w-full bg-[var(--surface-alt)] border border-[var(--border-color)] rounded-xl text-xs px-3 h-10 text-[var(--foreground)]"
-              />
-              <span className="text-[10px] text-[var(--foreground-muted)]">
-                Leave empty to run until you stop it.
-              </span>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <HeroUIDateTimePicker
+              label="Start Date & Time"
+              value={form.startDate || null}
+              onChange={(iso) => set({ startDate: iso })}
+              helperText="Leave empty to start immediately."
+              showPresets={false}
+            />
+            <HeroUIDateTimePicker
+              label="End Date & Time"
+              value={form.endDate || null}
+              onChange={(iso) => set({ endDate: iso })}
+              helperText="Leave empty to run until you stop it."
+            />
           </div>
 
           {/* Publish */}
