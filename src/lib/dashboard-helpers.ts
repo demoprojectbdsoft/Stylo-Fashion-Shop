@@ -890,7 +890,15 @@ export function aggregateCustomerDashboard(
         totalSaved += diff;
         orderSavings += diff;
 
-        const catName = prod?.categoryId?.name || prod?.category?.name || "Uncategorized";
+        // The category name comes from the populated product; older rows may
+        // carry it on the line itself, so both are read before giving up.
+        const catName =
+          prod?.categoryId?.name ||
+          prod?.category?.name ||
+          prod?.categories?.[0] ||
+          (item as { category?: string }).category ||
+          (item as { categoryName?: string }).categoryName ||
+          "Uncategorized";
         if (!categoryMap[catName]) categoryMap[catName] = { count: 0, amount: 0 };
         categoryMap[catName].count += qty;
         categoryMap[catName].amount += itemPrice * qty;
