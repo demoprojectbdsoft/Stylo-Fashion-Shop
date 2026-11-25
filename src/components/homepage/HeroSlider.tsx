@@ -17,9 +17,9 @@ const FALLBACK_IMAGE =
 /** One small box of the offer timer. */
 function TimerBox({ value, label }: { value: number; label: string }) {
   return (
-    <span className="flex min-w-[38px] shrink-0 flex-col items-center justify-center rounded-md bg-white/15 px-1.5 py-1 backdrop-blur-xs">
-      <span className="text-sm font-bold leading-none tabular-nums text-white">{padCountdown(value)}</span>
-      <span className="mt-0.5 text-[8px] font-semibold uppercase leading-none text-white/75">{label}</span>
+    <span className="flex min-w-[38px] shrink-0 flex-col items-center justify-center rounded-md bg-black/50 border border-white/25 px-1.5 py-1 shadow-sm backdrop-blur-xs">
+      <span className="text-sm font-extrabold leading-none tabular-nums text-white">{padCountdown(value)}</span>
+      <span className="mt-0.5 text-[8px] font-bold uppercase leading-none text-white/85">{label}</span>
     </span>
   );
 }
