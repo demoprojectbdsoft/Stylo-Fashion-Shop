@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { cancelVendorRenewal, checkoutVendorSubscription } from "@/lib/action/vendor";
+import WalletPaymentModal from "@/app/(main)/checkout/WalletPaymentModal";
 import { formatPrice } from "@/lib/currency";
 import { formatOrderDate } from "@/lib/dateTime";
 import { EXPORT_LABELS, planCoversDelivery, planCycles, planEffectivePrice, planOfferLive, planPrice, popularPlanId } from "@/lib/vendorPlan";
@@ -140,6 +141,7 @@ export default function SubscriptionClient({ overview, currency }: SubscriptionC
   const [transactionId, setTransactionId] = useState("");
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [paying, setPaying] = useState(false);
+  const [gatewayOpen, setGatewayOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [showAllPeriods, setShowAllPeriods] = useState(false);
@@ -190,16 +192,10 @@ export default function SubscriptionClient({ overview, currency }: SubscriptionC
     setConfirmCancel(false);
   };
 
-  const pay = async () => {
+  const performCheckout = async () => {
     if (!checkoutPlan || paying) return;
 
     const isFree = checkoutAmount === 0;
-
-    if (!isFree && method !== "wallet" && !isTransactionIdValid(transactionId)) {
-      toast.warning("Paste the transaction id (8-20 characters) or click 'Use demo payment'.");
-      return;
-    }
-
     setPaying(true);
     try {
       const res = await checkoutVendorSubscription({
@@ -229,6 +225,26 @@ export default function SubscriptionClient({ overview, currency }: SubscriptionC
     } finally {
       setPaying(false);
     }
+  };
+
+  const pay = async () => {
+    if (!checkoutPlan || paying) return;
+
+    const isFree = checkoutAmount === 0;
+
+    if (!isFree && method !== "wallet" && !isTransactionIdValid(transactionId)) {
+      toast.warning("Paste the transaction id (8-20 characters) or click 'Use demo payment'.");
+      return;
+    }
+
+    // A paid wallet runs through the animated gateway first, like checkout does;
+    // the demo wallet and the free plan skip it.
+    if (!isFree && method !== "wallet") {
+      setGatewayOpen(true);
+      return;
+    }
+
+    await performCheckout();
   };
 
   const cancelRenewal = async () => {
@@ -850,6 +866,25 @@ export default function SubscriptionClient({ overview, currency }: SubscriptionC
             </div>
           </div>
         </div>
+      )}
+
+      {gatewayOpen && checkoutPlan && (
+        <WalletPaymentModal
+          gatewayName={METHODS.find((m) => m.id === method)?.label || "Wallet"}
+          headerGradient="from-[var(--brand-flat)] to-[var(--primary)]"
+          brandButtonClass="bg-primary hover:bg-primary-hover"
+          brandBarClass="bg-primary"
+          icon={<CreditCard className="h-4 w-4" />}
+          siteName="Sparq"
+          amountLabel={money(checkoutAmount)}
+          phone="—"
+          transactionId={transactionId}
+          onClose={() => setGatewayOpen(false)}
+          onSuccess={() => {
+            setGatewayOpen(false);
+            void performCheckout();
+          }}
+        />
       )}
     </div>
   );
