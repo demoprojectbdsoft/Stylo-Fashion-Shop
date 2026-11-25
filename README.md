@@ -276,6 +276,10 @@ Both types:
   • Optional: min order, max discount, usage limits
   • Date range with auto expiry
   • Per-customer limits
+
+Vendor coupon control:
+  • Seller (their coupons desk): create, edit, stop/resume and delete their codes
+  • Store team: can only stop or put back a seller's code — never delete it
 ```
 
 ### Dynamic Branding (CMS)
