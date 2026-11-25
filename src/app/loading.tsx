@@ -8,17 +8,16 @@ import { useSiteSettings } from "@/context/SiteSettingsContext";
 /**
  * What the reader is opening, in their words.
  *
- * `kind` is the shape of the preview drawn underneath the label: a grid of
- * listings for a catalogue, a picture-and-copy block for a product, a list with
- * a total for a cart, panels for a dashboard. It is only ever a hint of what is
- * coming — the real page replaces the whole overlay the moment it is ready.
+ * `kind` picks the section-flavoured copy that leads the rotating lines, so the
+ * screen reads about the section the reader asked for rather than the same few
+ * lines everywhere. The label itself is the location they are standing in.
  */
-type PreviewKind = "catalog" | "product" | "cart" | "dashboard" | "generic";
+type SectionKind = "catalog" | "product" | "cart" | "dashboard" | "generic";
 
 function getPageContext(pathname: string | null): {
   label: string;
   emoji: string;
-  kind: PreviewKind;
+  kind: SectionKind;
 } {
   if (!pathname || pathname === "/") return { label: "Storefront", emoji: "🏪", kind: "catalog" };
   if (pathname.startsWith("/shop/")) return { label: "Product Details", emoji: "📦", kind: "product" };
@@ -39,74 +38,27 @@ function getPageContext(pathname: string | null): {
   return { label: "Loading", emoji: "⚡", kind: "generic" };
 }
 
-/** A small shimmering hint of the page that is on its way. */
-function PagePreview({ kind }: { kind: PreviewKind }) {
-  if (kind === "catalog") {
-    return (
-      <div className="grid grid-cols-3 gap-3">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-elevated)]"
-          >
-            <div className="h-14 bg-[var(--surface-alt)]" />
-            <div className="space-y-1.5 p-2">
-              <div className="h-2 w-3/4 rounded bg-[var(--surface-alt)]" />
-              <div className="h-2 w-1/2 rounded bg-[var(--surface-alt)]" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+/** The section's own opening lines, so the copy reads about what was asked for. */
+const SECTION_LINES: Record<SectionKind, string[]> = {
+  catalog: ["Rounding up every shop on the marketplace", "Weighing prices across the vendors"],
+  product: ["Opening the full spec sheet", "Checking stock and today's offer"],
+  cart: ["Adding up your basket", "Re-checking the coupon and the shipping"],
+  dashboard: ["Tallying your orders and earnings", "Pulling together your latest numbers"],
+  generic: ["Getting things ready for you"],
+};
 
-  if (kind === "product") {
-    return (
-      <div className="flex gap-3">
-        <div className="h-20 w-20 shrink-0 rounded-xl bg-[var(--surface-alt)]" />
-        <div className="flex-1 space-y-2 pt-1">
-          <div className="h-3 w-3/4 rounded bg-[var(--surface-alt)]" />
-          <div className="h-2.5 w-1/2 rounded bg-[var(--surface-alt)]" />
-          <div className="h-2.5 w-2/3 rounded bg-[var(--surface-alt)]" />
-        </div>
-      </div>
-    );
-  }
-
-  if (kind === "cart") {
-    return (
-      <div className="space-y-2.5">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="flex items-center gap-3">
-            <div className="h-9 w-9 shrink-0 rounded-lg bg-[var(--surface-alt)]" />
-            <div className="h-2.5 flex-1 rounded bg-[var(--surface-alt)]" />
-            <div className="h-2.5 w-10 rounded bg-[var(--surface-alt)]" />
-          </div>
-        ))}
-        <div className="h-9 rounded-xl bg-[var(--surface-alt)]" />
-      </div>
-    );
-  }
-
-  if (kind === "dashboard") {
-    return (
-      <div className="flex gap-3">
-        <div className="h-28 w-14 shrink-0 rounded-xl bg-[var(--surface-alt)]" />
-        <div className="flex-1 space-y-2.5">
-          <div className="h-12 rounded-xl bg-[var(--surface-alt)]" />
-          <div className="h-12 rounded-xl bg-[var(--surface-alt)]" />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2.5">
-      <div className="h-3 w-2/3 rounded bg-[var(--surface-alt)]" />
-      <div className="h-2.5 w-full rounded bg-[var(--surface-alt)]" />
-      <div className="h-2.5 w-5/6 rounded bg-[var(--surface-alt)]" />
-    </div>
-  );
+/** Lines about the store itself, shown alongside the section's own. */
+function siteLines(siteName: string): string[] {
+  return [
+    `${siteName} runs on real sellers and honest records`,
+    "Every price is checked on the server, never guessed",
+    "Fresh arrivals and today's offers are on the way",
+    "From shelf to doorstep, the whole trip is tracked",
+    "Loyalty points, warranties and verified reviews",
+    "One clean checkout across every vendor",
+    "Your cart and saved details stay safe with us",
+    "Fast delivery on every qualifying order",
+  ];
 }
 
 export default function Loading() {
@@ -114,27 +66,35 @@ export default function Loading() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     setMounted(true);
 
     // Ease toward 90% quickly, then hold for the real load.
-    const timer = setInterval(() => {
+    const progressTimer = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 90) { clearInterval(timer); return prev; }
+        if (prev >= 90) { clearInterval(progressTimer); return prev; }
         const jump = prev < 40 ? 7 : prev < 70 ? 3 : 0.8;
         return Math.min(prev + jump, 90);
       });
     }, 90);
 
-    return () => clearInterval(timer);
+    // Roll the copy so the wait has something to read.
+    const lineTimer = setInterval(() => setTick((t) => t + 1), 2000);
+
+    return () => { clearInterval(progressTimer); clearInterval(lineTimer); };
   }, []);
 
   const siteName = settings.siteName || "Sparq";
   const logo = settings.navbarLogo?.light || settings.navbarLogo?.dark || "";
   const { label: pageLabel, emoji, kind } = mounted
     ? getPageContext(pathname)
-    : { label: "Loading", emoji: "⚡", kind: "generic" as PreviewKind };
+    : { label: "Loading", emoji: "⚡", kind: "generic" as SectionKind };
+
+  // A window of the section's own lines plus the store's, so both are always read.
+  const pool = [...SECTION_LINES[kind], ...siteLines(siteName)];
+  const visible = Array.from({ length: Math.min(3, pool.length) }, (_, i) => pool[(tick + i) % pool.length]);
 
   /* `fixed inset-0` already is the viewport; the old `h-screen w-screen`
      measured 100vw/100vh on top of it, which is wider and taller than the
@@ -147,7 +107,7 @@ export default function Loading() {
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(55% 48% at 50% 40%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 72%)",
+            "radial-gradient(55% 48% at 50% 38%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 72%)",
         }}
       />
 
@@ -157,8 +117,8 @@ export default function Loading() {
         style={{
           backgroundImage: "radial-gradient(circle at 1px 1px, var(--foreground) 1px, transparent 0)",
           backgroundSize: "22px 22px",
-          WebkitMaskImage: "radial-gradient(circle at 50% 50%, #000 0%, transparent 68%)",
-          maskImage: "radial-gradient(circle at 50% 50%, #000 0%, transparent 68%)",
+          WebkitMaskImage: "radial-gradient(circle at 50% 48%, #000 0%, transparent 68%)",
+          maskImage: "radial-gradient(circle at 50% 48%, #000 0%, transparent 68%)",
         }}
       />
 
@@ -233,9 +193,21 @@ export default function Loading() {
           </div>
         </div>
 
-        {/* A hint of what is coming, shaped to the section */}
-        <div className="w-full animate-pulse rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)]/70 p-4 shadow-lg backdrop-blur-xl">
-          <PagePreview kind={kind} />
+        {/* Rotating lines about the section and the store, kept true while loading */}
+        <div className="flex min-h-[5.75rem] w-full flex-col items-center justify-center gap-1.5 text-center">
+          {visible.map((line, i) => (
+            <p
+              key={`${tick}-${i}`}
+              className={`animate-[loaderLineIn_0.55s_ease-out_both] text-[12px] leading-snug sm:text-[13px] ${
+                i === 0
+                  ? "font-semibold text-[var(--foreground)]"
+                  : "text-[var(--foreground-muted)]"
+              }`}
+              style={{ animationDelay: `${i * 110}ms` }}
+            >
+              {line}
+            </p>
+          ))}
         </div>
 
         {/* Progress track */}
