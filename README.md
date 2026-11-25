@@ -222,6 +222,39 @@ convertCurrency(amount, from, to, rates)
 No rates, or an unknown currency pair, leaves the number unchanged — so nothing
 breaks before the first fetch.
 
+### Hero Banners
+
+The homepage hero is driven by banners written in Admin → Hero Banners. Each
+banner is one image and one destination, and its `type` decides where the click
+goes:
+
+```
+product   → /shop/<slug>            shows the product's price, discount and offer timer
+category  → /shop?category=<slug>
+vendor    → /vendors/<slug>
+custom    → the URL you type in
+```
+
+- **Artwork** — a desktop image is required; a mobile image is optional and falls
+  back to the desktop one. Images upload to ImgBB through the existing uploader,
+  so PNG, JPG, WEBP and animated GIF all work. Suggested sizes: **1920 × 700**
+  desktop, **960 × 600** mobile.
+- **Overlay** — a light left-to-right gradient in the store's own colour
+  (`--brand-flat`), fading to the artwork so image and text stay balanced; dark
+  mode uses the same shape in black.
+- **Product banners** show the selling price, the struck-through original and a
+  live offer timer — only while an offer is actually running. With no offer the
+  banner shows the selling price alone.
+- **Publishing** — a publish switch plus start/end dates. Status is derived
+  (draft / scheduled / active / expired), so it can never disagree with the
+  clock. Display order is the admin's priority.
+- **Homepage** — only published banners inside their date window are shown, in
+  order, and a banner whose product, category or shop has since been removed is
+  skipped.
+
+Admin screens: `/dashboard/admin/hero-banners` (list) and `/add` · `/[id]/edit`
+(the shared `HeroBannerForm`).
+
 ### Warranty (product info only)
 
 Each product carries a coverage code — **Manufacturer**, **Seller**,
