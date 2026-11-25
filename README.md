@@ -96,6 +96,7 @@ Sparq is a **production-ready e-commerce platform** for electronics with complet
 - **Hero Banners**: Product, category, vendor or custom hero banners — upload artwork (desktop + mobile, GIFs included), schedule, order and preview them without touching code
 - **CMS Branding**: Logos, colors, fonts, content - no redeploy
 - **User Management**: Role assignment, per-role suspension
+- **Account Suspension**: Suspending an account parks its vendor/rider dashboards and takes a suspended seller's shop (and every product in it) off the storefront — listings, product page and checkout all refuse it
 - **Vendor Control**: Approve applications, grant promotions
 - **Support Tools**: Product review desk, reviews, contact messages
 - **Reports & Analytics**: CSV + PDF exports with charts
