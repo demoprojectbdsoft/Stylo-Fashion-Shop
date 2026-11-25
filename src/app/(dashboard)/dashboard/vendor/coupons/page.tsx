@@ -41,7 +41,7 @@ export default async function VendorCouponsPage({ searchParams }: VendorCouponsP
   const [list, subscription, catalogue, settingsRes] = await Promise.all([
     getMyCoupons({ status, search, page, limit: 20 }),
     getMySubscription().then(asSubscription),
-    getMyProducts({ status: "all", limit: 100 }).then(asProductList),
+    getMyProducts({ status: "all", limit: 1000 }).then(asProductList),
     getSiteSettings(),
   ]);
 

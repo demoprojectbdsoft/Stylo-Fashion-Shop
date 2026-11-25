@@ -110,6 +110,13 @@ export default function AdminCouponForm({
     return categories.filter((category) => category.name.toLowerCase().includes(q));
   }, [categories, categoryTerm]);
 
+  // The whole catalogue is loaded, so product search is a local filter.
+  const filteredProducts = useMemo(() => {
+    const q = term.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((product) => product.title.toLowerCase().includes(q));
+  }, [products, term]);
+
   // Whether every category the filter shows is already ticked.
   const allFilteredChosen =
     filteredCategories.length > 0 &&
@@ -506,7 +513,7 @@ export default function AdminCouponForm({
         )}
       </div>
 
-      {/* Product narrowing, searched on the server because the store is large */}
+      {/* Product narrowing: the whole catalogue is loaded, so this filters locally. */}
       <div>
         <span className={labelClass}>Which products</span>
         <p className={hintClass}>
@@ -517,35 +524,23 @@ export default function AdminCouponForm({
               }.`}
         </p>
 
-        {/* A nested form is not valid HTML, so this search is a button and Enter. */}
-        <div className="mt-2 flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--foreground-muted)]" />
-            <input
-              value={term}
-              onChange={(event) => setTerm(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  onSearchProducts(term);
-                }
-              }}
-              placeholder="Search the catalogue to name a product"
-              className={`${inputClass} pl-9`}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => onSearchProducts(term)}
-            className="rounded-xl border border-[var(--border-color)] px-3 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] cursor-pointer"
-          >
-            Search
-          </button>
+        <div className="relative mt-2">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--foreground-muted)]" />
+          <input
+            value={term}
+            onChange={(event) => setTerm(event.target.value)}
+            placeholder="Search the catalogue to name a product"
+            className={`${inputClass} pl-9`}
+          />
         </div>
 
-        {products.length > 0 && (
-          <div className="mt-2 max-h-40 space-y-0.5 overflow-y-auto rounded-xl border border-[var(--border-color)] bg-[var(--surface)] p-2">
-            {products.map((product) => (
+        <p className="mt-1 text-[10px] text-[var(--foreground-muted)]">
+          {filteredProducts.length} of {products.length} products · {chosenProducts.size} selected
+        </p>
+
+        {filteredProducts.length > 0 ? (
+          <div className="mt-2 max-h-44 space-y-0.5 overflow-y-auto rounded-xl border border-[var(--border-color)] bg-[var(--surface)] p-2">
+            {filteredProducts.map((product) => (
               <label
                 key={product._id}
                 className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-[11px] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] cursor-pointer"
@@ -563,6 +558,10 @@ export default function AdminCouponForm({
               </label>
             ))}
           </div>
+        ) : (
+          <p className="mt-2 rounded-xl bg-[var(--surface-alt)] px-3 py-2 text-[10px] text-[var(--foreground-muted)]">
+            No product matches &ldquo;{term}&rdquo;.
+          </p>
         )}
 
         {chosenProducts.size > 0 && (

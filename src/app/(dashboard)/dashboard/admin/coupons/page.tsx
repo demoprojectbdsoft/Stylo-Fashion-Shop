@@ -97,8 +97,9 @@ export default async function AdminCouponsPage({ searchParams }: AdminCouponsPag
   const [list, categoriesRes, productsRes, settingsRes] = await Promise.all([
     getCoupons({ owner, status, search, page, limit: 20 }),
     editorOpen ? getCategories() : Promise.resolve(null),
-    // An empty term still asks for a page, so the picker is never a blank box.
-    editorOpen ? getProducts({ search: productSearch || undefined, limit: 20 }) : Promise.resolve(null),
+    // The whole catalogue, so the editor can tick a category's products and
+    // search locally. The picker filters in the browser.
+    editorOpen ? getProducts({ limit: 1000 }) : Promise.resolve(null),
     getSiteSettings(),
   ]);
 
