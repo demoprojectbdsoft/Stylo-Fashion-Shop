@@ -35,7 +35,13 @@ const asCategoryOptions = (payload: unknown): CouponCategoryOption[] => {
 };
 
 /** One page of the catalogue, found by search because the store is large. */
-type ProductRow = { _id?: unknown; id?: unknown; title?: string; price?: number };
+type ProductRow = {
+  _id?: unknown;
+  id?: unknown;
+  title?: string;
+  price?: number;
+  categoryId?: { _id?: unknown; id?: unknown } | string | null;
+};
 
 const asProductOptions = (payload: unknown): CouponProductOption[] => {
   const rows = (payload as { data?: { products?: unknown[] } } | null)?.data?.products;
@@ -44,7 +50,17 @@ const asProductOptions = (payload: unknown): CouponProductOption[] => {
   return rows
     .map((raw) => {
       const row = raw as ProductRow;
-      return { _id: String(row._id ?? row.id ?? ""), title: row.title || "", price: Number(row.price) || 0 };
+      const category = row.categoryId;
+      const categoryId =
+        typeof category === "string"
+          ? category
+          : category?._id ?? category?.id ?? undefined;
+      return {
+        _id: String(row._id ?? row.id ?? ""),
+        title: row.title || "",
+        price: Number(row.price) || 0,
+        categoryId: categoryId ? String(categoryId) : undefined,
+      };
     })
     .filter((option) => option._id && option.title);
 };

@@ -33,6 +33,8 @@ export interface CouponProductOption {
   _id: string;
   title: string;
   price: number;
+  /** The product's category, so a category can select all its products. */
+  categoryId?: string;
 }
 
 interface AdminCouponFormProps {
@@ -113,16 +115,41 @@ export default function AdminCouponForm({
     filteredCategories.length > 0 &&
     filteredCategories.every((category) => chosenCategories.has(category._id));
 
-  // One click marks every category the filter is showing — and clicking again
-  // takes them all off, so a whole group is covered (or cleared) at once.
+  // Ticking a category also ticks every product in it that is loaded here, so the
+  // products show as selected. The category stays on the code too, so coverage
+  // holds even for products the picker has not loaded.
+  const toggleCategory = (id: string) => {
+    const on = chosenCategories.has(id);
+    const productIdsInCategory = products
+      .filter((product) => product.categoryId === id)
+      .map((product) => product._id);
+
+    setDraft((prev) => ({
+      ...prev,
+      categoryIds: on ? prev.categoryIds.filter((value) => value !== id) : [...prev.categoryIds, id],
+      productIds: on
+        ? prev.productIds.filter((value) => !productIdsInCategory.includes(value))
+        : Array.from(new Set([...prev.productIds, ...productIdsInCategory])),
+    }));
+  };
+
+  // One click marks every category the filter shows (and their products);
+  // clicking again takes them all off.
   const markAllCategories = () => {
     const ids = filteredCategories.map((category) => category._id);
-    set(
-      "categoryIds",
-      allFilteredChosen
-        ? draft.categoryIds.filter((id) => !ids.includes(id))
-        : Array.from(new Set([...draft.categoryIds, ...ids]))
-    );
+    const productIdsInCategories = products
+      .filter((product) => product.categoryId && ids.includes(product.categoryId))
+      .map((product) => product._id);
+
+    setDraft((prev) => ({
+      ...prev,
+      categoryIds: allFilteredChosen
+        ? prev.categoryIds.filter((id) => !ids.includes(id))
+        : Array.from(new Set([...prev.categoryIds, ...ids])),
+      productIds: allFilteredChosen
+        ? prev.productIds.filter((id) => !productIdsInCategories.includes(id))
+        : Array.from(new Set([...prev.productIds, ...productIdsInCategories])),
+    }));
   };
 
   const toggle = (key: "productIds" | "categoryIds", id: string) => {
@@ -443,7 +470,7 @@ export default function AdminCouponForm({
                     <input
                       type="checkbox"
                       checked={chosenCategories.has(category._id)}
-                      onChange={() => toggle("categoryIds", category._id)}
+                      onChange={() => toggleCategory(category._id)}
                       className="h-3.5 w-3.5 accent-[var(--brand-flat)]"
                     />
                     <span className="min-w-0 flex-1 truncate">{category.name}</span>
