@@ -280,6 +280,8 @@ Both types:
 Vendor coupon control:
   • Seller (their coupons desk): create, edit, stop/resume and delete their codes
   • Store team: can only stop or put back a seller's code — never delete it
+  • Admin coupon: the store bears the discount, the seller keeps full price
+  • Vendor coupon: deducted from the seller's own order total (seller bears it)
 ```
 
 ### Dynamic Branding (CMS)
