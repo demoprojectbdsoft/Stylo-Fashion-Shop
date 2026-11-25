@@ -1,6 +1,6 @@
-<div align="center">
+﻿<div align="center">
 
-# ⚡ Sparq
+# âš¡ Sparq
 
 **Modern Electronics E-Commerce Platform**
 
@@ -14,21 +14,20 @@ Full-stack marketplace with multi-vendor support, loyalty system, and comprehens
 
 ---
 
-## 📖 Table of Contents
+## ðŸ“– Table of Contents
 
 1. [What is Sparq?](#what-is-sparq)
 2. [Key Features](#key-features)
 3. [How It Works](#how-it-works)
 4. [Tech Stack](#tech-stack)
 5. [Quick Start](#quick-start)
-6. [Project Structure](#project-structure)
-7. [Environment Setup](#environment-setup)
-8. [Development](#development)
-9. [Deployment](#deployment)
-10. [Demo Accounts](#demo-accounts)
-11. [Implementation Status](#implementation-status)
-12. [Recent Changes](#recent-changes)
-13. [Documentation](#documentation)
+6. [Environment Setup](#environment-setup)
+7. [Development](#development)
+8. [Deployment](#deployment)
+9. [Demo Accounts](#demo-accounts)
+10. [Implementation Status](#implementation-status)
+11. [Recent Changes](#recent-changes)
+12. [Documentation](#documentation)
 
 ---
 
@@ -39,29 +38,29 @@ Sparq is a **production-ready e-commerce platform** for electronics with complet
 ### At a Glance
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    SPARQ PLATFORM                           │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  👥 CUSTOMERS          🏪 VENDORS         👨‍💼 ADMIN          │
-│  • Browse & Shop       • Sell Products   • Manage Platform │
-│  • Track Orders        • Fulfillment     • Site Settings   │
-│  • Reviews             • Analytics       • Reports         │
-│  • Loyalty Points      • Coupons         • Users           │
-│  • Coverage            • Promotions      • Support         │
-│                                                             │
-│  🛵 RIDERS             🧪 DEMO ADMIN                        │
-│  • Deliveries          • Sandbox Mode                      │
-│  • Earnings            • Auto-Restore                      │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    SPARQ PLATFORM                           â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚                                                             â”‚
+â”‚  ðŸ‘¥ CUSTOMERS          ðŸª VENDORS         ðŸ‘¨â€ðŸ’¼ ADMIN          â”‚
+â”‚  â€¢ Browse & Shop       â€¢ Sell Products   â€¢ Manage Platform â”‚
+â”‚  â€¢ Track Orders        â€¢ Fulfillment     â€¢ Site Settings   â”‚
+â”‚  â€¢ Reviews             â€¢ Analytics       â€¢ Reports         â”‚
+â”‚  â€¢ Loyalty Points      â€¢ Coupons         â€¢ Users           â”‚
+â”‚  â€¢ Coverage            â€¢ Promotions      â€¢ Support         â”‚
+â”‚                                                             â”‚
+â”‚  ðŸ›µ RIDERS             ðŸ§ª DEMO ADMIN                        â”‚
+â”‚  â€¢ Deliveries          â€¢ Sandbox Mode                      â”‚
+â”‚  â€¢ Earnings            â€¢ Auto-Restore                      â”‚
+â”‚                                                             â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
 
 ## Key Features
 
-### 🛍️ For Customers
+### ðŸ›ï¸ For Customers
 
 - **Smart Shopping**: Search, filters, comparison (up to 3 products)
 - **Flexible Browsing**: Pagination OR infinite scroll
@@ -72,38 +71,38 @@ Sparq is a **production-ready e-commerce platform** for electronics with complet
 - **Warranties**: Coverage shown on each product page
 - **Currency**: Prices show in the store's currency; the day's rates convert them for display
 - **Saved Addresses**: Up to 5 addresses with default
-- **Data Export**: Download your data as JSON — including your shop or rider file if you have one
+- **Data Export**: Download your data as JSON â€” including your shop or rider file if you have one
 
-### 🏪 For Vendors (Multi-Vendor)
+### ðŸª For Vendors (Multi-Vendor)
 
 - **Own Storefront**: Custom branding at `/stores/your-shop`
 - **Product Management**: With plan limits (10/50/unlimited)
-- **Order Fulfillment**: Accept → Process → Ready → Ship
+- **Order Fulfillment**: Accept â†’ Process â†’ Ready â†’ Ship
 - **Discount Coupons**: Create codes for your products
 - **Featured Promotions**: Buy slots to feature products
 - **Sales Analytics**: Revenue, top products, commission tracking
 - **Subscription Plans**: Free, Basic ($29/mo), Pro ($99/mo)
 
-### 🛵 For Riders
+### ðŸ›µ For Riders
 
 - **Delivery Jobs**: Accept requests, track deliveries
 - **Live Tracking**: GPS location sharing
 - **Earnings Dashboard**: Total, monthly, per-delivery stats
 - **Order History**: Completed and cancelled deliveries
 
-### 👨‍💼 For Admins
+### ðŸ‘¨â€ðŸ’¼ For Admins
 
 - **Complete Control**: Products, categories, orders, users
-- **Hero Banners**: Product, category, vendor or custom hero banners — upload artwork (desktop + mobile, GIFs included), schedule, order and preview them without touching code
+- **Hero Banners**: Product, category, vendor or custom hero banners â€” upload artwork (desktop + mobile, GIFs included), schedule, order and preview them without touching code
 - **CMS Branding**: Logos, colors, fonts, content - no redeploy
 - **User Management**: Role assignment, per-role suspension
-- **Account Suspension**: Suspending an account parks its vendor/rider dashboards and takes a suspended seller's shop (and every product in it) off the storefront — listings, product page and checkout all refuse it
+- **Account Suspension**: Suspending an account parks its vendor/rider dashboards and takes a suspended seller's shop (and every product in it) off the storefront â€” listings, product page and checkout all refuse it
 - **Vendor Control**: Approve applications, grant promotions
 - **Support Tools**: Product review desk, reviews, contact messages
 - **Reports & Analytics**: CSV + PDF exports with charts
 - **Maintenance Mode**: Close site for customers, keep admin access
 
-### 🧪 Demo Admin (Sandbox)
+### ðŸ§ª Demo Admin (Sandbox)
 
 - **Same reach as a real admin**: every dashboard, every write
 - **Every write is logged** and reverted by the nightly sweep
@@ -118,48 +117,48 @@ Sparq is a **production-ready e-commerce platform** for electronics with complet
 
 ```
 Browser                    Frontend (Next.js)              Backend (Express)        Database
-   │                              │                              │                      │
-   │────── Login ────────────────►│                              │                      │
-   │                              │──── Generate JWT ───────────►│                      │
-   │                              │                              │                      │
-   │◄──── JWT Token ──────────────│                              │                      │
-   │                              │                              │                      │
-   │────── Shop/Order ───────────►│                              │                      │
-   │                              │──── API + JWT ──────────────►│                      │
-   │                              │                              │──── Verify JWT ─────►│
-   │                              │                              │                      │
-   │                              │                              │◄──── User Data ──────│
-   │                              │                              │                      │
-   │                              │                              │──── Process ────────►│
-   │                              │◄──── Response ───────────────│                      │
-   │◄──── Display ────────────────│                              │                      │
+   â”‚                              â”‚                              â”‚                      â”‚
+   â”‚â”€â”€â”€â”€â”€â”€ Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚                              â”‚                      â”‚
+   â”‚                              â”‚â”€â”€â”€â”€ Generate JWT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚                      â”‚
+   â”‚                              â”‚                              â”‚                      â”‚
+   â”‚â—„â”€â”€â”€â”€ JWT Token â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                              â”‚                      â”‚
+   â”‚                              â”‚                              â”‚                      â”‚
+   â”‚â”€â”€â”€â”€â”€â”€ Shop/Order â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚                              â”‚                      â”‚
+   â”‚                              â”‚â”€â”€â”€â”€ API + JWT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚                      â”‚
+   â”‚                              â”‚                              â”‚â”€â”€â”€â”€ Verify JWT â”€â”€â”€â”€â”€â–ºâ”‚
+   â”‚                              â”‚                              â”‚                      â”‚
+   â”‚                              â”‚                              â”‚â—„â”€â”€â”€â”€ User Data â”€â”€â”€â”€â”€â”€â”‚
+   â”‚                              â”‚                              â”‚                      â”‚
+   â”‚                              â”‚                              â”‚â”€â”€â”€â”€ Process â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚
+   â”‚                              â”‚â—„â”€â”€â”€â”€ Response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                      â”‚
+   â”‚â—„â”€â”€â”€â”€ Display â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                              â”‚                      â”‚
 ```
 
 ### Authentication Flow
 
-1. **User logs in** → Frontend (better-auth)
-2. **JWT generated** → Stored in browser
-3. **API request** → JWT sent with every request
-4. **Backend verifies** → JWT via JWKS, or the session token as a fallback
-5. **Authorization** → Role checked on every endpoint
-6. **Fresh roles** → Always read from DB, never cached in token
+1. **User logs in** â†’ Frontend (better-auth)
+2. **JWT generated** â†’ Stored in browser
+3. **API request** â†’ JWT sent with every request
+4. **Backend verifies** â†’ JWT via JWKS, or the session token as a fallback
+5. **Authorization** â†’ Role checked on every endpoint
+6. **Fresh roles** â†’ Always read from DB, never cached in token
 
 ### Order Processing
 
 ```
 Place Order                                              Delivered
-    │                                                         │
-    ├─ Validate stock                                        ├─ Mark payment success
-    ├─ Redeem points (atomic)                                ├─ Credit loyalty points
-    ├─ Calculate totals (server-side)                        └─ Update sell counts
-    ├─ Create order + payment
-    ├─ Decrement stock (guarded)
-    ├─ Clear cart
-    └─ Split into vendor groups (if multi-vendor)
+    â”‚                                                         â”‚
+    â”œâ”€ Validate stock                                        â”œâ”€ Mark payment success
+    â”œâ”€ Redeem points (atomic)                                â”œâ”€ Credit loyalty points
+    â”œâ”€ Calculate totals (server-side)                        â””â”€ Update sell counts
+    â”œâ”€ Create order + payment
+    â”œâ”€ Decrement stock (guarded)
+    â”œâ”€ Clear cart
+    â””â”€ Split into vendor groups (if multi-vendor)
 
-Status Flow:  confirmed → processing → shipped → delivered
-                   │            │         │
-                   └────────────┴─────────┴──────► cancelled
+Status Flow:  confirmed â†’ processing â†’ shipped â†’ delivered
+                   â”‚            â”‚         â”‚
+                   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â–º cancelled
                        (cancelling refunds a paid order, restores stock,
                         returns points and the coupon's use)
 ```
@@ -174,14 +173,14 @@ Customer Cart:
   - Product B (Vendor X)  
   - Product C (Vendor Y)
   - Product D (Platform)
-          │
-          ▼
+          â”‚
+          â–¼
     One Payment
     One Order ID
-          │
-          ├──► VendorOrder (Vendor X) → Products A + B
-          ├──► VendorOrder (Vendor Y) → Product C
-          └──► Parent Order → Product D (platform stock)
+          â”‚
+          â”œâ”€â”€â–º VendorOrder (Vendor X) â†’ Products A + B
+          â”œâ”€â”€â–º VendorOrder (Vendor Y) â†’ Product C
+          â””â”€â”€â–º Parent Order â†’ Product D (platform stock)
 ```
 
 Each vendor manages their own group independently, but delivery is coordinated by platform.
@@ -189,7 +188,7 @@ Each vendor manages their own group independently, but delivery is coordinated b
 ### Loyalty Points System
 
 ```
-EARNING:  $147.50 order → 147 points credited on delivery
+EARNING:  $147.50 order â†’ 147 points credited on delivery
           (1 point per $1 spent, rounded down)
 
 REDEMPTION: 100 points = $1 discount
@@ -197,16 +196,16 @@ REDEMPTION: 100 points = $1 discount
             Maximum: Product total (shipping always paid in cash)
 
 TIERS:
-  🥈 Silver:   0 - 999 points
-  🥇 Gold:     1,000 - 3,999 points  
-  💎 Platinum: 4,000 - 9,999 points
-  💎 Diamond:  10,000+ points
+  ðŸ¥ˆ Silver:   0 - 999 points
+  ðŸ¥‡ Gold:     1,000 - 3,999 points  
+  ðŸ’Ž Platinum: 4,000 - 9,999 points
+  ðŸ’Ž Diamond:  10,000+ points
 ```
 
 ### Currency & Display
 
-The shop prices everything in **one** currency — the admin's choice in Settings
-— and stores prices in it. The backend pulls the day's exchange rates once a day,
+The shop prices everything in **one** currency â€” the admin's choice in Settings
+â€” and stores prices in it. The backend pulls the day's exchange rates once a day,
 and the storefront uses them to **convert a price for display** when a different
 currency is chosen: `convertCurrency(amount, base, display, rates)` then
 `formatPrice(amount, currency)`.
@@ -214,53 +213,53 @@ currency is chosen: `convertCurrency(amount, base, display, rates)` then
 The helpers live in `src/lib/currency.ts`:
 
 ```
-formatPrice(amount, currency)   // symbol + the currency's own decimals (¥1,238, ৳1,240.00)
+formatPrice(amount, currency)   // symbol + the currency's own decimals (Â¥1,238, à§³1,240.00)
 formatAmount(amount, symbol)    // the same, when you already hold a bare symbol
 currencyDecimals(currency)      // JPY 0, USD 2, KWD 3
 roundToCurrency(amount, currency)
 convertCurrency(amount, from, to, rates)
 ```
 
-No rates, or an unknown currency pair, leaves the number unchanged — so nothing
+No rates, or an unknown currency pair, leaves the number unchanged â€” so nothing
 breaks before the first fetch.
 
 ### Hero Banners
 
-The homepage hero is driven by banners written in Admin → Hero Banners. Each
+The homepage hero is driven by banners written in Admin â†’ Hero Banners. Each
 banner is one image and one destination, and its `type` decides where the click
 goes:
 
 ```
-product   → /shop/<slug>            shows the product's price, discount and offer timer
-category  → /shop?category=<slug>
-vendor    → /vendors/<slug>
-custom    → the URL you type in
+product   â†’ /shop/<slug>            shows the product's price, discount and offer timer
+category  â†’ /shop?category=<slug>
+vendor    â†’ /vendors/<slug>
+custom    â†’ the URL you type in
 ```
 
-- **Artwork** — a desktop image is required; a mobile image is optional and falls
+- **Artwork** â€” a desktop image is required; a mobile image is optional and falls
   back to the desktop one. Images upload to ImgBB through the existing uploader,
-  so PNG, JPG, WEBP and animated GIF all work. Suggested sizes: **1920 × 700**
-  desktop, **960 × 600** mobile.
-- **Overlay** — a light left-to-right gradient in the store's own colour
+  so PNG, JPG, WEBP and animated GIF all work. Suggested sizes: **1920 Ã— 700**
+  desktop, **960 Ã— 600** mobile.
+- **Overlay** â€” a light left-to-right gradient in the store's own colour
   (`--brand-flat`), fading to the artwork so image and text stay balanced; dark
   mode uses the same shape in black.
 - **Product banners** show the selling price, the struck-through original and a
-  live offer timer — only while an offer is actually running. With no offer the
+  live offer timer â€” only while an offer is actually running. With no offer the
   banner shows the selling price alone.
-- **Publishing** — a publish switch plus start/end dates. Status is derived
+- **Publishing** â€” a publish switch plus start/end dates. Status is derived
   (draft / scheduled / active / expired), so it can never disagree with the
   clock. Display order is the admin's priority.
-- **Homepage** — only published banners inside their date window are shown, in
+- **Homepage** â€” only published banners inside their date window are shown, in
   order, and a banner whose product, category or shop has since been removed is
   skipped.
 
-Admin screens: `/dashboard/admin/hero-banners` (list) and `/add` · `/[id]/edit`
+Admin screens: `/dashboard/admin/hero-banners` (list) and `/add` Â· `/[id]/edit`
 (the shared `HeroBannerForm`).
 
 ### Warranty (product info only)
 
-Each product carries a coverage code — **Manufacturer**, **Seller**,
-**Extended**, **Other** or **None** — plus a period in months and a terms line,
+Each product carries a coverage code â€” **Manufacturer**, **Seller**,
+**Extended**, **Other** or **None** â€” plus a period in months and a terms line,
 shown on the product page. There is **no claim workflow** in this build; one
 shared list lives in `src/lib/warranty.ts`.
 
@@ -268,23 +267,23 @@ shared list lives in `src/lib/warranty.ts`.
 
 ```
 ADMIN COUPONS (Store-Wide)          VENDOR COUPONS (Shop-Specific)
-        │                                    │
-        ├─ Any product/category              ├─ Only vendor's products
-        ├─ Created by platform               ├─ Created by vendor
-        └─ Applies to full cart              └─ Only their items discounted
+        â”‚                                    â”‚
+        â”œâ”€ Any product/category              â”œâ”€ Only vendor's products
+        â”œâ”€ Created by platform               â”œâ”€ Created by vendor
+        â””â”€ Applies to full cart              â””â”€ Only their items discounted
 
 Both types:
-  • Percentage (1-100%) or Fixed amount
-  • Optional: min order, max discount, usage limits
-  • Date range with auto expiry
-  • Per-customer limits
-  • Cancelling an order returns the use (per-customer and total counters)
+  â€¢ Percentage (1-100%) or Fixed amount
+  â€¢ Optional: min order, max discount, usage limits
+  â€¢ Date range with auto expiry
+  â€¢ Per-customer limits
+  â€¢ Cancelling an order returns the use (per-customer and total counters)
 
 Vendor coupon control:
-  • Seller (their coupons desk): create, edit, stop/resume and delete their codes
-  • Store team: can only stop or put back a seller's code — never delete it
-  • Admin coupon: the store bears the discount, the seller keeps full price
-  • Vendor coupon: deducted from the seller's own order total (seller bears it)
+  â€¢ Seller (their coupons desk): create, edit, stop/resume and delete their codes
+  â€¢ Store team: can only stop or put back a seller's code â€” never delete it
+  â€¢ Admin coupon: the store bears the discount, the seller keeps full price
+  â€¢ Vendor coupon: deducted from the seller's own order total (seller bears it)
 ```
 
 ### Dynamic Branding (CMS)
@@ -293,13 +292,13 @@ Everything controlled from admin dashboard:
 
 ```
 SITE SETTINGS
-  ├─ Identity: Name, tagline, SEO meta
-  ├─ Typography: Google Fonts selection
-  ├─ Theme: 8 industry palettes + custom color creator
-  ├─ Logos: Light/dark variants, favicon
-  ├─ Shipping: Fees, thresholds, delivery estimates
-  ├─ Contact: Phone, email, hours, social links
-  └─ System: Currency, timezone, maintenance mode
+  â”œâ”€ Identity: Name, tagline, SEO meta
+  â”œâ”€ Typography: Google Fonts selection
+  â”œâ”€ Theme: 8 industry palettes + custom color creator
+  â”œâ”€ Logos: Light/dark variants, favicon
+  â”œâ”€ Shipping: Fees, thresholds, delivery estimates
+  â”œâ”€ Contact: Phone, email, hours, social links
+  â””â”€ System: Currency, timezone, maintenance mode
 
 All changes take effect immediately - no redeploy needed.
 ```
@@ -340,10 +339,10 @@ All changes take effect immediately - no redeploy needed.
 ### Prerequisites
 
 ```bash
-✓ Node.js 20+
-✓ MongoDB (Atlas or local)
-✓ SMTP credentials (for emails)
-✓ ImgBB API key (for uploads)
+âœ“ Node.js 20+
+âœ“ MongoDB (Atlas or local)
+âœ“ SMTP credentials (for emails)
+âœ“ ImgBB API key (for uploads)
 ```
 
 ### 1. Clone & Install
@@ -441,63 +440,6 @@ Open http://localhost:3000 and:
 
 ---
 
-## Project Structure
-
-```
-sparq/
-├── src/
-│   ├── app/                          # Next.js 16 App Router
-│   │   ├── (auth)/auth/              # Login, register, password reset
-│   │   ├── (dashboard)/dashboard/    # Role-based dashboards
-│   │   │   ├── admin/                # Platform management
-│   │   │   ├── customer/             # Customer portal
-│   │   │   ├── vendor/               # Seller workspace
-│   │   │   └── rider/                # Delivery management
-│   │   ├── (main)/                   # Public storefront
-│   │   │   ├── page.tsx              # Homepage
-│   │   │   ├── shop/                 # Product catalog
-│   │   │   ├── stores/               # Vendor storefronts
-│   │   │   ├── cart/                 # Shopping cart
-│   │   │   ├── checkout/             # Checkout flow
-│   │   │   └── ...                   # Other public pages
-│   │   ├── api/auth/[...all]/        # better-auth endpoints
-│   │   ├── api/documents/            # Document upload → backend
-│   │   └── maintenance/              # Maintenance page
-│   │
-│   ├── proxy.ts                      # Middleware (maintenance gate)
-│   ├── components/
-│   │   ├── dashboard/                # Dashboard components
-│   │   ├── homepage/                 # Homepage sections
-│   │   ├── shared/                   # Reusable UI
-│   │   ├── shop/                     # Shopping components
-│   │   └── vendor/                   # Vendor components
-│   │
-│   ├── lib/
-│   │   ├── api/                      # Server-side API clients
-│   │   ├── action/                   # Server actions (mutations)
-│   │   ├── core/                     # Core utilities
-│   │   ├── auth.ts                   # better-auth config
-│   │   ├── compare.ts                # Product comparison
-│   │   ├── csvExport.ts              # CSV reports
-│   │   ├── dashboardPdf.ts           # PDF reports with charts
-│   │   ├── files.ts                  # Document uploads
-│   │   ├── walletPayment.ts          # Demo wallet helpers
-│   │   ├── warranty.ts               # Warranty type list
-│   │   └── ...                       # Other utilities
-│   │
-│   ├── types/                        # TypeScript definitions
-│   ├── context/                      # React contexts
-│   └── hooks/                        # Custom hooks
-│
-├── public/                           # Static assets
-├── .env.local                        # Environment (DO NOT COMMIT)
-├── next.config.ts
-├── tailwind.config.ts
-└── package.json
-```
-
----
-
 ## Environment Setup
 
 ### Required Variables
@@ -521,14 +463,14 @@ sparq/
 
 ### Important Notes
 
-- ⚠️ **Never commit `.env.local`** to git
-- ⚠️ **`INTERNAL_API_KEY` must match backend** exactly
-- ⚠️ **Rebuild after changing `NEXT_PUBLIC_*`** variables
-- ⚠️ **Emails sent by backend** - configure SMTP there
-- ⚠️ **Restrict `next/image` hosts** - `next.config.ts` currently allows any
+- âš ï¸ **Never commit `.env.local`** to git
+- âš ï¸ **`INTERNAL_API_KEY` must match backend** exactly
+- âš ï¸ **Rebuild after changing `NEXT_PUBLIC_*`** variables
+- âš ï¸ **Emails sent by backend** - configure SMTP there
+- âš ï¸ **Restrict `next/image` hosts** - `next.config.ts` currently allows any
   `https` host, so the image optimizer can fetch an arbitrary URL. Narrow
   `images.remotePatterns` to your own CDN/hosts before going live.
-- ⚠️ **Keep the document URL the API returns** - application documents are read
+- âš ï¸ **Keep the document URL the API returns** - application documents are read
   through a signed link, so store `payload.data.url` from `/api/documents`
   as-is instead of rebuilding it.
 
@@ -596,9 +538,9 @@ npm run lint         # ESLint
 ### Important URLs
 
 After deployment, update:
-- `BETTER_AUTH_URL` → Your Vercel URL
-- `NEXT_PUBLIC_API_URL` → Your backend URL
-- Google OAuth redirect → Your Vercel URL
+- `BETTER_AUTH_URL` â†’ Your Vercel URL
+- `NEXT_PUBLIC_API_URL` â†’ Your backend URL
+- Google OAuth redirect â†’ Your Vercel URL
 
 ---
 
@@ -626,7 +568,7 @@ After deployment, update:
 ### Test Payments
 
 **Cash on Delivery**: settles at the door (starts `pending`)
-**Mobile Wallets**: simulated — the site has no gateway. Type any 8–20 character
+**Mobile Wallets**: simulated â€” the site has no gateway. Type any 8â€“20 character
 reference; it is stored with `isDemo` and cannot be reused on a second order.
 Cancelling a paid order marks its payment **refunded**.
 
@@ -634,42 +576,42 @@ Cancelling a paid order marks its payment **refunded**.
 
 ## Implementation Status
 
-### ✅ Currently Implemented
+### âœ… Currently Implemented
 
 | Feature | Status |
 |---------|--------|
 | **Core Platform** ||
-| Public Storefront | ✅ Complete |
-| Shopping Cart & Checkout | ✅ Complete |
-| Customer Dashboard | ✅ Complete |
-| Admin Dashboard | ✅ Complete |
-| Dynamic CMS/Branding | ✅ Complete |
-| Demo Admin Mode | ✅ Complete |
+| Public Storefront | âœ… Complete |
+| Shopping Cart & Checkout | âœ… Complete |
+| Customer Dashboard | âœ… Complete |
+| Admin Dashboard | âœ… Complete |
+| Dynamic CMS/Branding | âœ… Complete |
+| Demo Admin Mode | âœ… Complete |
 | **Loyalty & Points** ||
-| Points System | ✅ Complete |
-| Earn/Redeem at Checkout | ✅ Complete |
-| Membership Tiers | ✅ Complete |
+| Points System | âœ… Complete |
+| Earn/Redeem at Checkout | âœ… Complete |
+| Membership Tiers | âœ… Complete |
 | **Marketplace** ||
-| Multi-Vendor Platform | ✅ Complete |
-| Vendor Dashboard | ✅ Complete |
-| Subscription Plans | ✅ Complete |
-| Order Splitting | ✅ Complete |
-| Commission System | ✅ Complete |
-| Subscription Renewals | ✅ Extend, never reset |
-| Vendor & Rider Applications | ✅ Submit, review, approve |
+| Multi-Vendor Platform | âœ… Complete |
+| Vendor Dashboard | âœ… Complete |
+| Subscription Plans | âœ… Complete |
+| Order Splitting | âœ… Complete |
+| Commission System | âœ… Complete |
+| Subscription Renewals | âœ… Extend, never reset |
+| Vendor & Rider Applications | âœ… Submit, review, approve |
 | **Delivery** ||
-| Rider Dashboard | ✅ Complete |
-| Delivery Assignment | ✅ Complete |
-| GPS Tracking + Door Code | ✅ Complete |
+| Rider Dashboard | âœ… Complete |
+| Delivery Assignment | âœ… Complete |
+| GPS Tracking + Door Code | âœ… Complete |
 | **Marketing** ||
-| Discount Coupons | ✅ Complete |
-| Featured Promotions | ✅ Complete |
-| Activity Notifications | ✅ Complete |
+| Discount Coupons | âœ… Complete |
+| Featured Promotions | âœ… Complete |
+| Activity Notifications | âœ… Complete |
 | **Money & Documents** ||
-| Wallet Demo Payments | ✅ Simulated, refunded on cancel |
-| Signed Document Links | ✅ Complete |
+| Wallet Demo Payments | âœ… Simulated, refunded on cancel |
+| Signed Document Links | âœ… Complete |
 
-### 📋 Future Enhancements (On Demand)
+### ðŸ“‹ Future Enhancements (On Demand)
 
 | Feature | Description |
 |---------|-------------|
@@ -686,12 +628,18 @@ Cancelling a paid order marks its payment **refunded**.
 
 ## Recent Changes
 
-- **Customer cancel (limited):** a customer can cancel their own order, with a reason, while it is still being packed — before it ships and before a rider holds it. The old "received / not received / cancelled" report is gone.
-- **Rider requests:** the request email is informational only (no accept/decline link). The rider answers from the table or the delivery page, which now shows a numbered **collection route** — every selling shop's warehouse plus the store (admin) warehouse for store-owned items.
-- **Warehouse required:** a warehouse address is now required on a seller's store profile and on the store team's admin profile, because riders collect from it.
-- **Notification preferences:** each account has an account-wide **bell** switch and **email** switch (customer and admin). The bell gates notifications on every dashboard the account can open; the email switch gates mail to that address.
-- **Subscription payment:** a paid plan now runs through the animated gateway flow instead of a toast.
-- **Plan exports:** Premium exports the **PDF**; Advanced exports **CSV + PDF**.
+- **Cron on Vercel Hobby:** the backend runs one daily sweep (/api/cron/daily) instead of seven cron jobs, because Hobby allows only daily jobs.
+- **Vendor storefront:** a products-first shop page — a sticky record column beside the shelf, three products per row.
+- **Vendor directory cards:** bigger, clearer cards with a cover, an overlapping logo, a stats strip and a Visit-shop footer.
+- **Shop record:** a seller's orders-completed and success rate are now derived live from their order groups, so the storefront always matches their board.
+- **Store profile:** the vendor profile page rebalances into two columns instead of a short left column with empty space.
+- **Global loading:** a context-aware loading screen that names the section being opened and rotates lines about it.
+- **Customer cancel (limited):** a customer can cancel before an order ships and while no rider holds it.
+- **Rider requests:** the request email is informational only; the delivery page shows a numbered collection route.
+- **Warehouse required:** on every seller store profile and on the store-team admin profile.
+- **Notification preferences:** an account-wide bell switch and email switch on every dashboard settings page.
+- **Subscription payment:** a paid plan runs through the animated gateway flow.
+- **Plan exports:** Premium exports **PDF**; Advanced exports **CSV + PDF**.
 
 ---
 
@@ -738,8 +686,8 @@ MIT License - See [LICENSE](LICENSE)
 
 <div align="center">
 
-**Built with ❤️ by [BD Soft](https://github.com/demoprojectbdsoft)**
+**Built with â¤ï¸ by [BD Soft](https://github.com/demoprojectbdsoft)**
 
-⚡ Sparq - Better products. A brighter you.
+âš¡ Sparq - Better products. A brighter you.
 
 </div>
