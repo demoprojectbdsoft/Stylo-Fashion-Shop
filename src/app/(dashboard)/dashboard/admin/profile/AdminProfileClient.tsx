@@ -75,6 +75,10 @@ export default function AdminProfileClient({
       toast.error("First name and last name are required.");
       return;
     }
+    if (!(profile.warehouse?.address || "").trim()) {
+      toast.error("A warehouse address is required — riders collect orders there.");
+      return;
+    }
     setIsSaving(true);
     try {
       const fullName = `${profile.firstName} ${profile.lastName}`.trim();

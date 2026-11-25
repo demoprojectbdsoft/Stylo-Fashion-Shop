@@ -201,6 +201,12 @@ export default function StoreProfileClient({
         phone: draft.warehousePhone.trim(),
       };
 
+      // A rider has to be sent somewhere, so the warehouse street is required.
+      if (!warehouse.address) {
+        toast.error("A warehouse address is required — riders collect your orders there.");
+        return;
+      }
+
       // With a file on record, one call writes it and the API mirrors the
       // storefront, the address and the visibility onto the store row. Without
       // one — a shop the store team opened by hand — only the storefront can be
@@ -348,7 +354,7 @@ export default function StoreProfileClient({
         </div>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid items-start gap-4 xl:grid-cols-2">
         <section className="space-y-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-4 shadow-2xs">
           <h2 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--foreground-muted)]">
             <Store className="h-3.5 w-3.5 text-[var(--brand-flat)]" />
