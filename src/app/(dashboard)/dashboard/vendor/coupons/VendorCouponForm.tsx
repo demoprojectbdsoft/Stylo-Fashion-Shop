@@ -29,6 +29,8 @@ export interface CouponProductOption {
   title: string;
   /** Carried through from the listings read; a missing status is not archived. */
   vendorProductStatus?: string;
+  /** The product's category, so a category can select all its products. */
+  categoryId?: string;
   price: number;
 }
 
@@ -89,18 +91,34 @@ export default function VendorCouponForm({
     set("productIds", next);
   };
 
-  const chosenCategories = new Set(draft.categoryIds);
+  // A category is a shortcut for its products: ticking it selects every product
+  // in it, unticking clears those products again. A category with no products
+  // in this shop is shown, but does nothing.
+  const productsByCategory = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const product of pickable) {
+      if (!product.categoryId) continue;
+      const list = map.get(product.categoryId) || [];
+      list.push(product._id);
+      map.set(product.categoryId, list);
+    }
+    return map;
+  }, [pickable]);
 
-  const toggleCategory = (id: string) => {
-    set(
-      "categoryIds",
-      chosenCategories.has(id)
-        ? draft.categoryIds.filter((current) => current !== id)
-        : [...draft.categoryIds, id]
-    );
+  const categoryAllChosen = (id: string) => {
+    const ids = productsByCategory.get(id) || [];
+    return ids.length > 0 && ids.every((productId) => chosen.has(productId));
   };
 
-  // Filter this seller's own categories, then tick as many as the code covers.
+  const toggleCategory = (id: string) => {
+    const ids = productsByCategory.get(id) || [];
+    if (ids.length === 0) return;
+    const next = categoryAllChosen(id)
+      ? [...chosen].filter((productId) => !ids.includes(productId))
+      : Array.from(new Set([...chosen, ...ids]));
+    set("productIds", next);
+  };
+
   const filteredCategories = useMemo(() => {
     const q = categoryTerm.trim().toLowerCase();
     if (!q) return categories;
@@ -109,15 +127,15 @@ export default function VendorCouponForm({
 
   const allFilteredChosen =
     filteredCategories.length > 0 &&
-    filteredCategories.every((category) => chosenCategories.has(category._id));
+    filteredCategories.every((category) => categoryAllChosen(category._id));
 
   const markAllCategories = () => {
-    const ids = filteredCategories.map((category) => category._id);
+    const ids = filteredCategories.flatMap((category) => productsByCategory.get(category._id) || []);
     set(
-      "categoryIds",
+      "productIds",
       allFilteredChosen
-        ? draft.categoryIds.filter((id) => !ids.includes(id))
-        : Array.from(new Set([...draft.categoryIds, ...ids]))
+        ? [...chosen].filter((productId) => !ids.includes(productId))
+        : Array.from(new Set([...chosen, ...ids]))
     );
   };
 
@@ -137,7 +155,8 @@ export default function VendorCouponForm({
     setError(null);
     setSaving(true);
 
-    const payload: CouponDraft = couponPayload(draft);
+    // The code is scoped by the products picked; a category only picks them.
+    const payload: CouponDraft = { ...couponPayload(draft), categoryIds: [] };
 
     try {
       const res = coupon
@@ -388,13 +407,13 @@ export default function VendorCouponForm({
         </div>
       </div>
 
-      {/* Category narrowing: filter this seller's own categories, then tick. */}
+      {/* Category shortcut: ticking a category selects all its products. */}
       <div>
-        <span className={labelClass}>Which categories</span>
+        <span className={labelClass}>Select products by category</span>
         <p className="mb-2 text-[10px] text-[var(--foreground-muted)]">
-          {chosenCategories.size === 0
-            ? "None picked, so no category is covered by name."
-            : `${chosenCategories.size} picked — each covers every product in that category, now and as new products are added.`}
+          {chosen.size === 0
+            ? "Nothing selected yet — tick a category to select all its products, or pick items below."
+            : `${chosen.size} product${chosen.size === 1 ? "" : "s"} selected. Ticking a category selects all of its products.`}
         </p>
 
         {categories.length === 0 ? (
@@ -429,46 +448,34 @@ export default function VendorCouponForm({
                   No category matches &ldquo;{categoryTerm}&rdquo;.
                 </p>
               ) : (
-                filteredCategories.map((category) => (
-                  <label
-                    key={category._id}
-                    className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-[11px] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={chosenCategories.has(category._id)}
-                      onChange={() => toggleCategory(category._id)}
-                      className="h-3.5 w-3.5 accent-[var(--brand-flat)]"
-                    />
-                    <span className="min-w-0 flex-1 truncate">{category.name}</span>
-                  </label>
-                ))
+                filteredCategories.map((category) => {
+                  const count = (productsByCategory.get(category._id) || []).length;
+                  const disabled = count === 0;
+                  return (
+                    <label
+                      key={category._id}
+                      className={`flex items-center gap-2 rounded-lg px-1.5 py-1 text-[11px] transition-colors ${
+                        disabled
+                          ? "text-[var(--foreground-muted)]/60 cursor-not-allowed"
+                          : "text-[var(--foreground)] hover:bg-[var(--surface-alt)] cursor-pointer"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={categoryAllChosen(category._id)}
+                        disabled={disabled}
+                        onChange={() => toggleCategory(category._id)}
+                        className="h-3.5 w-3.5 accent-[var(--brand-flat)] disabled:cursor-not-allowed"
+                      />
+                      <span className="min-w-0 flex-1 truncate">{category.name}</span>
+                      <span className="shrink-0 text-[10px] text-[var(--foreground-muted)]">
+                        {count === 0 ? "no products" : `${count} product${count === 1 ? "" : "s"}`}
+                      </span>
+                    </label>
+                  );
+                })
               )}
             </div>
-
-            {chosenCategories.size > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {draft.categoryIds.map((id) => {
-                  const name = categories.find((category) => category._id === id)?.name || `...${id.slice(-6)}`;
-                  return (
-                    <span
-                      key={id}
-                      className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--surface-alt)] px-2 py-1 text-[10px] text-[var(--foreground)]"
-                    >
-                      {name}
-                      <button
-                        type="button"
-                        onClick={() => toggleCategory(id)}
-                        className="text-[var(--foreground-muted)] hover:text-rose-600 cursor-pointer"
-                        aria-label={`Take ${name} off the code`}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
-            )}
           </>
         )}
       </div>

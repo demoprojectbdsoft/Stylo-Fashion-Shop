@@ -113,6 +113,10 @@ export default async function VendorCouponsPage({ searchParams }: VendorCouponsP
         _id: product._id,
         title: product.title,
         vendorProductStatus: product.vendorProductStatus,
+        categoryId:
+          typeof product.categoryId === "string"
+            ? product.categoryId
+            : product.categoryId?._id ?? product.categoryId?.id ?? undefined,
         price: product.price,
       }))}
       categories={vendorCategories}
