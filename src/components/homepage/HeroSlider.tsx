@@ -114,7 +114,7 @@ export default function HeroSlider({ initialBanners = [] }: HeroSliderProps) {
                       e.currentTarget.onerror = null;
                       if (e.currentTarget.src !== FALLBACK_IMAGE) e.currentTarget.src = FALLBACK_IMAGE;
                     }}
-                    className="w-full h-full object-contain bg-[var(--surface-alt)]"
+                    className="w-full h-full object-cover"
                   />
                 </picture>
 
