@@ -25,6 +25,13 @@ export interface Banner {
     vendorId: string | null;
     customUrl: string;
   };
+  /** Live pricing, only on a product banner. Null when there is no discount. */
+  product?: {
+    id: string | null;
+    price: number;
+    originalPrice: number | null;
+    offerEndDate: string | null;
+  } | null;
   /** The resolved link. Empty when the target has since been removed. */
   href: string;
 }

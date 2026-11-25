@@ -4,11 +4,25 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight, Megaphone } from "lucide-react";
 import type { Banner } from "@/types/banner";
+import { useSiteSettings } from "@/context/SiteSettingsContext";
+import { hasOfferDiscount } from "@/lib/offer";
+import { padCountdown } from "@/lib/countdown";
+import { useCountdown } from "@/hooks/useCountdown";
 
 // Fallback used when a banner's image fails to load, so the hero never shows a
 // broken frame.
 const FALLBACK_IMAGE =
   "https://i.ibb.co.com/Q3Tpt7Df/industries-consumer-electronics-removebg-preview.png";
+
+/** One small box of the offer timer. */
+function TimerBox({ value, label }: { value: number; label: string }) {
+  return (
+    <span className="flex min-w-[38px] shrink-0 flex-col items-center justify-center rounded-md bg-white/15 px-1.5 py-1 backdrop-blur-xs">
+      <span className="text-sm font-bold leading-none tabular-nums text-white">{padCountdown(value)}</span>
+      <span className="mt-0.5 text-[8px] font-semibold uppercase leading-none text-white/75">{label}</span>
+    </span>
+  );
+}
 
 interface HeroSliderProps {
   initialBanners?: Banner[];
@@ -16,6 +30,7 @@ interface HeroSliderProps {
 
 /** Renders the admin's banners. Only eligible ones ever reach here. */
 export default function HeroSlider({ initialBanners = [] }: HeroSliderProps) {
+  const { formatPrice } = useSiteSettings();
   const banners = Array.isArray(initialBanners) ? initialBanners.filter((b) => b.href) : [];
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -29,6 +44,17 @@ export default function HeroSlider({ initialBanners = [] }: HeroSliderProps) {
   // Keep the index valid if the list shrank between renders.
   const index = current < banners.length ? current : 0;
   const banner = banners[index];
+
+  // Pricing + timer for a product banner. Hooks run every render, before any
+  // early return, so the order is stable.
+  const product = banner?.product ?? null;
+  const offerEnd = product?.offerEndDate ?? null;
+  const countdown = useCountdown(offerEnd ?? undefined);
+  const hasDiscount = hasOfferDiscount(product?.price, product?.originalPrice);
+  const live = hasDiscount && !countdown.ended;
+  const currentPrice = live ? product!.price : product?.originalPrice ?? product?.price ?? 0;
+  const showStrike = live && Number(product?.originalPrice) > Number(product?.price);
+  const showTimer = live && !!offerEnd && !countdown.ended;
 
   if (banners.length === 0) {
     return (
@@ -65,48 +91,79 @@ export default function HeroSlider({ initialBanners = [] }: HeroSliderProps) {
         onMouseLeave={() => setIsPaused(false)}
       >
         {/* Each banner is absolutely stacked so the cross-fade is a pure opacity change. */}
-        <div className="relative h-56 sm:h-72 md:h-[420px]">
-          {banners.map((b, i) => (
-            <Link
-              key={b.id}
-              href={b.href}
-              aria-hidden={i !== index}
-              className={`absolute inset-0 block transition-opacity duration-700 ${
-                i === index ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-              }`}
-            >
-              <picture>
-                {b.mobileImage && <source media="(max-width: 640px)" srcSet={b.mobileImage} />}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={b.desktopImage || FALLBACK_IMAGE}
-                  alt={b.title}
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    if (e.currentTarget.src !== FALLBACK_IMAGE) e.currentTarget.src = FALLBACK_IMAGE;
-                  }}
-                  className="w-full h-full object-cover"
-                />
-              </picture>
+        <div className="relative h-60 sm:h-80 md:h-[440px]">
+          {banners.map((b, i) => {
+            const active = i === index;
+            return (
+              <Link
+                key={b.id}
+                href={b.href}
+                aria-hidden={!active}
+                className={`absolute inset-0 block transition-opacity duration-700 ${
+                  active ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                }`}
+              >
+                <picture>
+                  {b.mobileImage && <source media="(max-width: 640px)" srcSet={b.mobileImage} />}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={b.desktopImage || FALLBACK_IMAGE}
+                    alt={b.title}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      if (e.currentTarget.src !== FALLBACK_IMAGE) e.currentTarget.src = FALLBACK_IMAGE;
+                    }}
+                    className="w-full h-full object-cover"
+                  />
+                </picture>
 
-              {/* Text overlay */}
-              <div className="absolute inset-0 flex flex-col justify-center gap-2 p-6 sm:p-10 md:p-14">
-                <div className="max-w-lg bg-gradient-to-r from-black/60 via-black/35 to-transparent rounded-2xl p-5 md:p-7">
-                  <h3 className="text-2xl md:text-4xl font-extrabold leading-tight text-white drop-shadow">
-                    {b.title}
-                  </h3>
-                  {b.subtitle && (
-                    <p className="mt-1.5 text-xs md:text-sm text-white/90">{b.subtitle}</p>
-                  )}
-                  <span className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-white text-xs font-bold shadow-md shadow-primary/25">
-                    {b.ctaText || "Shop Now"}
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
+                {/* One light overlay, left → right: the site's colour behind the
+                    words fades to the artwork on the right, so image and text
+                    stay balanced. Dark mode uses the same shape in black. */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand-flat)]/65 via-[var(--brand-flat)]/25 to-transparent dark:from-black/65 dark:via-black/30 dark:to-transparent" />
+
+                {/* Content */}
+                <div className="absolute inset-0 flex flex-col justify-center p-6 sm:p-10 md:p-14">
+                  <div className="max-w-xl">
+                    <h3 className="text-2xl md:text-4xl lg:text-5xl font-extrabold leading-tight text-white drop-shadow-sm">
+                      {b.title}
+                    </h3>
+                    {b.subtitle && (
+                      <p className="mt-2 text-xs md:text-sm font-medium text-white/90 max-w-md">{b.subtitle}</p>
+                    )}
+
+                    {/* Product pricing + offer timer */}
+                    {b.type === "product" && product && (
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <span className="text-2xl md:text-3xl font-extrabold text-white drop-shadow-sm">
+                          {formatPrice(currentPrice)}
+                        </span>
+                        {showStrike && (
+                          <span className="text-sm md:text-base text-white/70 line-through">
+                            {formatPrice(Number(product.originalPrice))}
+                          </span>
+                        )}
+                        {showTimer && (
+                          <div className="flex items-center gap-1.5">
+                            {countdown.days > 0 && <TimerBox value={countdown.days} label="DAYS" />}
+                            <TimerBox value={countdown.hours} label="HRS" />
+                            <TimerBox value={countdown.minutes} label="MIN" />
+                            <TimerBox value={countdown.seconds} label="SEC" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <span className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-white text-xs font-bold shadow-md shadow-primary/25">
+                      {b.ctaText || "Shop Now"}
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Controls */}
