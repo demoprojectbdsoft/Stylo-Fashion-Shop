@@ -37,6 +37,7 @@ import { authClient } from "@/lib/auth-client";
 import SuspendedAccountModal from "@/components/shared/SuspendedAccountModal";
 import { CustomerOrder, CustomerOrderItem } from "@/types/customerDashboard";
 import { addToCart } from "@/lib/action/cart";
+import { cancelMyOrder } from "@/lib/action/orders";
 import { downloadOrderInvoicePdf } from "@/lib/orderInvoicePdf";
 import OrderStatusBadge from "@/components/shared/OrderStatusBadge";
 import { formatOrderDateTime } from "@/lib/dateTime";
@@ -94,6 +95,16 @@ function isDeliveredOrder(order: CustomerOrder): boolean {
   return order.status === "Delivered";
 }
 
+/**
+ * A customer may call off an order only while it is still being packed — before
+ * it ships and before a rider holds it. The API re-checks both.
+ */
+function canCancelOrder(order: CustomerOrder): boolean {
+  const raw = (order.rawStatus || "").toLowerCase();
+  const status = raw || order.status.toLowerCase();
+  return status === "confirmed" || status === "processing";
+}
+
 interface CustomerOrdersClientProps {
   initialOrders: CustomerOrder[];
   /** Pre-fills the search box, so a notification link can land on the exact order. */
@@ -123,6 +134,11 @@ export default function CustomerOrdersClient({ initialOrders = [], initialSearch
   // token stays on the server and the page is never blocked on it.
   const [tracking, setTracking] = useState<DeliveryTracking | null>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
+
+  // ── Cancel order modal: only while the order is still being packed ─────────
+  const [cancelTarget, setCancelTarget] = useState<CustomerOrder | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // ── Track Shipment modal: live delivery ────────────────────────────────────
   // Fetches the delivery behind an order when the modal opens, so the rider and
@@ -312,6 +328,32 @@ export default function CustomerOrdersClient({ initialOrders = [], initialSearch
     if (navigator.clipboard) {
       navigator.clipboard.writeText(tracking);
       toast.info(`Tracking #${tracking} copied to clipboard!`);
+    }
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelTarget) return;
+    setIsCancelling(true);
+    try {
+      const res = await cancelMyOrder(cancelTarget.id, cancelReason.trim());
+      if (res?.success === false) {
+        toast.error(res?.message || "Could not cancel the order");
+        return;
+      }
+      toast.success("Order cancelled");
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === cancelTarget.id
+            ? { ...o, status: "Cancelled" as const, rawStatus: "cancelled" }
+            : o
+        )
+      );
+      setCancelTarget(null);
+      setCancelReason("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not cancel the order");
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -671,6 +713,20 @@ export default function CustomerOrdersClient({ initialOrders = [], initialSearch
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {canCancelOrder(order) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setCancelTarget(order);
+                        setCancelReason("");
+                      }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-rose-600 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold transition-colors cursor-pointer h-8"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      <span>Cancel order</span>
+                    </Button>
+                  )}
                   {order.timeline && (
                     <Button
                       size="sm"
@@ -1000,6 +1056,47 @@ export default function CustomerOrdersClient({ initialOrders = [], initialSearch
         </div>
       )}
 
+      {/* Cancel order — only while the order is still being packed */}
+      {cancelTarget && (
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-4 bg-[var(--surface)]/60 backdrop-blur-xs">
+          <Card className="bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 text-[var(--foreground)]">
+            <div>
+              <h3 className="text-base font-bold flex items-center gap-2 text-rose-600">
+                <XCircle className="w-5 h-5" />
+                Cancel {cancelTarget.orderNumber}
+              </h3>
+              <p className="text-xs text-[var(--foreground-muted)] mt-1">
+                The order is still being packed, so it can be called off. Once it
+                ships it can no longer be cancelled from here.
+              </p>
+            </div>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              rows={3}
+              placeholder="Why are you cancelling? (optional — the store reads this)"
+              className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-rose-300"
+            />
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setCancelTarget(null)}
+                isDisabled={isCancelling}
+                className="px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer border border-[var(--border-color)] text-[var(--foreground)]"
+              >
+                Keep order
+              </Button>
+              <Button
+                onClick={handleConfirmCancel}
+                isDisabled={isCancelling}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm cursor-pointer"
+              >
+                {isCancelling ? "Cancelling..." : "Cancel order"}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
 
     </div>
     </>

@@ -14,6 +14,14 @@ export const updateOrderStatus = async (id: string, orderStatus: string) => {
   return serverMutation(`/orders/${id}/status`, { orderStatus }, "PATCH");
 };
 
+/**
+ * The customer calling off their own order, before it ships. The API refuses it
+ * once the parcel has left the store or a rider is holding it.
+ */
+export const cancelMyOrder = async (id: string, reason?: string) => {
+  return serverMutation(`/orders/${id}/cancel`, { reason: reason || "" }, "PATCH");
+};
+
 export const getUserOrdersAction = async (userId: string) => {
   if (!userId) return [];
   const res = await serverFetch(`/orders?userId=${userId}`, true);
