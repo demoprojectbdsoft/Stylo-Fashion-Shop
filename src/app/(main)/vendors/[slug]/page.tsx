@@ -155,12 +155,12 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
         <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-4 shadow-2xs">
           <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--foreground-muted)]">
             <ShoppingBag className="w-3 h-3 text-primary" />
-            Orders delivered
+            Orders completed
           </div>
           <p className="mt-1 text-xl font-extrabold text-[var(--foreground)]">
             {store.completedOrders.toLocaleString()}
           </p>
-          <p className="text-[10px] text-[var(--foreground-muted)]">parcels completed</p>
+          <p className="text-[10px] text-[var(--foreground-muted)]">shipped or delivered</p>
         </div>
 
         <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-4 shadow-2xs">
@@ -238,7 +238,7 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
               )}
               <p className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] px-3 py-2 text-[11px] text-[var(--foreground)]">
                 <TrendingUp className="w-3.5 h-3.5 shrink-0 text-[var(--foreground-muted)]" />
-                Delivered <span className="font-semibold">{store.completedOrders.toLocaleString()}</span>{" "}
+                Completed <span className="font-semibold">{store.completedOrders.toLocaleString()}</span>{" "}
                 orders
               </p>
             </div>

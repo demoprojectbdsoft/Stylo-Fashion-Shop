@@ -27,7 +27,7 @@ export default function SpotlightVendorCard({
 }) {
   const place = [vendor.address.area, vendor.address.city].filter(Boolean).join(", ");
   const success = Math.max(0, Math.min(100, Math.round(Number(vendor.successRate) || 0)));
-  const delivered = Number(vendor.completedOrders) || 0;
+  const completed = Number(vendor.completedOrders) || 0;
 
   return (
     <Link
@@ -136,7 +136,7 @@ export default function SpotlightVendorCard({
           </span>
           <span className="inline-flex items-center gap-1">
             <BadgeCheck className="h-3 w-3" />
-            {delivered} delivered
+            {completed} completed
           </span>
           <ArrowUpRight className="ml-auto h-3.5 w-3.5 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-amber-500" />
         </div>
