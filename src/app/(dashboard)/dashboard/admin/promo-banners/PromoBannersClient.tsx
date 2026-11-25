@@ -21,6 +21,7 @@ import {
 import { toast } from "react-toastify";
 import { Promo } from "@/types";
 import { addPromo, updatePromo, deletePromo } from "@/lib/action/promo";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import ImageUploader from "@/components/shared/ImageUploader";
 import PromoBanners from "@/components/homepage/PromoBanners";
 import PromoStrip from "@/components/homepage/PromoStrip";
@@ -199,7 +200,7 @@ export default function PromoBannersClient({
       placement: editorPlacement,
       isActive: draft.isActive,
       order: Number(draft.order) || 0,
-      image: draft.image.trim(),
+      image: normalizeImageUrl(draft.image),
       imageAlt: draft.imageAlt.trim(),
       subtitle: draft.subtitle.trim(),
       highlightText: draft.highlightText.trim(),
@@ -418,7 +419,7 @@ export default function PromoBannersClient({
                     label="Banner Image"
                     required
                     value={draft.image}
-                    onChange={(url) => setField("image", url)}
+                    onChange={(url) => setField("image", normalizeImageUrl(url))}
                     urlPlaceholder="https://example.com/banner.webp"
                     hint={
                       editorPlacement === "strip"
@@ -763,7 +764,7 @@ function PromoBlock({
               <div className="relative w-24 h-16 rounded-xl bg-[var(--surface-alt)] border border-[var(--border-color)] overflow-hidden shrink-0 flex items-center justify-center">
                 {promo.image ? (
                   <Image
-                    src={promo.image}
+                    src={normalizeImageUrl(promo.image)}
                     alt={promo.imageAlt || promo.name}
                     fill
                     sizes="96px"

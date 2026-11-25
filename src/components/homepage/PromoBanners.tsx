@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight } from "lucide-react";
 import { Promo } from "@/types";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 
 /**
  * The row of promo tiles that sits between the product carousels.
@@ -40,12 +41,13 @@ export default function PromoBanners({ banners = [] }: { banners?: Promo[] }) {
                   className="relative w-full h-full cursor-pointer flex items-center justify-center"
                 >
                   <Image
-                    src={banner.image as string}
+                    src={normalizeImageUrl(banner.image)}
                     alt={imageAlt}
                     fill
                     sizes="(max-width: 768px) 50vw, 30vw"
                     className="object-contain transition-transform duration-500 group-hover:scale-105 filter drop-shadow-sm"
                     priority={index === 0}
+                    unoptimized
                   />
                 </Link>
               </div>

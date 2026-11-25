@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Promo } from "@/types";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 
 /**
  * The full-width promo strip that runs lower down the homepage.
@@ -56,11 +57,12 @@ export default function PromoStrip({ strip }: { strip?: Promo | null }) {
             <div className="relative w-full md:w-64 h-32 md:h-full flex items-center justify-center">
               <div className="relative w-full h-full max-w-xs transition-transform duration-500 group-hover:scale-105">
                 <Image
-                  src={strip.image}
+                  src={normalizeImageUrl(strip.image)}
                   alt={imageAlt}
                   fill
                   sizes="(max-width: 768px) 100vw, 256px"
                   className="object-contain object-center drop-shadow-md"
+                  unoptimized
                 />
               </div>
             </div>
