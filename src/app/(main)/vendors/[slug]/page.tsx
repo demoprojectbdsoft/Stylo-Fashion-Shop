@@ -193,105 +193,102 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
         </div>
       </div>
 
-      {/* ── About & the shop's record, side by side ── */}
-      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
-        <div className="flex h-full flex-col rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-5 shadow-2xs">
-          <h2 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
-            <Store className="w-4 h-4 text-primary" />
-            About this vendor
+      {/* ── The shop: the shelf first, the record beside it ── */}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
+          <h2 className="text-lg font-bold text-[var(--foreground)] md:text-xl">
+            What {store.name} sells
           </h2>
-          <p className="mt-2 text-xs leading-relaxed text-[var(--foreground-muted)]">
-            {store.description ||
-              `${store.name} has not written a description yet, but its shelf and its record speak for it.`}
-          </p>
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {store.category && (
-              <p className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] px-3 py-2 text-[11px] text-[var(--foreground)]">
-                <Package className="w-3.5 h-3.5 text-[var(--foreground-muted)] shrink-0" />
-                Sells in <span className="font-semibold">{store.category}</span>
-              </p>
-            )}
-            {where && (
-              <p className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] px-3 py-2 text-[11px] text-[var(--foreground)]">
-                <MapPin className="w-3.5 h-3.5 text-[var(--foreground-muted)] shrink-0" />
-                Based in <span className="font-semibold">{where}</span>
-              </p>
-            )}
-            {joined && (
-              <p className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] px-3 py-2 text-[11px] text-[var(--foreground)]">
-                <CalendarDays className="w-3.5 h-3.5 text-[var(--foreground-muted)] shrink-0" />
-                Trading since <span className="font-semibold">{joined}</span>
-              </p>
-            )}
-            <p className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] px-3 py-2 text-[11px] text-[var(--foreground)]">
-              <TrendingUp className="w-3.5 h-3.5 text-[var(--foreground-muted)] shrink-0" />
-              Delivered <span className="font-semibold">{store.completedOrders.toLocaleString()}</span>{" "}
-              orders
+          <VendorShelf
+            storeSlug={store.slug}
+            initialProducts={products}
+            initialPagination={pagination}
+            initialFilters={{ search: shelfSearch, sort: shelfSort, filter: shelfFilter }}
+          />
+        </div>
+
+        <aside className="space-y-4 lg:sticky lg:top-4 lg:col-span-1">
+          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-5 shadow-2xs">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-[var(--foreground)]">
+              <Store className="w-4 h-4 text-primary" />
+              About this vendor
+            </h2>
+            <p className="mt-2 text-xs leading-relaxed text-[var(--foreground-muted)]">
+              {store.description ||
+                `${store.name} has not written a description yet, but its shelf and its record speak for it.`}
             </p>
-          </div>
-        </div>
-
-        <div className="flex h-full flex-col rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-5 shadow-2xs">
-          <h2 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
-            <BadgeCheck className="w-4 h-4 text-emerald-500" />
-            Delivery record
-          </h2>
-          <p className="mt-2 text-[11px] leading-relaxed text-[var(--foreground-muted)]">
-            Delivered parcels against every parcel this shop has closed. Orders still on the way
-            are not counted either way.
-          </p>
-          <div className="mt-4 flex items-end gap-2">
-            <span className="text-3xl font-extrabold text-[var(--foreground)]">
-              {store.successRate > 0 ? `${store.successRate}%` : "—"}
-            </span>
-            <span className="pb-1 text-[10px] text-[var(--foreground-muted)]">arrived</span>
-          </div>
-          <div className="mt-2 h-2 w-full rounded-full bg-[var(--surface-alt)] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
-              style={{ width: `${Math.min(100, Math.max(0, store.successRate))}%` }}
-            />
-          </div>
-          <p className="mt-3 text-[10px] text-[var(--foreground-muted)]">
-            {store.successRate > 0
-              ? "A record this shop earns one parcel at a time."
-              : "This shop has not closed a parcel yet, so there is no record to read."}
-          </p>
-          {socials.length > 0 && (
-            <div className="mt-auto pt-4 border-t border-[var(--border-color)]">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--foreground-muted)]">
-                Reach the shop
+            <div className="mt-4 grid grid-cols-1 gap-2.5">
+              {store.category && (
+                <p className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] px-3 py-2 text-[11px] text-[var(--foreground)]">
+                  <Package className="w-3.5 h-3.5 shrink-0 text-[var(--foreground-muted)]" />
+                  Sells in <span className="font-semibold">{store.category}</span>
+                </p>
+              )}
+              {where && (
+                <p className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] px-3 py-2 text-[11px] text-[var(--foreground)]">
+                  <MapPin className="w-3.5 h-3.5 shrink-0 text-[var(--foreground-muted)]" />
+                  Based in <span className="font-semibold">{where}</span>
+                </p>
+              )}
+              {joined && (
+                <p className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] px-3 py-2 text-[11px] text-[var(--foreground)]">
+                  <CalendarDays className="w-3.5 h-3.5 shrink-0 text-[var(--foreground-muted)]" />
+                  Trading since <span className="font-semibold">{joined}</span>
+                </p>
+              )}
+              <p className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-alt)] px-3 py-2 text-[11px] text-[var(--foreground)]">
+                <TrendingUp className="w-3.5 h-3.5 shrink-0 text-[var(--foreground-muted)]" />
+                Delivered <span className="font-semibold">{store.completedOrders.toLocaleString()}</span>{" "}
+                orders
               </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {socials.map((social) => (
-                  <a
-                    key={social.key}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--surface-alt)] text-[10px] font-semibold text-[var(--foreground)] hover:text-primary hover:border-primary/50 transition-colors"
-                  >
-                    {social.label}
-                    <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
-                ))}
-              </div>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* ── The shelf ── */}
-      <div>
-        <h2 className="text-lg md:text-xl font-bold text-[var(--foreground)] mb-4">
-          What {store.name} sells
-        </h2>
-        <VendorShelf
-          storeSlug={store.slug}
-          initialProducts={products}
-          initialPagination={pagination}
-          initialFilters={{ search: shelfSearch, sort: shelfSort, filter: shelfFilter }}
-        />
+          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-5 shadow-2xs">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-[var(--foreground)]">
+              <BadgeCheck className="w-4 h-4 text-emerald-500" />
+              Delivery record
+            </h2>
+            <div className="mt-3 flex items-end gap-2">
+              <span className="text-3xl font-extrabold text-[var(--foreground)]">
+                {store.successRate > 0 ? `${store.successRate}%` : "—"}
+              </span>
+              <span className="pb-1 text-[10px] text-[var(--foreground-muted)]">arrived</span>
+            </div>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[var(--surface-alt)]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
+                style={{ width: `${Math.min(100, Math.max(0, store.successRate))}%` }}
+              />
+            </div>
+            <p className="mt-3 text-[10px] text-[var(--foreground-muted)]">
+              {store.successRate > 0
+                ? "A record this shop earns one parcel at a time."
+                : "This shop has not closed a parcel yet, so there is no record to read."}
+            </p>
+            {socials.length > 0 && (
+              <div className="mt-4 border-t border-[var(--border-color)] pt-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--foreground-muted)]">
+                  Reach the shop
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {socials.map((social) => (
+                    <a
+                      key={social.key}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--surface-alt)] px-2.5 py-1.5 text-[10px] font-semibold text-[var(--foreground)] transition-colors hover:border-primary/50 hover:text-primary"
+                    >
+                      {social.label}
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </aside>
       </div>
     </section>
   );
