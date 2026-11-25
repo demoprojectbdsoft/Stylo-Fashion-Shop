@@ -32,7 +32,7 @@ export interface VendorPlan {
   analytics: "basic" | "detailed" | "advanced";
   salesReports: "basic" | "advanced";
   /** No file, the CSV only, or both the CSV and the PDF report. */
-  exports: "none" | "csv" | "csv+pdf";
+  exports: "none" | "csv" | "pdf" | "csv+pdf";
   storeCustomization: "basic" | "enhanced" | "full";
   promotionalCampaigns: "none" | "limited" | "priority";
   storeVisibility: "standard" | "enhanced" | "priority";
@@ -556,7 +556,7 @@ export interface VendorAnalyticsReport {
     id: string;
     name: string;
     analytics: "basic" | "detailed" | "advanced";
-    exports: "none" | "csv" | "csv+pdf";
+    exports: "none" | "csv" | "pdf" | "csv+pdf";
   };
   isLive: boolean;
   totals: {

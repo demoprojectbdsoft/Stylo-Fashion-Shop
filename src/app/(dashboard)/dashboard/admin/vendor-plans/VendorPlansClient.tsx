@@ -72,6 +72,7 @@ const CAPABILITY_FIELDS = [
     label: "Report exports",
     options: [
       { value: "none", label: "No export" },
+      { value: "pdf", label: "PDF only" },
       { value: "csv", label: "CSV only" },
       { value: "csv+pdf", label: "CSV + PDF" },
     ],

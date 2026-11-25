@@ -272,10 +272,10 @@ export default function VendorAnalyticsClient({
   const { totals, previous } = report;
   const profit = report.profit;
 
-  // The three export rungs: none on free, CSV on premium, CSV + PDF on advanced.
+  // The export rungs: none on free, the PDF on Premium, CSV + PDF on Advanced.
   // The deeper tables (per product, per order) are the top rung's reward.
-  const canExportCsv = report.plan.exports === "csv" || report.plan.exports === "csv+pdf";
-  const canExportPdf = report.plan.exports === "csv+pdf";
+  const canExportCsv = report.plan.exports === "csv+pdf";
+  const canExportPdf = report.plan.exports === "pdf" || report.plan.exports === "csv+pdf";
 
   // The plan decides how deep the page goes: Free reads the headline sales,
   // Premium adds the working detail, Advanced adds the traffic on top.
@@ -457,11 +457,11 @@ export default function VendorAnalyticsClient({
           ) : (
             <Link
               href="/dashboard/vendor/subscription"
-              title="CSV reports start on Premium"
+              title="CSV reports come with Advanced"
               className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[var(--border-color)] px-3 py-2 text-[11px] font-semibold text-[var(--foreground-muted)] transition-colors hover:text-[var(--foreground)]"
             >
               <Download className="h-3.5 w-3.5" />
-              CSV on Premium
+              CSV on Advanced
             </Link>
           )}
         </div>
@@ -929,11 +929,11 @@ export default function VendorAnalyticsClient({
             </ul>
           )}
 
-          {!canExportPdf && (
+          {!canExportCsv && (
             <p className="mt-3 text-[10px] leading-relaxed text-[var(--foreground-muted)]">
-              {canExportCsv
-                ? "Your CSV carries the totals, the chart data and the tables on this page. The PDF report comes with Advanced."
-                : "Reporting exports start on Premium, where the CSV carries every table on this page. PDF joins them on Advanced."}
+              {canExportPdf
+                ? "Your PDF report carries the totals, the chart data and the tables on this page. The CSV export comes with Advanced."
+                : "Report exports start on Premium, which builds the PDF. The CSV export joins it on Advanced."}
             </p>
           )}
         </section>

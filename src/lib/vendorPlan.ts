@@ -87,6 +87,7 @@ export const ANALYTICS_LABELS: Record<VendorPlan["analytics"], string> = {
 export const EXPORT_LABELS: Record<VendorPlan["exports"], string> = {
   none: "No report export",
   csv: "CSV report export",
+  pdf: "PDF report export",
   "csv+pdf": "CSV + PDF report export",
 };
 
