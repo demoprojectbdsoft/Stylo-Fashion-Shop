@@ -194,8 +194,8 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
       </div>
 
       {/* ── About & the shop's record, side by side ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-5 shadow-2xs">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
+        <div className="flex h-full flex-col rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-5 shadow-2xs">
           <h2 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
             <Store className="w-4 h-4 text-primary" />
             About this vendor
@@ -231,7 +231,7 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-5 shadow-2xs">
+        <div className="flex h-full flex-col rounded-2xl border border-[var(--border-color)] bg-[var(--surface-elevated)] p-5 shadow-2xs">
           <h2 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
             <BadgeCheck className="w-4 h-4 text-emerald-500" />
             Delivery record
@@ -258,7 +258,7 @@ export default async function VendorPage({ params, searchParams }: VendorPagePro
               : "This shop has not closed a parcel yet, so there is no record to read."}
           </p>
           {socials.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-[var(--border-color)]">
+            <div className="mt-auto pt-4 border-t border-[var(--border-color)]">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--foreground-muted)]">
                 Reach the shop
               </p>
