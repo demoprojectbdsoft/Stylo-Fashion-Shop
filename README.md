@@ -277,6 +277,7 @@ Both types:
   • Optional: min order, max discount, usage limits
   • Date range with auto expiry
   • Per-customer limits
+  • Cancelling an order returns the use (per-customer and total counters)
 
 Vendor coupon control:
   • Seller (their coupons desk): create, edit, stop/resume and delete their codes
