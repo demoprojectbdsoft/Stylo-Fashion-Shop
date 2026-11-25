@@ -369,13 +369,13 @@ export default function HeroBannerForm({
               value={form.desktopImage}
               onChange={(url) => set({ desktopImage: normalizeImageUrl(url) })}
               required
-              hint="Recommended: 1920 × 600 px (wide banner, PNG/JPG/WEBP/GIF)."
+              hint="Recommended: 1920 × 700 px (wide, ~2.7:1) to fit the hero. PNG, JPG, WEBP or GIF."
             />
             <ImageUploader
               label="Mobile Banner Image (optional)"
               value={form.mobileImage}
               onChange={(url) => set({ mobileImage: normalizeImageUrl(url) })}
-              hint="Recommended: 800 × 600 px for phones. Falls back to desktop image."
+              hint="Recommended: 960 × 600 px (~1.6:1) for phones. Falls back to the desktop image."
             />
           </div>
 
