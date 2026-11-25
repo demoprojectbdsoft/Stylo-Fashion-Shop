@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card, Input, Button, Select, ListBox, Switch, Modal } from "@heroui/react";
+import { Card, Input, Button, Switch, Modal } from "@heroui/react";
 import {
   Image as ImageIcon,
   Plus,
@@ -18,40 +18,18 @@ import {
   FolderTree,
   Store,
   Link2,
-  Check,
   SlidersHorizontal,
   Megaphone,
   ExternalLink,
   ArrowRight,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import ImageUploader from "@/components/shared/ImageUploader";
-import { addBanner, updateBanner, deleteBanner } from "@/lib/action/banners";
+import { updateBanner, deleteBanner } from "@/lib/action/banners";
+import { normalizeImageUrl } from "@/lib/imageUrl";
 import type { Banner, BannerStatus, BannerType } from "@/types/banner";
-
-interface ProductLite {
-  id?: string;
-  _id?: string;
-  title: string;
-}
-interface CategoryLite {
-  id?: string;
-  _id?: string;
-  name: string;
-  slug?: string;
-}
-interface StoreLite {
-  _id?: string;
-  id?: string;
-  name: string;
-  slug?: string;
-}
 
 interface HeroBannersClientProps {
   initialBanners: Banner[];
-  products: ProductLite[];
-  categories: CategoryLite[];
-  stores: StoreLite[];
 }
 
 const TYPE_OPTIONS: { value: BannerType; label: string; icon: typeof Package }[] = [
@@ -68,7 +46,6 @@ const STATUS_STYLE: Record<BannerStatus, string> = {
   expired: "bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/50",
 };
 
-const idOf = (row: { id?: string; _id?: string }) => String(row.id || row._id || "");
 const typeLabel = (t: BannerType) => TYPE_OPTIONS.find((o) => o.value === t)?.label || t;
 
 /** Draft/active/scheduled/expired, read from the switch and the dates. */
@@ -80,14 +57,6 @@ function computeStatus(isActive: boolean, start: string | null, end: string | nu
   return "active";
 }
 
-function toLocalInput(iso?: string | null) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  const off = d.getTimezoneOffset() * 60000;
-  return new Date(d.getTime() - off).toISOString().slice(0, 16);
-}
-
 function toDisplay(iso?: string | null) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -95,47 +64,18 @@ function toDisplay(iso?: string | null) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-const EMPTY_FORM = {
-  title: "",
-  subtitle: "",
-  type: "product" as BannerType,
-  desktopImage: "",
-  mobileImage: "",
-  ctaText: "Shop Now",
-  productId: "",
-  categoryId: "",
-  vendorId: "",
-  customUrl: "",
-  order: 0,
-  startDate: "",
-  endDate: "",
-  isActive: false,
-};
-
 export default function HeroBannersClient({
   initialBanners = [],
-  products = [],
-  categories = [],
-  stores = [],
 }: HeroBannersClientProps) {
   const router = useRouter();
 
-  const [banners, setBanners] = useState<Banner[]>(banners_(initialBanners));
+  const [banners, setBanners] = useState<Banner[]>(Array.isArray(initialBanners) ? initialBanners : []);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | BannerType>("all");
-
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({ ...EMPTY_FORM });
 
   const [preview, setPreview] = useState<Banner | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Banner | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  function banners_(rows: Banner[]) {
-    return Array.isArray(rows) ? rows : [];
-  }
 
   const stats = useMemo(() => {
     const active = banners.filter((b) => b.status === "active" || b.status === "scheduled").length;
@@ -150,87 +90,6 @@ export default function HeroBannersClient({
       return matchesType && matchesQuery;
     });
   }, [banners, searchQuery, typeFilter]);
-
-  const openCreate = () => {
-    setEditingId(null);
-    setForm({ ...EMPTY_FORM, order: banners.length });
-    setIsFormOpen(true);
-  };
-
-  const openEdit = (b: Banner) => {
-    setEditingId(b.id);
-    setForm({
-      title: b.title,
-      subtitle: b.subtitle,
-      type: b.type,
-      desktopImage: b.desktopImage,
-      mobileImage: b.mobileImage,
-      ctaText: b.ctaText || "Shop Now",
-      productId: b.target.productId || "",
-      categoryId: b.target.categoryId || "",
-      vendorId: b.target.vendorId || "",
-      customUrl: b.target.customUrl || "",
-      order: b.order ?? 0,
-      startDate: toLocalInput(b.startDate),
-      endDate: toLocalInput(b.endDate),
-      isActive: b.isActive,
-    });
-    setIsFormOpen(true);
-  };
-
-  const set = (patch: Partial<typeof form>) => setForm((prev) => ({ ...prev, ...patch }));
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!form.title.trim()) return toast.error("Banner title is required");
-    if (!form.desktopImage) return toast.error("Upload a desktop banner image");
-    if (form.type === "product" && !form.productId) return toast.error("Select a product");
-    if (form.type === "category" && !form.categoryId) return toast.error("Select a category");
-    if (form.type === "vendor" && !form.vendorId) return toast.error("Select a vendor");
-    if (form.type === "custom" && !form.customUrl.trim()) return toast.error("Enter a destination URL");
-
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        title: form.title.trim(),
-        subtitle: form.subtitle.trim(),
-        type: form.type,
-        desktopImage: form.desktopImage,
-        mobileImage: form.mobileImage,
-        ctaText: form.ctaText.trim() || "Shop Now",
-        order: Number(form.order) || 0,
-        startDate: form.startDate ? new Date(form.startDate).toISOString() : null,
-        endDate: form.endDate ? new Date(form.endDate).toISOString() : null,
-        isActive: form.isActive,
-        productId: form.type === "product" ? form.productId : undefined,
-        categoryId: form.type === "category" ? form.categoryId : undefined,
-        vendorId: form.type === "vendor" ? form.vendorId : undefined,
-        customUrl: form.type === "custom" ? form.customUrl.trim() : undefined,
-      };
-
-      const res = editingId ? await updateBanner(editingId, payload) : await addBanner(payload);
-
-      if (res?.success === false) {
-        toast.error(res?.message || "Could not save the banner");
-        return;
-      }
-
-      const saved: Banner | undefined = res?.data;
-      if (saved) {
-        setBanners((prev) =>
-          editingId ? prev.map((b) => (b.id === editingId ? saved : b)) : [saved, ...prev]
-        );
-      }
-      toast.success(editingId ? "Banner updated" : "Banner created");
-      setIsFormOpen(false);
-      router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const toggleActive = async (b: Banner, next: boolean) => {
     const res = await updateBanner(b.id, { isActive: next });
@@ -284,13 +143,13 @@ export default function HeroBannersClient({
             The homepage hero. Upload the artwork, pick a target, schedule it, and publish.
           </p>
         </div>
-        <Button
-          onPress={openCreate}
+        <Link
+          href="/dashboard/admin/hero-banners/add"
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-sm transition-all cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>Add Banner</span>
-        </Button>
+        </Link>
       </div>
 
       {/* Stats */}
@@ -363,10 +222,13 @@ export default function HeroBannersClient({
                 : "Add your first hero banner to fill the homepage."}
             </p>
           </div>
-          <Button onPress={openCreate} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold shadow-sm cursor-pointer">
+          <Link
+            href="/dashboard/admin/hero-banners/add"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold shadow-sm cursor-pointer mx-auto"
+          >
             <Plus className="w-4 h-4" />
             <span>Create First Banner</span>
-          </Button>
+          </Link>
         </Card>
       ) : (
         <Card className="bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-xs p-0">
@@ -396,7 +258,7 @@ export default function HeroBannersClient({
                         <div className="relative w-20 h-12 rounded-lg bg-[var(--surface-alt)] border border-[var(--border-color)] overflow-hidden shrink-0">
                           {b.desktopImage ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={b.desktopImage} alt={b.title} className="w-full h-full object-cover" />
+                            <img src={normalizeImageUrl(b.desktopImage)} alt={b.title} className="w-full h-full object-cover" />
                           ) : (
                             <span className="flex h-full w-full items-center justify-center text-[var(--foreground-muted)]">
                               <ImageIcon className="w-5 h-5" />
@@ -438,9 +300,13 @@ export default function HeroBannersClient({
                         <button onClick={() => setPreview(b)} title="Preview" className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[var(--foreground-muted)] hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer">
                           <Eye className="w-[18px] h-[18px]" />
                         </button>
-                        <button onClick={() => openEdit(b)} title="Edit" className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors cursor-pointer">
+                        <Link
+                          href={`/dashboard/admin/hero-banners/${b.id}/edit`}
+                          title="Edit"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                        >
                           <Edit2 className="w-[18px] h-[18px]" />
-                        </button>
+                        </Link>
                         <button onClick={() => setDeleteTarget(b)} title="Delete" className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer">
                           <Trash2 className="w-[18px] h-[18px]" />
                         </button>
@@ -453,219 +319,6 @@ export default function HeroBannersClient({
           </div>
         </Card>
       )}
-
-      {/* Create / Edit modal */}
-      <Modal isOpen={isFormOpen} onOpenChange={setIsFormOpen}>
-        <Modal.Backdrop>
-          <Modal.Container size="lg">
-            <Modal.Dialog className="bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-3xl p-6 shadow-2xl space-y-6 max-h-[90dvh] overflow-y-auto text-[var(--foreground)]">
-              <Modal.Header className="flex items-center justify-between border-b border-[var(--border-color)] pb-4">
-                <Modal.Heading className="text-base font-bold flex items-center gap-2">
-                  <SlidersHorizontal className="w-4 h-4 text-primary" />
-                  {editingId ? "Edit Banner" : "Create Banner"}
-                </Modal.Heading>
-                <Modal.CloseTrigger className="text-[var(--foreground-muted)] hover:text-[var(--foreground)] cursor-pointer p-1 rounded-lg">✕</Modal.CloseTrigger>
-              </Modal.Header>
-
-              <Modal.Body>
-                <form onSubmit={handleSubmit} id="banner-form" className="space-y-5">
-                  {/* Type */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold">Banner Type <span className="text-rose-500">*</span></label>
-                    <Select
-                      selectedKey={form.type}
-                      onSelectionChange={(key) => set({ type: String(key) as BannerType })}
-                      placeholder="Choose a type"
-                    >
-                      <Select.Trigger className="w-full cursor-pointer bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl">
-                        <Select.Value />
-                        <Select.Indicator />
-                      </Select.Trigger>
-                      <Select.Popover>
-                        <ListBox>
-                          {TYPE_OPTIONS.map((opt) => (
-                            <ListBox.Item key={opt.value} id={opt.value} textValue={opt.label} className="cursor-pointer py-2">
-                              <span className="flex items-center gap-2 text-xs font-medium">
-                                <opt.icon className="w-3.5 h-3.5 text-primary" />
-                                {opt.label}
-                              </span>
-                            </ListBox.Item>
-                          ))}
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
-                  </div>
-
-                  {/* Target — depends on type */}
-                  {form.type !== "custom" && (
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold">
-                        {form.type === "product" ? "Product" : form.type === "category" ? "Category" : "Vendor"}{" "}
-                        <span className="text-rose-500">*</span>
-                      </label>
-                      <Select
-                        selectedKey={
-                          form.type === "product" ? form.productId : form.type === "category" ? form.categoryId : form.vendorId
-                        }
-                        onSelectionChange={(key) => {
-                          const v = String(key);
-                          if (form.type === "product") set({ productId: v });
-                          else if (form.type === "category") set({ categoryId: v });
-                          else set({ vendorId: v });
-                        }}
-                        placeholder="Choose a target"
-                      >
-                        <Select.Trigger className="w-full cursor-pointer bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl">
-                          <Select.Value />
-                          <Select.Indicator />
-                        </Select.Trigger>
-                        <Select.Popover className="max-h-60 overflow-y-auto">
-                          <ListBox>
-                            {form.type === "product" &&
-                              products.map((p) => (
-                                <ListBox.Item key={idOf(p)} id={idOf(p)} textValue={p.title} className="cursor-pointer py-2">
-                                  <span className="text-xs font-medium truncate max-w-[320px]">{p.title}</span>
-                                </ListBox.Item>
-                              ))}
-                            {form.type === "category" &&
-                              categories.map((c) => (
-                                <ListBox.Item key={idOf(c)} id={idOf(c)} textValue={c.name} className="cursor-pointer py-2">
-                                  <span className="text-xs font-medium">{c.name}</span>
-                                </ListBox.Item>
-                              ))}
-                            {form.type === "vendor" &&
-                              stores.map((s) => (
-                                <ListBox.Item key={idOf(s)} id={idOf(s)} textValue={s.name} className="cursor-pointer py-2">
-                                  <span className="text-xs font-medium">{s.name}</span>
-                                </ListBox.Item>
-                              ))}
-                          </ListBox>
-                        </Select.Popover>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Custom URL */}
-                  {form.type === "custom" && (
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold">Destination URL <span className="text-rose-500">*</span></label>
-                      <Input
-                        value={form.customUrl}
-                        onChange={(e) => set({ customUrl: e.target.value })}
-                        placeholder="https://example.com/seasonal-offer"
-                        className="w-full bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl text-xs"
-                      />
-                    </div>
-                  )}
-
-                  {/* Images */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <ImageUploader
-                      label="Desktop Banner Image"
-                      value={form.desktopImage}
-                      onChange={(url) => set({ desktopImage: url })}
-                      required
-                      hint="Wide artwork — PNG, JPG, WEBP or GIF (animated GIFs supported)."
-                    />
-                    <ImageUploader
-                      label="Mobile Banner Image (optional)"
-                      value={form.mobileImage}
-                      onChange={(url) => set({ mobileImage: url })}
-                      hint="A taller or narrower crop for phones. Falls back to the desktop image."
-                    />
-                  </div>
-
-                  {/* Title / Subtitle */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-semibold">Banner Title <span className="text-rose-500">*</span></label>
-                      <Input value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="e.g. Eid Mega Sale" className="w-full rounded-xl text-xs" />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-semibold">Subtitle / Description</label>
-                      <Input value={form.subtitle} onChange={(e) => set({ subtitle: e.target.value })} placeholder="e.g. Up to 40% off electronics" className="w-full rounded-xl text-xs" />
-                    </div>
-                  </div>
-
-                  {/* CTA + order */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-semibold">CTA Button Text</label>
-                      <Input value={form.ctaText} onChange={(e) => set({ ctaText: e.target.value })} placeholder="Shop Now" className="w-full rounded-xl text-xs" />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-semibold">Display Order</label>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={String(form.order)}
-                        onChange={(e) => set({ order: parseInt(e.target.value) || 0 })}
-                        className="w-full rounded-xl text-xs font-mono"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Schedule */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-semibold">Start Date</label>
-                      <input
-                        type="datetime-local"
-                        value={form.startDate}
-                        onChange={(e) => set({ startDate: e.target.value })}
-                        className="w-full bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl text-xs px-3 h-10 text-[var(--foreground)]"
-                      />
-                      <span className="text-[10px] text-[var(--foreground-muted)]">Leave empty to start immediately.</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-semibold">End Date</label>
-                      <input
-                        type="datetime-local"
-                        value={form.endDate}
-                        onChange={(e) => set({ endDate: e.target.value })}
-                        className="w-full bg-[var(--surface-elevated)] border border-[var(--border-color)] rounded-xl text-xs px-3 h-10 text-[var(--foreground)]"
-                      />
-                      <span className="text-[10px] text-[var(--foreground-muted)]">Leave empty to run until you stop it.</span>
-                    </div>
-                  </div>
-
-                  {/* Publish */}
-                  <div className="flex items-center justify-between p-3.5 bg-[var(--surface-alt)] rounded-xl border border-[var(--border-color)]/60">
-                    <div>
-                      <p className="text-xs font-bold">Publish on homepage</p>
-                      <p className="text-[10px] text-[var(--foreground-muted)]">
-                        Off saves it as a draft. A future start date shows it as scheduled.
-                      </p>
-                    </div>
-                    <Switch isSelected={form.isActive} onChange={(val) => set({ isActive: val })} className="cursor-pointer">
-                      <Switch.Content className="cursor-pointer">
-                        <Switch.Control className="cursor-pointer">
-                          <Switch.Thumb className="cursor-pointer" />
-                        </Switch.Control>
-                      </Switch.Content>
-                    </Switch>
-                  </div>
-                </form>
-              </Modal.Body>
-
-              <Modal.Footer className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-color)]">
-                <Button variant="outline" onPress={() => setIsFormOpen(false)} className="px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer border border-[var(--border-color)] text-[var(--foreground)]">
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  form="banner-form"
-                  isDisabled={isSubmitting}
-                  className="px-5 py-2 rounded-xl bg-brand-gradient text-[var(--on-grad-text)] text-xs font-bold shadow-xs cursor-pointer"
-                >
-                  <Check className="w-4 h-4" />
-                  {isSubmitting ? "Saving..." : editingId ? "Update Banner" : "Create Banner"}
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
 
       {/* Preview modal */}
       <Modal isOpen={!!preview} onOpenChange={(open) => !open && setPreview(null)}>
@@ -684,7 +337,7 @@ export default function HeroBannersClient({
                   <div className="space-y-4">
                     <div className="relative rounded-2xl overflow-hidden border border-[var(--border-color)] bg-[var(--surface-alt)]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={preview.desktopImage} alt={preview.title} className="w-full h-auto object-cover" />
+                      <img src={normalizeImageUrl(preview.desktopImage)} alt={preview.title} className="w-full h-auto object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-r from-black/55 to-transparent flex flex-col justify-center p-6 md:p-10 max-w-xl">
                         <h3 className="text-xl md:text-3xl font-extrabold text-white drop-shadow">
                           {preview.title || "Banner title"}
