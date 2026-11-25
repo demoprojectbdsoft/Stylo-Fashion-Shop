@@ -68,6 +68,7 @@ export default function AdminCouponForm({
     coupon ? couponDraftFrom(coupon) : blankCouponDraft()
   );
   const [term, setTerm] = useState(productSearch);
+  const [categoryTerm, setCategoryTerm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -98,6 +99,14 @@ export default function AdminCouponForm({
 
   const chosenProducts = new Set(draft.productIds);
   const chosenCategories = new Set(draft.categoryIds);
+
+  // The category list carries its own filter: with a store of this size the
+  // right category is a search away, not a scroll, and several can be ticked.
+  const filteredCategories = useMemo(() => {
+    const q = categoryTerm.trim().toLowerCase();
+    if (!q) return categories;
+    return categories.filter((category) => category.name.toLowerCase().includes(q));
+  }, [categories, categoryTerm]);
 
   const toggle = (key: "productIds" | "categoryIds", id: string) => {
     const current = draft[key];
@@ -367,7 +376,7 @@ export default function AdminCouponForm({
         </div>
       </div>
 
-      {/* Category narrowing: the staff desk's own tool */}
+      {/* Category narrowing: filter the list, then tick as many as the code covers. */}
       <div>
         <span className={labelClass}>Which categories</span>
         <p className={hintClass}>
@@ -382,25 +391,64 @@ export default function AdminCouponForm({
             name. The code still covers products you name below.
           </p>
         ) : (
-          <div className="mt-2 flex max-h-36 flex-wrap gap-1.5 overflow-y-auto rounded-xl border border-[var(--border-color)] bg-[var(--surface)] p-2">
-            {categories.map((category) => {
-              const on = chosenCategories.has(category._id);
-              return (
-                <button
-                  key={category._id}
-                  type="button"
-                  onClick={() => toggle("categoryIds", category._id)}
-                  className={`rounded-lg px-2 py-1 text-[10px] font-semibold transition-colors cursor-pointer ${
-                    on
-                      ? "bg-brand-gradient text-[var(--on-grad-text)]"
-                      : "border border-[var(--border-color)] text-[var(--foreground-muted)] hover:bg-[var(--surface-alt)] hover:text-[var(--foreground)]"
-                  }`}
-                >
-                  {category.name}
-                </button>
-              );
-            })}
-          </div>
+          <>
+            <div className="relative mt-2">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--foreground-muted)]" />
+              <input
+                value={categoryTerm}
+                onChange={(event) => setCategoryTerm(event.target.value)}
+                placeholder="Filter categories"
+                className={`${inputClass} pl-9`}
+              />
+            </div>
+
+            <div className="mt-2 max-h-40 space-y-0.5 overflow-y-auto rounded-xl border border-[var(--border-color)] bg-[var(--surface)] p-2">
+              {filteredCategories.length === 0 ? (
+                <p className="px-1.5 py-2 text-[10px] text-[var(--foreground-muted)]">
+                  No category matches &ldquo;{categoryTerm}&rdquo;.
+                </p>
+              ) : (
+                filteredCategories.map((category) => (
+                  <label
+                    key={category._id}
+                    className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-[11px] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-alt)] cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={chosenCategories.has(category._id)}
+                      onChange={() => toggle("categoryIds", category._id)}
+                      className="h-3.5 w-3.5 accent-[var(--brand-flat)]"
+                    />
+                    <span className="min-w-0 flex-1 truncate">{category.name}</span>
+                  </label>
+                ))
+              )}
+            </div>
+
+            {chosenCategories.size > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {draft.categoryIds.map((id) => {
+                  const name = categories.find((category) => category._id === id)?.name || `...${id.slice(-6)}`;
+                  return (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--surface-alt)] px-2 py-1 text-[10px] text-[var(--foreground)]"
+                    >
+                      {name}
+                      <button
+                        type="button"
+                        onClick={() => toggle("categoryIds", id)}
+                        className="text-[var(--foreground-muted)] hover:text-rose-600 cursor-pointer"
+                        aria-label={`Take ${name} off the code`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
 
